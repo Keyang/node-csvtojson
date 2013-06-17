@@ -1,0 +1,49 @@
+#!/usr/bin/env node
+
+var cliMain=require("../libs/interfaces").cli;
+var ws=require("../libs/interfaces").web
+var usingPipe=false;
+var csvData="";
+var fs=require("fs");
+// process.stdin.resume();
+process.stdin.setEncoding('utf8');
+process.stdin.on("data",function(chunk){
+    usingPipe=true;
+    csvData+=chunk;
+});
+process.stdin.on("end",function(){
+    cliMain.convertString(csvData);
+});
+if (process.argv.length==2){
+    process.stdin.resume();
+    setTimeout(function(){
+        if (usingPipe===false){
+            _showHelp();
+        }
+    },50);
+   
+}else if (process.argv.length>=3){
+    var filePath=process.argv[2];
+    if (filePath.toLowerCase() === "startserver"){
+        var port=process.argv[3];
+        port=parseInt(port);
+        port=port>1000?port:8801;
+        ws.startWebServer({port:port});
+    }else{
+        _loadFromFile(filePath);    
+    }
+    
+}
+function _loadFromFile(filePath){
+    if (fs.existsSync(filePath)){
+        cliMain.convertFile(filePath);
+    }else{
+        console.log("File does not exist:"+filePath);
+        process.exit(-1);
+    }
+}
+
+function _showHelp(){
+    console.log("Usage: csvtojson [<CSVFilePath> | StartServer] ");
+    process.exit(0);
+}

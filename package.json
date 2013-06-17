@@ -1,0 +1,28 @@
+{
+    "name":"csvtojson",
+    "description":"A tool concentrating on converting csv data to JSON with customised parser supporting",
+    "author":"Keyang Xiang <keyang.xiang@gmail.com>",
+    "contributors":[
+        {
+            "name":"Keyang Xiang",
+            "email":"keyang.xiang@gmail.com"
+        }
+    ],
+    "version":"0.1.0",
+    "dependencies":{
+        "express":"3.2.6",
+        "csv":"0.3.3"
+    },
+    "keywords":[
+        "csv",
+        "json",
+        "convert",
+        "parser",
+        "exntendible",
+        "plugin"
+    ],
+    "bin":{
+        "csvtojson":"./bin/csvtojson"
+    }
+}
+
