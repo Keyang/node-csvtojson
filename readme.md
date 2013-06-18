@@ -1,6 +1,8 @@
 #CSV2JSON
 A tool concentrating on converting csv data to JSON with customised parser supporting.  
 
+GitHub: https://github.com/Keyang/node-csvtojson
+
 ##Installation
 >npm install -g csvtojson
 
@@ -143,7 +145,7 @@ If you already have an express application, simply use following code to extend 
 
     //..your code to setup the application object.
 
-    webServer.applyWebServer(app);
+    webServer.applyWebServer(app, postURL); //postURL can be omitted by using default one.
 
 #### Events
 
