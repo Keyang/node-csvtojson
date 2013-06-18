@@ -9,7 +9,8 @@ A tool concentrating on converting csv data to JSON with customised parser suppo
 
 * Powerful library for you nodejs applications processing csv data.
 * Extremly straight forward
-* Highly extendible with your own rules and parsers
+* Multiple input support: CSV File, Readable Stream, CSV String etc.
+* Highly extendible with your own rules and parsers for outputs.
 * Multiple interfaces (webservice, command line)
  
 
@@ -17,7 +18,7 @@ A tool concentrating on converting csv data to JSON with customised parser suppo
 
 ###Command Line Tools
 
->csvtojson [<CSVFilePath> | StartServer]  [port]
+>csvtojson [ CSVFilePath | StartServer]  [port]
 
 Example
 
@@ -135,6 +136,14 @@ It is able to start the web server through code.
     });
 
 It will return an [expressjs](http://expressjs.com/) Application. You can add your own  web app content there.
+
+If you already have an express application, simply use following code to extend your current application
+
+    var webServer=require("csvtojson").interfaces.web;
+
+    //..your code to setup the application object.
+
+    webServer.applyWebServer(app);
 
 #### Events
 

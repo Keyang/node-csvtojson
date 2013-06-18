@@ -1,6 +1,6 @@
 //module interfaces
 module.exports.startWebServer=startWebServer;
-
+module.exports.applyWebServer=applyWebServer;
 //implementation
 var express=require("express");
 var expressApp=express();
@@ -10,6 +10,9 @@ var defaultArgs={
     "urlPath":"/parseCSV"
 }
 
+function applyWebServer(app,url){
+    app.post(url,_POSTData);
+}
 function startWebServer(args){
     if (typeof args=="undefined"){
         args={};
