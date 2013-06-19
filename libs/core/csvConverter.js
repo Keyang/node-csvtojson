@@ -6,7 +6,10 @@ var parserMgr=require("./parserMgr.js");
 var utils=require("util");
 
 //it is a bridge from csv component to our parsers
-function csvAdv(){
+function csvAdv(constructResult){
+    if (typeof constructResult !== false){
+        constructResult=true;
+    }
     var instance= csv.apply(this);
 
     this.parseRules=[];
@@ -19,7 +22,9 @@ function csvAdv(){
         }else{
             var resultRow={};
             that._rowProcess(row,index,resultRow);
-            that.resultObject.csvRows.push(resultRow);
+            if (constructResult){
+                that.resultObject.csvRows.push(resultRow);    
+            }
             instance.emit("record_parsed",resultRow,row,index);
         }
     });
