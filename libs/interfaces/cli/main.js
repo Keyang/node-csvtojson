@@ -19,9 +19,21 @@ function convertString(csvString){
 
 function _initConverter(){
     var csvConverter=new Converter();
-    csvConverter.on("end_parsed",function(json){
-        process.stdout.write(JSON.stringify(json));
-        process.exit(0);
+    var started=false;
+    var writeStream=process.stdout;
+   csvConverter.on("record_parsed",function(rowJSON){
+        if (started){
+            writeStream.write(",\n");
+        }
+        writeStream.write(JSON.stringify(rowJSON));  //write parsed JSON object one by one.
+        if (started==false){
+            started=true;
+        }
+    });
+    writeStream.write("[\n"); //write array symbol
+
+    csvConverter.on("end_parsed",function(){
+        writeStream.write("\n]"); //end array symbol
     });
     csvConverter.on("error",function(err){
         console.error(err);
