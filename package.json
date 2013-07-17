@@ -2,13 +2,19 @@
     "name":"csvtojson",
     "description":"A tool concentrating on converting csv data to JSON with customised parser supporting",
     "author":"Keyang Xiang <keyang.xiang@gmail.com>",
+    "homepage": "http://keyangxiang.com/blog/csv2json/",
+    "bugs": "https://github.com/Keyang/node-csvtojson/issues",
+     "repository": {
+        "type": "git",
+        "url": "https://github.com/Keyang/node-csvtojson.git"
+      },
     "contributors":[
         {
             "name":"Keyang Xiang",
             "email":"keyang.xiang@gmail.com"
         }
     ],
-    "version":"0.1.1",
+    "version":"0.1.2",
     "dependencies":{
         "express":"3.2.6",
         "csv":"0.3.3"
