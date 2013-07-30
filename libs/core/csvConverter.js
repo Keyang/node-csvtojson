@@ -7,7 +7,7 @@ var utils=require("util");
 
 //it is a bridge from csv component to our parsers
 function csvAdv(constructResult){
-    if (typeof constructResult !== false){
+    if (constructResult !== false){
         constructResult=true;
     }
     var instance= csv.apply(this);
