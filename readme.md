@@ -1,5 +1,20 @@
 #CSV2JSON
-A tool concentrating on converting csv data to JSON with customised parser supporting.  
+All you need nodejs csv to json converter. Support big json data, CLI, server. can be easily plugged and used in other nodejs app.
+
+##Menu
+* [Installation](#installation)
+* [Example](#example)
+* [Usage](#usage)
+    * [CLI Tool](#command-line-tools)
+    * [Web Service](#webservice)
+    * [API & Library](#api)
+        * [Quick Start](#quick-start)
+        * [Customised Parser](#parser)
+        * [Integrate with your express server](#webserver)
+        * [Events](#events)
+        * [Built-in Parsers](#default-parsers)
+        * [Example](#example)
+        * [Big CSV File Streaming](#big-csv-file)
 
 GitHub: https://github.com/Keyang/node-csvtojson
 
@@ -53,8 +68,8 @@ Use csvtojson library to your own project.
 Import csvtojson to your package.json or install through npm:
 >npm install csvtojson
 
-#### Converter
-Converter class is the core of csvtojson library. It is based on node-csv library (version 0.3.3). Therefore it has all features of [node-csv](http://www.adaltas.com/projects/node-csv/).
+#### Quick Start
+The core of the tool is Converter class. It is based on node-csv library (version 0.3.6). Therefore it has all features of [node-csv](http://www.adaltas.com/projects/node-csv/). To start a parse, simply use following code:
     
     //Converter Class
     var Converter=require("csvtojson").core.Converter;
@@ -77,6 +92,7 @@ Converter class is the core of csvtojson library. It is based on node-csv librar
 
 #### Parser
 CSVTOJSON allows adding customised parsers which concentrating on what to parse and how to parse.
+It is the main power of the tool that developer only needs to concentrate on how to deal with the data and other concerns like streaming, memory, web, cli etc are done automatically.
 
 How to add a customised parser:
 
@@ -179,7 +195,7 @@ There are default parsers in the library they are
 
 **Omitted column**: For columns head start with "*omit*" e.g. "*omit*id", the parser will omit the column's data.
 
-For example:
+####Example:
 
 Original data:
 
