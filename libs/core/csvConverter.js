@@ -30,7 +30,7 @@ function csvAdv(constructResult){
     });
 
     instance.on("end",function(){
-        instance.emit("end_parsed",that.resultObject);
+        instance.emit("end_parsed",that.resultObject,that.resultObject.csvRows);
     });
 
     return instance;
