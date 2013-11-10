@@ -16,8 +16,8 @@
     ],
     "version":"0.1.4",
     "dependencies":{
-        "express":"3.2.6",
-        "csv":"0.3.3"
+        "express":"3.4.4",
+        "csv":"0.3.6"
     },
     "keywords":[
         "csv",
