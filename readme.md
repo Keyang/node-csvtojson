@@ -70,25 +70,25 @@ Import csvtojson to your package.json or install through npm:
 
 #### Quick Start
 The core of the tool is Converter class. It is based on node-csv library (version 0.3.6). Therefore it has all features of [node-csv](http://www.adaltas.com/projects/node-csv/). To start a parse, simply use following code:
+
+```js
+//Converter Class
+var Converter=require("csvtojson").core.Converter;
     
-    //Converter Class
-    var Converter=require("csvtojson").core.Converter;
+//CSV File Path or CSV String or Readable Stream Object
+var csvFileName="./myCSVFile";
     
-    //CSV File Path or CSV String or Readable Stream Object
-    var csvFileName="./myCSVFile";
+//new converter instance
+var csvConverter=new Converter();
     
-    //new converter instance
-    var csvConverter=new Converter();
+//end_parsed will be emitted once parsing finished
+csvConverter.on("end_parsed",function(jsonObj){
+   console.log(jsonObj); //here is your result json object
+});
     
-    //end_parsed will be emitted once parsing finished
-    csvConverter.on("end_parsed",function(jsonObj){
-    
-        console.log(jsonObj); //here is your result json object
-    
-    });
-    
-    //read from file
-    csvConverter.from(csvFileName);
+//read from file
+csvConverter.from(csvFileName);
+```
 
 #### Parser
 CSVTOJSON allows adding customised parsers which concentrating on what to parse and how to parse.
@@ -96,14 +96,16 @@ It is the main power of the tool that developer only needs to concentrate on how
 
 How to add a customised parser:
 
-    //Parser Manager
-    var parserMgr=require("csvtojson").core.parserMgr;
+```js
+//Parser Manager
+var parserMgr=require("csvtojson").core.parserMgr;
 
-    parserMgr.addParser("myParserName",/^\*parserRegExp\*/,function (params){
-        var columnTitle=params.head; //params.head be like: *parserRegExp*ColumnName;
-        var fieldName=columnTitle.replace(this.regExp, ""); //this.regExp is the regular expression above.
-        params.resultRow[fieldName]="Hello my parser"+params.item;
-    });
+parserMgr.addParser("myParserName",/^\*parserRegExp\*/,function (params){
+   var columnTitle=params.head; //params.head be like: *parserRegExp*ColumnName;
+   var fieldName=columnTitle.replace(this.regExp, ""); //this.regExp is the regular expression above.
+   params.resultRow[fieldName]="Hello my parser"+params.item;
+});
+```
 
 parserMgr's addParser function take three parameters:
 
@@ -128,40 +130,45 @@ The parameter of Parse function is a JSON object. It contains following fields:
 **rowIndex**: the index of current row in CSV data. start from 1 since 0 is the head. e.g. 1
 
 **resultObject**: the reference of result object in JSON format. It always has a field called csvRows which is in Array format. It changes as parsing going on. e.g. 
-    
-    {
-        "csvRows":[
-            {
-                "itemName":"item1",
-                "number":10
-            },
-            {
-                "itemName":"item2",
-                "number":4
-            }
-        ]
-    }
 
+```json    
+{
+   "csvRows":[
+      {
+          "itemName":"item1",
+          "number":10
+      },
+      {
+         "itemName":"item2",
+         "number":4
+      }
+   ]
+}
+```
 
 #### WebServer
 It is able to start the web server through code.
 
-    var webServer=require("csvtojson").interfaces.web;
+```js
+var webServer=require("csvtojson").interfaces.web;
 
-    var expressApp=webServer.startWebServer({
-        "port":"8801",
-        "urlPath":"/parseCSV"
-    });
+var expressApp=webServer.startWebServer({
+   "port":"8801",
+   "urlPath":"/parseCSV"
+});
+```
 
 It will return an [expressjs](http://expressjs.com/) Application. You can add your own  web app content there.
 
 If you already have an express application, simply use following code to extend your current application
 
-    var webServer=require("csvtojson").interfaces.web;
+```js
+var webServer=require("csvtojson").interfaces.web;
 
-    //..your code to setup the application object.
+//..your code to setup the application object.
 
-    webServer.applyWebServer(app, postURL); //postURL can be omitted by using default one.
+webServer.applyWebServer(app, postURL); //postURL can be omitted by using default one.
+```
 
 #### Events
 
@@ -171,18 +178,21 @@ Following events are used for Converter class:
 * record_parsed: it is emitted each time a row has been parsed. The callback function has following parameters: result row JSON object reference, Original row array object reference, row index
 
 To subscribe the event:
-   //Converter Class
-    var Converter=require("csvtojson").core.Converter;
+
+```js
+//Converter Class
+var Converter=require("csvtojson").core.Converter;
     
-    //end_parsed will be emitted once parsing finished
-    csvConverter.on("end_parsed",function(jsonObj){
-        console.log(jsonObj); //here is your result json object
-    });
+//end_parsed will be emitted once parsing finished
+csvConverter.on("end_parsed",function(jsonObj){
+    console.log(jsonObj); //here is your result json object
+});
     
-    //record_parsed will be emitted each time a row has been parsed.
-    csvConverter.on("record_parsed",function(resultRow,rawRow,rowIndex){
-        console.log(resultRow); //here is your result json object
-    });
+//record_parsed will be emitted each time a row has been parsed.
+csvConverter.on("record_parsed",function(resultRow,rawRow,rowIndex){
+   console.log(resultRow); //here is your result json object
+});
+```
 
 #### Default Parsers
 There are default parsers in the library they are
@@ -205,11 +215,12 @@ Original data:
 
 Output data:
 
-    {
-      "csvRows": [
-        {
-          "date": "2012-02-12",
-          "employee": {
+```json
+{
+   "csvRows": [
+      {
+         "date": "2012-02-12",
+         "employee": {
             "name": "Eric",
             "age": "31",
             "number": "51234",
@@ -233,43 +244,44 @@ Output data:
               "key3",
               "key4"
             ]
-          },
-          "address": [
+         },
+         "address": [
             "Cambridge Road",
             "Tormore"
-          ]
-        }
-      ]
-    }
-
+         ]
+      }
+   ]
+}
+```
 #### Big CSV File
 csvtojson library was designed to accept big csv file converting. To avoid memory consumption, it is recommending to use read stream and write stream. 
 
-    var Converter=require("csvtojson").core.Converter;
+```js
+var Converter=require("csvtojson").core.Converter;
+var csvConverter=new Converter(false); // The parameter false will turn off final result construction. It can avoid huge memory consumption while parsing. The trade off is final result will not be populated to end_parsed event.
 
-    var csvConverter=new Converter(false); // The parameter false will turn off final result construction. It can avoid huge memory consumption while parsing. The trade off is final result will not be populated to end_parsed event.
+var readStream=require("fs").createReadStream("inputData.csv"); 
 
-    var readStream=require("fs").createReadStream("inputData.csv"); 
+var writeStream=require("fs").createWriteStream("outpuData.json");
 
-    var writeStream=require("fs").createWriteStream("outpuData.json");
+var started=false;
+csvConverter.on("record_parsed",function(rowJSON){
+   if (started){
+      writeStream.write(",\n");
+   }
+   writeStream.write(JSON.stringify(rowJSON));  //write parsed JSON object one by one.
+   if (started==false){
+      started=true;
+   }
+});
 
-    var started=false;
-    csvConverter.on("record_parsed",function(rowJSON){
-        if (started){
-            writeStream.write(",\n");
-        }
-        writeStream.write(JSON.stringify(rowJSON));  //write parsed JSON object one by one.
-        if (started==false){
-            started=true;
-        }
-    });
+writeStream.write("[\n"); //write array symbol
 
-    writeStream.write("[\n"); //write array symbol
-
-    csvConverter.on("end_parsed",function(){
-        writeStream.write("\n]"); //end array symbol
-    });
+csvConverter.on("end_parsed",function(){
+   writeStream.write("\n]"); //end array symbol
+});
     
-    csvConverter.from(readStream);
+csvConverter.from(readStream);
+```
 
 The Converter constructor was passed in a "false" parameter which will tell the constructor not to combine the final result which would take simlar memory as the file size. The output is constructed line by line through writable stream object.
