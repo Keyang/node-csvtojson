@@ -23,7 +23,7 @@ function csvAdv(constructResult){
             var resultRow={};
             that._rowProcess(row,index,resultRow);
             if (constructResult){
-                that.resultObject.csvRows.push(resultRow);    
+                that.resultObject.csvRows.push(resultRow);
             }
             instance.emit("record_parsed",resultRow,row,index);
         }
@@ -40,7 +40,7 @@ csvAdv.prototype._headRowProcess=function(headRow){
     this.parseRules=parserMgr.initParsers(headRow);
 }
 csvAdv.prototype._rowProcess=function(row,index,resultRow){
-    for (var i=0;i<row.length;i++){
+    for (var i=0;i<parseRules.length;i++){
         var item=row[i];
         var parser=this.parseRules[i];
         var head=this.headRow[i];
