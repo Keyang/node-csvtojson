@@ -40,7 +40,7 @@ csvAdv.prototype._headRowProcess=function(headRow){
     this.parseRules=parserMgr.initParsers(headRow);
 }
 csvAdv.prototype._rowProcess=function(row,index,resultRow){
-    for (var i=0;i<parseRules.length;i++){
+    for (var i=0;i<this.parseRules.length;i++){
         var item=row[i];
         var parser=this.parseRules[i];
         var head=this.headRow[i];
