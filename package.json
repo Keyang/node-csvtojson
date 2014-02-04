@@ -14,7 +14,7 @@
             "email":"keyang.xiang@gmail.com"
         }
     ],
-    "version":"0.1.6",
+    "version":"0.1.7",
     "dependencies":{
         "express":"3.4.4",
         "csv":"0.3.6"
