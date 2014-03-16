@@ -37,7 +37,14 @@ describe("CSV Converter",function(){
         var stream=fs.createReadStream(file);
         obj.on("end_parsed",function(result){
             assert(result);
-            assert(result.csvRows.length>0);
+            assert(result.csvRows.length==2);
+            assert(result.csvRows[0].date);
+            assert(result.csvRows[0].employee);
+            assert(result.csvRows[0].employee.name);
+            assert(result.csvRows[0].employee.age);
+            assert(result.csvRows[0].employee.number);
+            assert(result.csvRows[0].employee.key.length===2);
+            assert(result.csvRows[0].address.length===2);
             //console.log(JSON.stringify(result));
             done();
         });
