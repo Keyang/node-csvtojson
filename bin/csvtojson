@@ -2,7 +2,7 @@
 
 var web=require("../libs/interfaces").web
 var Converter=require("../libs/core").Converter;
-var converter=new Converter();
+var converter=new Converter(false);
 var usingPipe=false;
 var csvData="";
 var fs=require("fs");
