@@ -36,13 +36,15 @@ function _showHelp(){
     console.log("Usage: csvtojson [<CSVFilePath> | StartServer] ");
     process.exit(0);
 }
-ws.write("[\n");
+
 converter.on("record_parsed",function(rowJSON){
     if (!usingPipe){
         usingPipe=true;
     }
     if (started){
         ws.write(",\n");
+    }else{
+        ws.write("[\n");
     }
     ws.write(JSON.stringify(rowJSON));
     if (started ===false){
