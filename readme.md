@@ -15,6 +15,7 @@ All you need nodejs csv to json converter. Support big json data, CLI, server. c
         * [Built-in Parsers](#default-parsers)
         * [Example](#example)
         * [Big CSV File Streaming](#big-csv-file)
+        * [Process Big CSV File in CLI](#convert-big-csv-file-with-command-line-tool)
 
 GitHub: https://github.com/Keyang/node-csvtojson
 
@@ -289,7 +290,7 @@ The Converter constructor was passed in a "false" parameter which will tell the 
 #### Convert Big CSV File with Command line tool
 csvtojson command line tool supports streaming in big csv file and stream out json file. 
 
-It is very convenient to process any kind of big csv file. It's proved having no issue to proceed csv files over 2,000,000 lines (130MB).
+It is very convenient to process any kind of big csv file. It's proved having no issue to proceed csv files over 3,000,000 lines (over 500MB) with memory usage under 30MB.
 
 Once you have installed [csvtojson](#installation), you could use the tool with command:
 
