@@ -285,3 +285,22 @@ csvConverter.from(readStream);
 ```
 
 The Converter constructor was passed in a "false" parameter which will tell the constructor not to combine the final result which would take simlar memory as the file size. The output is constructed line by line through writable stream object.
+
+#### Convert Big CSV File with Command line tool
+csvtojson command line tool supports streaming in big csv file and stream out json file. 
+
+It is very convenient to process any kind of big csv file. It's proved having no issue to proceed csv files over 2,000,000 lines (130MB).
+
+Once you have installed [csvtojson](#installation), you could use the tool with command:
+
+```
+csvtojson [path to bigcsvdata] > converted.json
+```
+
+Or if you prefer streaming data in from another application:
+
+```
+cat [path to bigcsvdata] | csvtojson > converted.json
+```
+
+They will do the same job.
