@@ -1,5 +1,35 @@
 #CSV2JSON
-All you need nodejs csv to json converter. Support big json data, CLI, server. can be easily plugged and used in other nodejs app.
+All you need nodejs csv to json converter. Support big json data, CLI, server. Easily convert your CSV data to nested JSON object.
+
+#IMPORTANT!!
+Since version 0.3, the core class of csvtojson has been inheriting from stream.Transform class. Therefore, it will behave like a normal Stream object and CSV features will not be available any more. Now the usage is like:
+```js
+//Converter Class
+var Converter=require("csvtojson").core.Converter;
+var fs=require("fs");
+
+var csvFileName="./myCSVFile";
+var fileStream=fs.createReadStream(csvFileName);
+//new converter instance
+var csvConverter=new Converter({constructResult:true});
+
+//end_parsed will be emitted once parsing finished
+csvConverter.on("end_parsed",function(jsonObj){
+   console.log(jsonObj); //here is your result json object
+});
+
+//read from file
+fileStream.pipe(csvConverter);
+```
+
+#Change Log
+
+##version 0.3
+* Removed all dependencies
+* Deprecated applyWebServer
+* Added construct parameter for Converter Class
+* Converter Class now works as a proper stream object
+
 
 ##Menu
 * [Installation](#installation)
@@ -30,7 +60,7 @@ GitHub: https://github.com/Keyang/node-csvtojson
 * Multiple input support: CSV File, Readable Stream, CSV String etc.
 * Highly extendible with your own rules and parsers for outputs.
 * Multiple interfaces (webservice, command line)
- 
+
 
 ##Usage
 
@@ -70,26 +100,32 @@ Import csvtojson to your package.json or install through npm:
 >npm install csvtojson
 
 #### Quick Start
-The core of the tool is Converter class. It is based on node-csv library (version 0.3.6). Therefore it has all features of [node-csv](http://www.adaltas.com/projects/node-csv/). To start a parse, simply use following code:
+~~The core of the tool is Converter class. It is based on node-csv library (version 0.3.6). Therefore it has all features of [node-csv](http://www.adaltas.com/projects/node-csv/).~~ To start a parse, simply use following code:
 
 ```js
 //Converter Class
 var Converter=require("csvtojson").core.Converter;
-    
-//CSV File Path or CSV String or Readable Stream Object
+var fs=require("fs");
+
 var csvFileName="./myCSVFile";
-    
+var fileStream=fs.createReadStream(csvFileName);
 //new converter instance
-var csvConverter=new Converter();
-    
+var param={};
+var csvConverter=new Converter(param);
+
 //end_parsed will be emitted once parsing finished
 csvConverter.on("end_parsed",function(jsonObj){
    console.log(jsonObj); //here is your result json object
 });
-    
+
 //read from file
-csvConverter.from(csvFileName);
+fileStream.pipe(csvConverter);
 ```
+#### Params
+The parameters for Converter constructor are:
+
+* constructResult: true/false. Whether to constrcut final json object in memory which will be populated in "end_parsed" event. Set to false if deal with huge csv data. default: true.
+* delimiter: delimiter used for seperating columns. default: ","
 
 #### Parser
 CSVTOJSON allows adding customised parsers which concentrating on what to parse and how to parse.
@@ -130,9 +166,9 @@ The parameter of Parse function is a JSON object. It contains following fields:
 
 **rowIndex**: the index of current row in CSV data. start from 1 since 0 is the head. e.g. 1
 
-**resultObject**: the reference of result object in JSON format. It always has a field called csvRows which is in Array format. It changes as parsing going on. e.g. 
+**resultObject**: the reference of result object in JSON format. It always has a field called csvRows which is in Array format. It changes as parsing going on. e.g.
 
-```json    
+```json
 {
    "csvRows":[
       {
@@ -153,29 +189,19 @@ It is able to start the web server through code.
 ```js
 var webServer=require("csvtojson").interfaces.web;
 
-var expressApp=webServer.startWebServer({
+var server=webServer.startWebServer({
    "port":"8801",
    "urlPath":"/parseCSV"
 });
 ```
 
-It will return an [expressjs](http://expressjs.com/) Application. You can add your own  web app content there.
-
-If you already have an express application, simply use following code to extend your current application
-
-```js
-var webServer=require("csvtojson").interfaces.web;
-
-//..your code to setup the application object.
-
-webServer.applyWebServer(app, postURL); //postURL can be omitted by using default one.
-```
+~~It will return an [expressjs](http://expressjs.com/) Application. You can add your own  web app content there.~~ It will return http.Server object.
 
 #### Events
 
 Following events are used for Converter class:
 
-* end_parsed: It is emitted when parsing finished. the callback function will contain the JSON object
+* end_parsed: It is emitted when parsing finished. the callback function will contain the JSON object if constructResult is set to true.
 * record_parsed: it is emitted each time a row has been parsed. The callback function has following parameters: result row JSON object reference, Original row array object reference, row index
 
 To subscribe the event:
@@ -183,12 +209,12 @@ To subscribe the event:
 ```js
 //Converter Class
 var Converter=require("csvtojson").core.Converter;
-    
+
 //end_parsed will be emitted once parsing finished
 csvConverter.on("end_parsed",function(jsonObj){
     console.log(jsonObj); //here is your result json object
 });
-    
+
 //record_parsed will be emitted each time a row has been parsed.
 csvConverter.on("record_parsed",function(resultRow,rawRow,rowIndex){
    console.log(resultRow); //here is your result json object
@@ -198,13 +224,13 @@ csvConverter.on("record_parsed",function(resultRow,rawRow,rowIndex){
 #### Default Parsers
 There are default parsers in the library they are
 
-**Array**: For columns head start with "*array*" e.g. "*array*fieldName", this parser will combine cells data with same fieldName to one Array.
+**Array**: For columns head start with "\*array\*" e.g. "\*array\*fieldName", this parser will combine cells data with same fieldName to one Array.
 
-**Nested JSON**: For columns head start with "*json*" e.g. "*json*my.nested.json.structure", this parser will create nested nested JSON structure: my.nested.json
+**Nested JSON**: For columns head start with "\*json\*" e.g. "\*json\*my.nested.json.structure", this parser will create nested nested JSON structure: my.nested.json
 
-**Nested JSON Array**: For columns head start with "*jsonarray*" e.g. "*jsonarray*my.items", this parser will create structure like my.items[].
+**Nested JSON Array**: For columns head start with "\*jsonarray\*" e.g. "\*jsonarray\*my.items", this parser will create structure like my.items[].
 
-**Omitted column**: For columns head start with "*omit*" e.g. "*omit*id", the parser will omit the column's data.
+**Omitted column**: For columns head start with "\*omit\*" e.g. "\*omit\*id", the parser will omit the column's data.
 
 ####Example:
 
@@ -255,40 +281,23 @@ Output data:
 }
 ```
 #### Big CSV File
-csvtojson library was designed to accept big csv file converting. To avoid memory consumption, it is recommending to use read stream and write stream. 
+csvtojson library was designed to accept big csv file converting. To avoid memory consumption, it is recommending to use read stream and write stream.
 
 ```js
 var Converter=require("csvtojson").core.Converter;
-var csvConverter=new Converter(false); // The parameter false will turn off final result construction. It can avoid huge memory consumption while parsing. The trade off is final result will not be populated to end_parsed event.
+var csvConverter=new Converter({constructResult:false}); // The parameter false will turn off final result construction. It can avoid huge memory consumption while parsing. The trade off is final result will not be populated to end_parsed event.
 
-var readStream=require("fs").createReadStream("inputData.csv"); 
+var readStream=require("fs").createReadStream("inputData.csv");
 
 var writeStream=require("fs").createWriteStream("outpuData.json");
 
-var started=false;
-csvConverter.on("record_parsed",function(rowJSON){
-   if (started){
-      writeStream.write(",\n");
-   }
-   writeStream.write(JSON.stringify(rowJSON));  //write parsed JSON object one by one.
-   if (started==false){
-      started=true;
-   }
-});
-
-writeStream.write("[\n"); //write array symbol
-
-csvConverter.on("end_parsed",function(){
-   writeStream.write("\n]"); //end array symbol
-});
-    
-csvConverter.from(readStream);
+readStream.pipe(csvConverter).pipe(writeStream);
 ```
 
-The Converter constructor was passed in a "false" parameter which will tell the constructor not to combine the final result which would take simlar memory as the file size. The output is constructed line by line through writable stream object.
+The constructResult:false will tell the constructor not to combine the final result which would drain the memory as progressing. The output is piped directly to writeStream.
 
 #### Convert Big CSV File with Command line tool
-csvtojson command line tool supports streaming in big csv file and stream out json file. 
+csvtojson command line tool supports streaming in big csv file and stream out json file.
 
 It is very convenient to process any kind of big csv file. It's proved having no issue to proceed csv files over 3,000,000 lines (over 500MB) with memory usage under 30MB.
 

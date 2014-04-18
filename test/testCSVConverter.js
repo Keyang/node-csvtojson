@@ -12,11 +12,11 @@ describe("CSV Converter",function(){
     it ("should read from a stream",function(done){
         var obj=new CSVAdv();
         var stream=fs.createReadStream(file);
-        obj.on("end",function(count){
-            assert(count==3);
+        obj.on("end_parsed",function(obj){
+            assert(obj.length===2);
             done();
         });
-        obj.from(stream);
+        stream.pipe(obj);
     });
 
     it ("should emit record_parsed message once a row is parsed.",function(done){
@@ -29,7 +29,7 @@ describe("CSV Converter",function(){
         obj.on("end",function(){
             done();
         });
-        obj.from(stream);
+        stream.pipe(obj);
     });
 
     it ("should emit end_parsed message once it is finished.",function(done){
@@ -37,18 +37,18 @@ describe("CSV Converter",function(){
         var stream=fs.createReadStream(file);
         obj.on("end_parsed",function(result){
             assert(result);
-            assert(result.csvRows.length==2);
-            assert(result.csvRows[0].date);
-            assert(result.csvRows[0].employee);
-            assert(result.csvRows[0].employee.name);
-            assert(result.csvRows[0].employee.age);
-            assert(result.csvRows[0].employee.number);
-            assert(result.csvRows[0].employee.key.length===2);
-            assert(result.csvRows[0].address.length===2);
+            assert(result.length==2);
+            assert(result[0].date);
+            assert(result[0].employee);
+            assert(result[0].employee.name);
+            assert(result[0].employee.age);
+            assert(result[0].employee.number);
+            assert(result[0].employee.key.length===2);
+            assert(result[0].address.length===2);
             //console.log(JSON.stringify(result));
             done();
         });
-        obj.from(stream);
+        stream.pipe(obj);
     });
 
     it ("should handle traling comma gracefully",function(done){
@@ -56,10 +56,10 @@ describe("CSV Converter",function(){
         var obj=new CSVAdv();
         obj.on("end_parsed",function(result){
             assert(result);
-            assert(result.csvRows.length>0);
+            assert(result.length>0);
             //console.log(JSON.stringify(result));
             done();
         });
-        obj.from(stream);
+        stream.pipe(obj);
     });
 });

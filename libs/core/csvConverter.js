@@ -1,44 +1,89 @@
 module.exports=csvAdv;
 
 //implementation
-var csv=require("csv");//see http://www.adaltas.com/projects/node-csv/from.html
 var parserMgr=require("./parserMgr.js");
 var utils=require("util");
-
-//it is a bridge from csv component to our parsers
-function csvAdv(constructResult){
-    if (constructResult !== false){
-        constructResult=true;
+var Transform=require("stream").Transform;
+var Result=require("./Result");
+function csvAdv(params){
+    Transform.call(this);
+    var _param={
+        "constructResult":true,
+        "delimiter":","
     }
-    var instance= csv.apply(this);
-
+    if (params && typeof params =="object"){
+        for (var key in params){
+            _param[key]=params[key];
+        }
+    }else if (typeof params =="boolean"){ //backcompatible with older version
+        console.warn("Parameter should be a JSON object like {'constructResult':false}");
+        _param.constructResult=params;
+    }
+    this.param=_param;
     this.parseRules=[];
-    this.resultObject={csvRows:[]};
+    this.resultObject=new Result();
+    if (this.param.constructResult){
+        this.pipe(this.resultObject);
+    }
     this.headRow=[];
-    var that=this;
-    instance.on("record",function(row,index){
+    this._buffer="";
+    this.rowIndex=0;
+    var self=this;
+    var started=false;
+    self.on("record",function(rowStr,index,lastLine){
+        var row=rowStr.split(self.param.delimiter);
         if (index ==0){
-            that._headRowProcess(row);
-        }else{
+            self._headRowProcess(row);
+            self.push("[\n");
+        }else if(rowStr.length>0){
             var resultRow={};
-            that._rowProcess(row,index,resultRow);
-            if (constructResult){
-                that.resultObject.csvRows.push(resultRow);
+            self._rowProcess(row,index,resultRow);
+            self.emit("record_parsed",resultRow,row,index);
+            if (started===true ){
+                self.push(",\n");
             }
-            instance.emit("record_parsed",resultRow,row,index);
+            self.push(JSON.stringify(resultRow));
+            started=true;
         }
     });
 
-    instance.on("end",function(){
-        instance.emit("end_parsed",that.resultObject,that.resultObject.csvRows);
+    self.on("end",function(){
+        self.emit("end_parsed",self.param.constructResult?self.resultObject.getBuffer():{});
     });
 
-    return instance;
+    return this;
+};
+utils.inherits(csvAdv,Transform);
+csvAdv.prototype._transform=function(data,encoding,cb){
+    var self=this;
+    if (encoding=="buffer"){
+        encoding="utf8";
+    }
+
+    this._buffer+=data.toString(encoding);
+    if (this._buffer.indexOf("\n")>-1){
+        var arr=this._buffer.split("\n");
+        while(arr.length>1){
+            var data=arr.shift();
+            if (data.length>0){
+                this.emit("record",data,this.rowIndex++);    
+            }
+        }
+        this._buffer=arr[0];
+    }
+    cb();
+};
+csvAdv.prototype._flush=function(cb){
+    if (this._buffer.length!=0){ //emit last line
+        this.emit("record",this._buffer,this.rowIndex++,true);
+    }
+    this.push("\n]");
+    cb();
 };
 csvAdv.prototype._headRowProcess=function(headRow){
     this.headRow=headRow;
     this.parseRules=parserMgr.initParsers(headRow);
-}
+};
 csvAdv.prototype._rowProcess=function(row,index,resultRow){
     for (var i=0;i<this.parseRules.length;i++){
         var item=row[i];
@@ -54,6 +99,6 @@ csvAdv.prototype._rowProcess=function(row,index,resultRow){
             resultObject:this.resultObject
         });
     }
-}
+};
 
 

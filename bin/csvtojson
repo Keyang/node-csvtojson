@@ -17,7 +17,7 @@ if (process.argv.length==2){
         if (usingPipe===false){
             _showHelp();
         }
-    },50);
+    },100);
 }else if (process.argv.length>=3){
     var filePath=process.argv[2];
     if (filePath.toLowerCase() === "startserver"){
@@ -27,31 +27,16 @@ if (process.argv.length==2){
         web.startWebServer({port:port});
         return true;
     }else{
-        sin=filePath;    
+        sin=fs.createReadStream(filePath);    
     }
 }
-
+process.stdin.on("data",function(){
+    usingPipe=true;
+});
 
 function _showHelp(){
     console.log("Usage: csvtojson [<CSVFilePath> | StartServer] ");
     process.exit(0);
 }
 
-converter.on("record_parsed",function(rowJSON){
-    if (!usingPipe){
-        usingPipe=true;
-    }
-    if (started){
-        ws.write(",\n");
-    }else{
-        ws.write("[\n");
-    }
-    ws.write(JSON.stringify(rowJSON));
-    if (started ===false){
-        started=true;
-    }
-});
-converter.on("end_parsed",function(){
-    ws.write("\n]");
-});
-converter.from(sin);
+sin.pipe(converter).pipe(process.stdout);
