@@ -38,5 +38,10 @@ function _showHelp(){
     console.log("Usage: csvtojson [<CSVFilePath> | StartServer] ");
     process.exit(0);
 }
+converter.on("end",function(){
+    setTimeout(function(){
+        process.exit(0);
+    },200);
+});
 
 sin.pipe(converter).pipe(process.stdout);

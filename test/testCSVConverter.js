@@ -13,6 +13,7 @@ describe("CSV Converter",function(){
         var obj=new CSVAdv();
         var stream=fs.createReadStream(file);
         obj.on("end_parsed",function(obj){
+            console.log(obj);
             assert(obj.length===2);
             done();
         });
