@@ -8,8 +8,9 @@ var Result=require("./Result");
 function csvAdv(params){
     Transform.call(this);
     var _param={
-        "constructResult":true,
-        "delimiter":","
+        "constructResult":true, //set to false to not construct result in memory. suitable for big csv data
+        "delimiter":",", // change the delimiter of csv columns
+        "quote":"\"" //quote for a column containing delimiter.
     }
     if (params && typeof params =="object"){
         for (var key in params){
@@ -31,14 +32,40 @@ function csvAdv(params){
     var self=this;
     var started=false;
     self.on("record",function(rowStr,index,lastLine){
-        var row=rowStr.split(self.param.delimiter);
+        var quote=self.param.quote;
+        var delimiter=self.param.delimiter;
+        var rowArr=rowStr.split(delimiter);
+        var row=[];
+        var inquote=false;
+        var quoteBuff="";
+        for (var i=0;i<rowArr.length;i++){
+            var ele=rowArr[i];
+            if (inquote){
+                quoteBuff+=delimiter;
+                if (ele.indexOf(quote)===ele.length-1){
+                    quoteBuff+=ele.substr(0,ele.length-1);
+                    row.push(quoteBuff);
+                    inquote=false;
+                    quoteBuff="";
+                }else{
+                    quoteBuff+=ele;
+                }
+            }else{
+                if (ele.indexOf(quote)===0){
+                    inquote=true;
+                    quoteBuff+=ele.substr(1,ele.length-1);
+                }else{
+                    row.push(ele);
+                }
+            }
+        }
         if (index ==0){
             self._headRowProcess(row);
             self.push("[\n");
         }else if(rowStr.length>0){
             var resultRow={};
             self._rowProcess(row,index,resultRow);
-            self.emit("record_parsed",resultRow,row,index);
+            self.emit("record_parsed",resultRow,row,index-1);
             if (started===true ){
                 self.push(",\n");
             }

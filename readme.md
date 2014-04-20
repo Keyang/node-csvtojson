@@ -24,6 +24,10 @@ fileStream.pipe(csvConverter);
 
 #Change Log
 
+##version 0.3.2
+* Added quote in parameter to support quoted column content containing delimiters
+* Changed row index starting from 0 instead of 1 when populated from record_parsed event
+
 ##version 0.3
 * Removed all dependencies
 * Deprecated applyWebServer
@@ -46,6 +50,7 @@ fileStream.pipe(csvConverter);
         * [Example](#example)
         * [Big CSV File Streaming](#big-csv-file)
         * [Process Big CSV File in CLI](#convert-big-csv-file-with-command-line-tool)
+        * [Column Array](#column-array)
 
 GitHub: https://github.com/Keyang/node-csvtojson
 
@@ -126,6 +131,7 @@ The parameters for Converter constructor are:
 
 * constructResult: true/false. Whether to constrcut final json object in memory which will be populated in "end_parsed" event. Set to false if deal with huge csv data. default: true.
 * delimiter: delimiter used for seperating columns. default: ","
+* quote: If a column contains delimiter, it is able to use quote character to surround the column content. e.g. "hello, world" wont be split into two columns while parsing. default: " (double quote)
 
 #### Parser
 CSVTOJSON allows adding customised parsers which concentrating on what to parse and how to parse.
@@ -202,7 +208,7 @@ var server=webServer.startWebServer({
 Following events are used for Converter class:
 
 * end_parsed: It is emitted when parsing finished. the callback function will contain the JSON object if constructResult is set to true.
-* record_parsed: it is emitted each time a row has been parsed. The callback function has following parameters: result row JSON object reference, Original row array object reference, row index
+* record_parsed: it is emitted each time a row has been parsed. The callback function has following parameters: result row JSON object reference, Original row array object reference, row index of current row in csv (header row does not count, first row content will start from 0)
 
 To subscribe the event:
 
@@ -314,3 +320,53 @@ cat [path to bigcsvdata] | csvtojson > converted.json
 ```
 
 They will do the same job.
+
+#### Column Array
+To convert a csv data to column array,  you have to construct the result in memory. See example below
+
+```js
+var columArrData=__dirname+"/data/columnArray";
+var rs=fs.createReadStream(columArrData);
+var result = {}
+var csvConverter=new CSVAdv();
+//end_parsed will be emitted once parsing finished
+csvConverter.on("end_parsed", function(jsonObj) {
+    console.log(result);
+    console.log("Finished parsing");
+    done();
+});
+
+//record_parsed will be emitted each time a row has been parsed.
+csvConverter.on("record_parsed", function(resultRow, rawRow, rowIndex) {
+
+    for (var key in resultRow) {
+        if (!result[key] || !result[key] instanceof Array) {
+            result[key] = [];
+        }
+        result[key][rowIndex] = resultRow[key];
+    }
+
+});
+rs.pipe(csvConverter);
+```
+
+Here is an example:
+
+    TIMESTAMP,UPDATE,UID,BYTES SENT,BYTES RCVED
+    1395426422,n,10028,1213,5461
+    1395426422,n,10013,9954,13560
+    1395426422,n,10109,221391500,141836
+    1395426422,n,10007,53448,308549
+    1395426422,n,10022,15506,72125
+
+It will be converted to:
+
+```json
+{
+  "TIMESTAMP": ["1395426422", "1395426422", "1395426422", "1395426422", "1395426422"],
+  "UPDATE": ["n", "n", "n", "n", "n"],
+  "UID": ["10028", "10013", "10109", "10007", "10022"],
+  "BYTES SENT": ["1213", "9954", "221391500", "53448", "15506"],
+  "BYTES RCVED": ["5461", "13560", "141836", "308549", "72125"]
+}
+```
