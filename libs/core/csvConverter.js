@@ -5,6 +5,8 @@ var parserMgr=require("./parserMgr.js");
 var utils=require("util");
 var Transform=require("stream").Transform;
 var Result=require("./Result");
+var os=require("os");
+var eol=os.EOL;
 function csvAdv(params){
     Transform.call(this);
     var _param={
@@ -61,13 +63,13 @@ function csvAdv(params){
         }
         if (index ==0){
             self._headRowProcess(row);
-            self.push("[\n");
+            self.push("["+eol);
         }else if(rowStr.length>0){
             var resultRow={};
             self._rowProcess(row,index,resultRow);
             self.emit("record_parsed",resultRow,row,index-1);
             if (started===true ){
-                self.push(",\n");
+                self.push(","+eol);
             }
             self.push(JSON.stringify(resultRow));
             started=true;
@@ -88,8 +90,8 @@ csvAdv.prototype._transform=function(data,encoding,cb){
     }
 
     this._buffer+=data.toString(encoding);
-    if (this._buffer.indexOf("\n")>-1){
-        var arr=this._buffer.split("\n");
+    if (this._buffer.indexOf(eol)>-1){
+        var arr=this._buffer.split(eol);
         while(arr.length>1){
             var data=arr.shift();
             if (data.length>0){
@@ -104,7 +106,7 @@ csvAdv.prototype._flush=function(cb){
     if (this._buffer.length!=0){ //emit last line
         this.emit("record",this._buffer,this.rowIndex++,true);
     }
-    this.push("\n]");
+    this.push(eol+"]");
     cb();
 };
 csvAdv.prototype._headRowProcess=function(headRow){
