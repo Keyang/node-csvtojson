@@ -1,5 +1,5 @@
 #CSV2JSON
-All you need nodejs csv to json converter. Support big json data, CLI, server. Easily convert your CSV data to nested JSON object.
+All you need nodejs csv to json converter. Support big json data, CLI, web server, nested JSON, customised parser, stream, pipe, and more!
 
 #IMPORTANT!!
 Since version 0.3, the core class of csvtojson has been inheriting from stream.Transform class. Therefore, it will behave like a normal Stream object and CSV features will not be available any more. Now the usage is like:
@@ -22,17 +22,6 @@ csvConverter.on("end_parsed",function(jsonObj){
 fileStream.pipe(csvConverter);
 ```
 
-#Change Log
-
-##version 0.3.2
-* Added quote in parameter to support quoted column content containing delimiters
-* Changed row index starting from 0 instead of 1 when populated from record_parsed event
-
-##version 0.3
-* Removed all dependencies
-* Deprecated applyWebServer
-* Added construct parameter for Converter Class
-* Converter Class now works as a proper stream object
 
 
 ##Menu
@@ -51,6 +40,7 @@ fileStream.pipe(csvConverter);
         * [Big CSV File Streaming](#big-csv-file)
         * [Process Big CSV File in CLI](#convert-big-csv-file-with-command-line-tool)
         * [Column Array](#column-array)
+* [Change Log](#change-log)
 
 GitHub: https://github.com/Keyang/node-csvtojson
 
@@ -71,7 +61,7 @@ GitHub: https://github.com/Keyang/node-csvtojson
 
 ###Command Line Tools
 
->csvtojson [ CSVFilePath | StartServer]  [port]
+>csvtojson <csv file path>
 
 Example
 
@@ -83,9 +73,11 @@ Or use pipe:
 
 To start a webserver
 
->csvtojson startserver [port]
+>csvtojson startserver [options]
 
-Default port number is 8801.
+Advanced usage with parameters support, check help:
+
+>csvtojson --help
 
 ### WebService
 After webserve being initialised, it is able to use http post with CSV data as body.
@@ -197,7 +189,7 @@ var webServer=require("csvtojson").interfaces.web;
 
 var server=webServer.startWebServer({
    "port":"8801",
-   "urlPath":"/parseCSV"
+   "urlpath":"/parseCSV"
 });
 ```
 
@@ -370,3 +362,18 @@ It will be converted to:
   "BYTES RCVED": ["5461", "13560", "141836", "308549", "72125"]
 }
 ```
+
+#Change Log
+
+##0.3.4
+* Added more parameters to command line tool.
+
+##0.3.2
+* Added quote in parameter to support quoted column content containing delimiters
+* Changed row index starting from 0 instead of 1 when populated from record_parsed event
+
+##0.3
+* Removed all dependencies
+* Deprecated applyWebServer
+* Added construct parameter for Converter Class
+* Converter Class now works as a proper stream object

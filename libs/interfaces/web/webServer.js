@@ -8,7 +8,7 @@ var http=require("http");
 var CSVConverter=require("../../core").Converter;
 var defaultArgs={
     "port":"8801",
-    "urlPath":"/parseCSV"
+    "urlpath":"/parseCSV"
 }
 var server=null;
 
@@ -29,22 +29,22 @@ function startWebServer(args){
     }
     server=http.createServer();
     server.on("request",function(req,res){
-        if (req.url==serverArgs.urlPath && req.method =="POST"){
+        if (req.url==serverArgs.urlpath && req.method =="POST"){
             _POSTData(req,res);
         }else{
-            res.end("Please post data to: "+serverArgs.urlPath);
+            res.end("Please post data to: "+serverArgs.urlpath);
         }
     });
 
     server.listen(serverArgs.port);
    //expressApp.use(express.bodyParser());
-    // expressApp.post(serverArgs.urlPath,_POSTData);
+    // expressApp.post(serverArgs.urlpath,_POSTData);
     // expressApp.get("/",function(req,res){
-    //     res.end("POST to "+serverArgs.urlPath+" with CSV data to get parsed.");
+    //     res.end("POST to "+serverArgs.urlpath+" with CSV data to get parsed.");
     // });
     // expressApp.listen(serverArgs.port);
     console.log("CSV Web Server Listen On:"+serverArgs.port);
-    console.log("POST to "+serverArgs.urlPath+" with CSV data to get parsed.");
+    console.log("POST to "+serverArgs.urlpath+" with CSV data to get parsed.");
     return server;
 }
 

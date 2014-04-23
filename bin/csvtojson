@@ -1,47 +1,127 @@
 #!/usr/bin/env node
 
-var web=require("../libs/interfaces").web
-var Converter=require("../libs/core").Converter;
-var converter=new Converter({constructResult:false});
-var usingPipe=false;
-var csvData="";
-var fs=require("fs");
-var ws=process.stdout;
-var sin=process.stdin;
-var started=false;
+var web = require("../libs/interfaces").web
+var Converter = require("../libs/core").Converter;
+var converter = new Converter({
+    constructResult: false
+});
+var usingPipe = false;
+var csvData = "";
+var fs = require("fs");
+var ws = process.stdout;
+var sin = process.stdin;
+var started = false;
 // process.stdin.resume();
 process.stdin.setEncoding('utf8');
-if (process.argv.length==2){
-    process.stdin.resume();
-    setTimeout(function(){
-        if (usingPipe===false){
-            _showHelp();
-        }
-    },100);
-}else if (process.argv.length>=3){
-    var filePath=process.argv[2];
-    if (filePath.toLowerCase() === "startserver"){
-        var port=process.argv[3];
-        port=parseInt(port);
-        port=port>1000?port:8801;
-        web.startWebServer({port:port});
-        return true;
-    }else{
-        sin=fs.createReadStream(filePath);    
-    }
-}
-process.stdin.on("data",function(){
-    usingPipe=true;
-});
+var parsedCmd = commandParser();
 
-function _showHelp(){
-    console.log("Usage: csvtojson [<CSVFilePath> | StartServer] ");
+if (parsedCmd.cmd == "parse") {
+    var args = parsedCmd.options;
+    args.constructResult = false;
+    var converter = new Converter(args);
+    if (parsedCmd.extra == "") {
+        process.stdin.resume();
+        process.stdin.pipe(converter);
+    } else {
+        var path = parsedCmd.extra;
+        if (fs.existsSync(path)) {
+            var rs = fs.createReadStream(path);
+            rs.pipe(converter);
+        } else {
+            console.log("File not found: " + path);
+            process.exit(1);
+        }
+    }
+    converter.pipe(process.stdout);
+} else if (parsedCmd.cmd == "startserver") {
+    var args = parsedCmd.options;
+    web.startWebServer(args);
+    return true;
+} else {
+
+    _showHelp();
+}
+
+function commandParser() {
+    var cmdArr = process.argv;
+    cmdArr.shift();
+    cmdArr.shift();
+    if (cmdArr.length === 0) {
+        return {
+            "cmd": "parse",
+            "options": {},
+            "extra": ""
+        }
+    }
+    if (cmdArr.length === 1) {
+
+        var arg = cmdArr.shift();
+
+        if (arg.toLowerCase().indexOf("help") > -1) {
+            _showHelp();
+        } else if (isOption(arg)) {
+            console.log("command cannot be omited");
+            _showHelp();
+        } else if (arg.toLowerCase() == "parse") {
+            return {
+                "cmd": "parse",
+                "options": {},
+                "extra": ""
+            }
+        } else {
+            return {
+                "cmd": "parse",
+                "options": {},
+                "extra": arg
+            }
+        }
+
+    }
+    var cmd = cmdArr.shift();
+    var args = {};
+    var extra = "";
+    while (cmdArr.length) {
+        if (cmdArr.length > 1 || isOption(cmdArr[0])) {
+            var pair = cmdArr.shift();
+            var pairArr = pair.split("=");
+            var key = pairArr[0];
+            var val = pairArr[1];
+            key = key.replace("--", "");
+            args[key] = val;
+        } else {
+            extra = cmdArr.shift();
+        }
+    }
+    return {
+        "cmd": cmd,
+        "options": args,
+        "extra": extra
+    }
+
+}
+
+function isOption(arg) {
+    return arg.indexOf("=") > -1;
+}
+
+function _showHelp() {
+    console.log("Usage: csvtojson <command> [<options>] [filepath] ");
+    console.log("");
+    console.log("Commands: ");
+    console.log("   parse: Parse a csv file to json");
+    console.log("   startserver: Start a web server");
+    console.log("");
+    console.log("Options: ");
+    console.log("   parse: ");
+    console.log("       --delimiter: delimiter to separate columns. default comma (,). e.g. --delimiter=|");
+    console.log("       --quote: quote surrounding a column content containing delimiters. default double quote (\"). e.g. --quote=# ");
+    console.log("   startserver: ");
+    console.log("       --port: the port which the web server runs on. default 8801. e.g. --port=8080");
+    console.log("       --urlpath: The path where to post csv data. default /parseCSV. e.g. --urlpath=/csv ");
     process.exit(0);
 }
-converter.on("end",function(){
-    setTimeout(function(){
+converter.on("end", function() {
+    setTimeout(function() {
         process.exit(0);
-    },200);
+    }, 200);
 });
-
-sin.pipe(converter).pipe(process.stdout);
