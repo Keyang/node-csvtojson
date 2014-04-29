@@ -70,7 +70,7 @@ describe("CSV Converter", function() {
             "quote": "#"
         });
         obj.on("end_parsed", function(result) {
-            assert(result[0].col1 == "Mini. Sectt,hisar S.O");
+            assert(result[0].col1 == "\"Mini. Sectt");
             assert(result[3].col2 == "125001,fenvkdsf");
             // console.log(result);
             done();
@@ -102,5 +102,19 @@ describe("CSV Converter", function() {
 
         });
         rs.pipe(csvConverter);
+    });
+     it("should be able to convert csv string directly", function(done) {
+        var testData=__dirname+"/data/testData";
+        var data=fs.readFileSync(testData).toString();
+        var result = {}
+        var csvConverter=new CSVAdv();
+        //end_parsed will be emitted once parsing finished
+        csvConverter.on("end_parsed", function(jsonObj) {
+            assert(jsonObj.length === 2);
+        });
+       csvConverter.fromString(data,function(err,jsonObj){
+            assert(jsonObj.length === 2);
+            done();
+       });
     });
 });

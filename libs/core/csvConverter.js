@@ -4,6 +4,7 @@ module.exports=csvAdv;
 var parserMgr=require("./parserMgr.js");
 var utils=require("util");
 var Transform=require("stream").Transform;
+var Readable=require("stream").Readable;
 var Result=require("./Result");
 var os=require("os");
 var eol=os.EOL;
@@ -77,9 +78,15 @@ function csvAdv(params){
     });
 
     self.on("end",function(){
-        self.emit("end_parsed",self.param.constructResult?self.resultObject.getBuffer():{});
+        var finalResult=self.param.constructResult?self.resultObject.getBuffer():{};
+        self.emit("end_parsed",finalResult);
+        if (self._callback && typeof self._callback =="function"){
+            var func=self._callback;
+            self._callback=null;
+            func(null,finalResult);
+        }
     });
-
+    this._callback=null;
     return this;
 };
 utils.inherits(csvAdv,Transform);
@@ -130,4 +137,15 @@ csvAdv.prototype._rowProcess=function(row,index,resultRow){
     }
 };
 
-
+csvAdv.prototype.fromString=function(csvString,cb){
+    var rs=new Readable();
+    rs._read=function(){
+        this.push(csvString);
+        this.push(null);
+    }
+    rs.pipe(this);
+    if (cb && typeof cb == "function"){
+        this._callback=cb;
+    }
+    
+};

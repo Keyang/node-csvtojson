@@ -33,13 +33,14 @@ fileStream.pipe(csvConverter);
     * [API & Library](#api)
         * [Quick Start](#quick-start)
         * [Customised Parser](#parser)
-        * [Integrate with your express server](#webserver)
+        * [Webserver](#webserver)
         * [Events](#events)
         * [Built-in Parsers](#default-parsers)
         * [Example](#example)
         * [Big CSV File Streaming](#big-csv-file)
         * [Process Big CSV File in CLI](#convert-big-csv-file-with-command-line-tool)
         * [Column Array](#column-array)
+        * [Parse String](#parse-string)
 * [Change Log](#change-log)
 
 GitHub: https://github.com/Keyang/node-csvtojson
@@ -363,7 +364,35 @@ It will be converted to:
 }
 ```
 
+#### Parse String
+To parse a string, simply call fromString(csvString,callback) method.
+
+For example:
+
+```js
+var testData=__dirname+"/data/testData";
+var data=fs.readFileSync(testData).toString();
+var csvConverter=new CSVConverter();
+
+//end_parsed will be emitted once parsing finished
+csvConverter.on("end_parsed", function(jsonObj) {
+    //final result poped here as normal.
+});
+csvConverter.fromString(data,function(err,jsonObj){
+    if (err){
+      //err handle
+    }
+    console.log(jsonObj);
+});
+
+```
+
+
+
 #Change Log
+
+##0.3.5
+* Added fromString method to support direct string input
 
 ##0.3.4
 * Added more parameters to command line tool.
