@@ -126,7 +126,21 @@ describe("CSV Converter", function() {
     csvConverter.on("end_parsed", function(jsonObj) {
     });
     csvConverter.fromString(data, function(err, jsonObj) {
-      assert(jsonObj[0].TIMESTAMP=='13954264"22',JSON.stringify(jsonObj[0]));
+      assert(jsonObj[0].TIMESTAMP=='13954264""22',JSON.stringify(jsonObj[0].TIMESTAMP));
+      done();
+    });
+  });
+
+  it("should be able to handle columns with two double quotes", function(done) {
+    var testData = __dirname + "/data/twodoublequotes";
+    var data = fs.readFileSync(testData).toString();
+    var result = {}
+    var csvConverter = new CSVAdv();
+    //end_parsed will be emitted once parsing finished
+    csvConverter.on("end_parsed", function(jsonObj) {
+    });
+    csvConverter.fromString(data, function(err, jsonObj) {
+      assert(jsonObj[0].data=="xyabcde",jsonObj);
       done();
     });
   });
