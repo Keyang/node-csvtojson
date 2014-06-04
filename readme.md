@@ -1,5 +1,5 @@
 #CSV2JSON
-All you need nodejs csv to json converter. Support big json data, CLI, web server, nested JSON, customised parser, stream, pipe, and more!
+All you need nodejs csv to json converter. Support big json data, CLI, web server, powerful nested JSON, customised parser, stream, pipe, and more!
 
 #IMPORTANT!!
 Since version 0.3, the core class of csvtojson has been inheriting from stream.Transform class. Therefore, it will behave like a normal Stream object and CSV features will not be available any more. Now the usage is like:
@@ -27,20 +27,22 @@ fileStream.pipe(csvConverter);
 ##Menu
 * [Installation](#installation)
 * [Example](#example)
-* [Usage](#usage)
+* [CLI Usage](#usage)
     * [CLI Tool](#command-line-tools)
     * [Web Service](#webservice)
-    * [API & Library](#api)
-        * [Quick Start](#quick-start)
-        * [Customised Parser](#parser)
-        * [Webserver](#webserver)
-        * [Events](#events)
-        * [Built-in Parsers](#default-parsers)
-        * [Example](#example)
-        * [Big CSV File Streaming](#big-csv-file)
-        * [Process Big CSV File in CLI](#convert-big-csv-file-with-command-line-tool)
-        * [Column Array](#column-array)
-        * [Parse String](#parse-string)
+* [Demo Product](#demo-product)
+* [Quick Start](#quick-start)
+* [Parameters](#params)
+* [Customised Parser](#parser)
+* [Webserver](#webserver)
+* [Events](#events)
+* [Built-in Parsers](#default-parsers)
+* [Example](#example)
+* [Big CSV File Streaming](#big-csv-file)
+* [Process Big CSV File in CLI](#convert-big-csv-file-with-command-line-tool)
+* [Column Array](#column-array)
+* [Parse String](#parse-string)
+* [Empowered JSON Parser](#empowered-json-parser)
 * [Change Log](#change-log)
 
 GitHub: https://github.com/Keyang/node-csvtojson
@@ -92,12 +94,28 @@ And then we use curl to perform a web request:
 >
 >2012-03-06,Ted,28,51289,Cambridge Road,Tormore,key3,key4,4" http://127.0.0.1:8801/parseCSV
 
-### API
+#Demo Product
+I am hosting a free online service to convert CSV to JSON. The tool can be found from [here](http://keyangxiang.com/projects.html?_ctl=project&_act=csv2json).
+Just paste your CSV data and it will convert to JSON data for you.
+
+The product simply uses csvtojson web interface. All the source code is like below:
+
+```js
+var server=require("csvtojson").interfaces.web;
+
+server.startWebServer({
+	"port":process.env.VCAP_APP_PORT || 8801
+});
+```
+It uses HTTP Request as readable stream and HTTP Response as writable stream.
+
+# Quick Start
 Use csvtojson library to your own project.
+
 Import csvtojson to your package.json or install through npm:
+
 >npm install csvtojson
 
-#### Quick Start
 ~~The core of the tool is Converter class. It is based on node-csv library (version 0.3.6). Therefore it has all features of [node-csv](http://www.adaltas.com/projects/node-csv/).~~ To start a parse, simply use following code:
 
 ```js
@@ -119,14 +137,15 @@ csvConverter.on("end_parsed",function(jsonObj){
 //read from file
 fileStream.pipe(csvConverter);
 ```
-#### Params
+# Params
 The parameters for Converter constructor are:
 
 * constructResult: true/false. Whether to constrcut final json object in memory which will be populated in "end_parsed" event. Set to false if deal with huge csv data. default: true.
 * delimiter: delimiter used for seperating columns. default: ","
 * quote: If a column contains delimiter, it is able to use quote character to surround the column content. e.g. "hello, world" wont be split into two columns while parsing. default: " (double quote)
+* trim: Indicate if parser trim off spaces surrounding column content. e.g. "  content  " will be trimmed to "content". Default: true
 
-#### Parser
+# Parser
 CSVTOJSON allows adding customised parsers which concentrating on what to parse and how to parse.
 It is the main power of the tool that developer only needs to concentrate on how to deal with the data and other concerns like streaming, memory, web, cli etc are done automatically.
 
@@ -182,7 +201,7 @@ The parameter of Parse function is a JSON object. It contains following fields:
 }
 ```
 
-#### WebServer
+# WebServer
 It is able to start the web server through code.
 
 ```js
@@ -196,7 +215,7 @@ var server=webServer.startWebServer({
 
 ~~It will return an [expressjs](http://expressjs.com/) Application. You can add your own  web app content there.~~ It will return http.Server object.
 
-#### Events
+# Events
 
 Following events are used for Converter class:
 
@@ -220,7 +239,7 @@ csvConverter.on("record_parsed",function(resultRow,rawRow,rowIndex){
 });
 ```
 
-#### Default Parsers
+# Default Parsers
 There are default parsers in the library they are
 
 **Array**: For columns head start with "\*array\*" e.g. "\*array\*fieldName", this parser will combine cells data with same fieldName to one Array.
@@ -231,7 +250,7 @@ There are default parsers in the library they are
 
 **Omitted column**: For columns head start with "\*omit\*" e.g. "\*omit\*id", the parser will omit the column's data.
 
-####Example:
+#Example:
 
 Original data:
 
@@ -265,7 +284,7 @@ Output data:
           "employee": {
             "name": "Ted",
             "age": "28",
-            "number": "51289",
+           "number": "51289",
             "key": [
               "key3",
               "key4"
@@ -279,7 +298,8 @@ Output data:
    ]
 }
 ```
-#### Big CSV File
+
+# Big CSV File
 csvtojson library was designed to accept big csv file converting. To avoid memory consumption, it is recommending to use read stream and write stream.
 
 ```js
@@ -295,7 +315,7 @@ readStream.pipe(csvConverter).pipe(writeStream);
 
 The constructResult:false will tell the constructor not to combine the final result which would drain the memory as progressing. The output is piped directly to writeStream.
 
-#### Convert Big CSV File with Command line tool
+# Convert Big CSV File with Command line tool
 csvtojson command line tool supports streaming in big csv file and stream out json file.
 
 It is very convenient to process any kind of big csv file. It's proved having no issue to proceed csv files over 3,000,000 lines (over 500MB) with memory usage under 30MB.
@@ -314,7 +334,7 @@ cat [path to bigcsvdata] | csvtojson > converted.json
 
 They will do the same job.
 
-#### Column Array
+# Column Array
 To convert a csv data to column array,  you have to construct the result in memory. See example below
 
 ```js
@@ -364,8 +384,8 @@ It will be converted to:
 }
 ```
 
-#### Parse String
-To parse a string, simply call fromString(csvString,callback) method.
+# Parse String
+To parse a string, simply call fromString(csvString,callback) method. The callback parameter is optional.
 
 For example:
 
@@ -387,9 +407,79 @@ csvConverter.fromString(data,function(err,jsonObj){
 
 ```
 
+#Empowered JSON Parser
+Since version 0.3.8, csvtojson now can replicate any complex JSON structure.
+As we know, JSON object represents a graph while CSV only contains 2-dimension data (table).
+To make JSON and CSV containing same amount information, we need "flatten" some information in JSON.
 
+Here is an example. Original CSV:
+
+```
+fieldA.title, fieldA.children[0].name, fieldA.children[0].id,fieldA.children[1].name, fieldA.children[1].employee[].name,fieldA.children[1].employee[].name, fieldA.address[],fieldA.address[], description
+Food Factory, Oscar, 0023, Tikka, Tim, Joe, 3 Lame Road, Grantstown, A fresh new food factory
+Kindom Garden, Ceil, 54, Pillow, Amst, Tom, 24 Shaker Street, HelloTown, Awesome castle
+
+```
+The data above contains nested JSON including nested array of JSON objects and plain texts.
+
+Using csvtojson to convert, the result would be like:
+
+```json
+[{
+    "fieldA": {
+        "title": "Food Factory",
+        "children": [{
+            "name": "Oscar",
+            "id": "0023"
+        }, {
+            "name": "Tikka",
+            "employee": [{
+                "name": "Tim"
+            }, {
+                "name": "Joe"
+            }]
+        }],
+        "address": ["3 Lame Road", "Grantstown"]
+    },
+    "description": "A fresh new food factory"
+}, {
+    "fieldA": {
+        "title": "Kindom Garden",
+        "children": [{
+            "name": "Ceil",
+            "id": "54"
+        }, {
+            "name": "Pillow",
+            "employee": [{
+                "name": "Amst"
+            }, {
+                "name": "Tom"
+            }]
+        }],
+        "address": ["24 Shaker Street", "HelloTown"]
+    },
+    "description": "Awesome castle"
+}]
+```
+
+Here is the rule for CSV data headers:
+
+* Use dot(.) to represent nested JSON. e.g. field1.field2.field3 will be converted to {field1:{field2:{field3:<value>}}}
+* Use square brackets([]) to represent an Array. e.g. field1.field2[< index >] will be converted to {field1:{field2:[<values>]}}. Different column with same header name will be added to same array.
+* Array could contain nested JSON object. e.g. field1.field2[< index >].name will be converted to {field1:{field2:[{name:<value>}]}}
+* The index could be omitted in some situation. However it causes information lost. Therefore Index should **NOT** be omitted if array contains JSON objects with more than 1 field (See example above fieldA.children[1].employee field, it is still ok if child JSON contains only 1 field).
+
+Since 0.3.8, JSON parser is the default parser. It does not need to add "\*json\*" to column titles. Theoretically, the JSON parser now should have functionality of "Array" parser, "JSONArray" parser, and old "JSON" parser.
+
+This mainly purposes on the next few versions where csvtojson could convert a JSON object back to CSV format without losing information.
+It can be used to process JSON data exported from no-sql database like MongoDB.
 
 #Change Log
+
+##0.3.8
+* Empowered built-in JSON parser.
+* Change: Use JSON parser as default parser.
+* Added parameter trim in constructor. default: true. trim will trim content spaces.
 
 ##0.3.5
 * Added fromString method to support direct string input

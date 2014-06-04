@@ -1,30 +1,31 @@
 {
-    "name":"csvtojson",
-    "description":"A tool concentrating on converting csv data to JSON with customised parser supporting",
-    "author":"Keyang Xiang <keyang.xiang@gmail.com>",
-    "homepage": "http://keyangxiang.com/blog/csv2json/",
-    "bugs": "https://github.com/Keyang/node-csvtojson/issues",
-     "repository": {
-        "type": "git",
-        "url": "https://github.com/Keyang/node-csvtojson.git"
-      },
-    "contributors":[
-        {
-            "name":"Keyang Xiang",
-            "email":"keyang.xiang@gmail.com"
-        }
-    ],
-    "version":"0.3.7",
-    "keywords":[
-        "csv",
-        "json",
-        "convert",
-        "parser",
-        "exntendible",
-        "plugin"
-    ],
-    "bin":{
-        "csvtojson":"./bin/csvtojson"
-    }
+  "name": "csvtojson",
+  "description": "A tool concentrating on converting csv data to JSON with customised parser supporting",
+  "author": "Keyang Xiang <keyang.xiang@gmail.com>",
+  "homepage": "http://keyangxiang.com/blog/csv2json/",
+  "bugs": "https://github.com/Keyang/node-csvtojson/issues",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Keyang/node-csvtojson.git"
+  },
+  "contributors": [{
+    "name": "Keyang Xiang",
+    "email": "keyang.xiang@gmail.com"
+  }],
+  "version": "0.3.8",
+  "keywords": [
+    "csv",
+    "json",
+    "convert",
+    "parser",
+    "exntendible",
+    "plugin"
+  ],
+  "bin": {
+    "csvtojson": "./bin/csvtojson"
+  },
+  "license": [{
+    "type": "MIT",
+    "url": "https://github.com/Keyang/node-csvtojson/blob/master/LICENSE"
+  }]
 }
-

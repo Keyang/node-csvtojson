@@ -117,6 +117,18 @@ describe("CSV Converter", function() {
       done();
     });
   });
+  it("should be able to convert csv string without callback provided", function(done) {
+    var testData = __dirname + "/data/testData";
+    var data = fs.readFileSync(testData).toString();
+    var result = {}
+    var csvConverter = new CSVAdv();
+    //end_parsed will be emitted once parsing finished
+    csvConverter.on("end_parsed", function(jsonObj) {
+      assert(jsonObj.length === 2);
+      done();
+    });
+    csvConverter.fromString(data);
+  });
   it("should be able to handle columns with double quotes", function(done) {
     var testData = __dirname + "/data/dataWithQoutes";
     var data = fs.readFileSync(testData).toString();

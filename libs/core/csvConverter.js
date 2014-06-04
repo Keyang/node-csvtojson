@@ -8,13 +8,13 @@ var Readable = require("stream").Readable;
 var Result = require("./Result");
 var os = require("os");
 var eol = os.EOL;
-
 function csvAdv(params) {
     Transform.call(this);
     var _param = {
         "constructResult": true, //set to false to not construct result in memory. suitable for big csv data
         "delimiter": ",", // change the delimiter of csv columns
-        "quote": "\"" //quote for a column containing delimiter.
+        "quote": "\"", //quote for a column containing delimiter.
+        "trim":true //trim column's space charcters
     }
     if (params && typeof params == "object") {
         for (var key in params) {
@@ -34,66 +34,16 @@ function csvAdv(params) {
     this._buffer = "";
     this.rowIndex = 0;
     var self = this;
-    var started = false;
-    self.on("record", function(rowStr, index, lastLine) {
-        var quote = self.param.quote;
-        var delimiter = self.param.delimiter;
-        var rowArr = rowStr.split(delimiter);
-        var row = [];
-        var inquote = false;
-        var quoteBuff = "";
-        for (var i = 0; i < rowArr.length; i++) {
-            var ele = rowArr[i];
-            if (self._isToogleQuote(ele)) {
-                if (inquote) {
-                    quoteBuff += delimiter;
-                    inquote = false;
-                    quoteBuff += ele.substr(0, ele.length - 1);
-                    row.push(quoteBuff);
-                    quoteBuff = "";
-                } else {
-                    inquote = true;
-                    quoteBuff += ele.substring(1);
-                }
-            } else {
-                if (inquote) {
-                    quoteBuff += ele;
-                } else {
-                    if (ele.indexOf(quote) === 0 && ele[ele.length - 1] == quote) {
-                        ele = ele.substring(1, ele.length - 1);
-                    }
-                    row.push(ele);
-                }
-            }
-        }
-        if (index == 0) {
-            self._headRowProcess(row);
-            self.push("[" + eol);
-        } else if (rowStr.length > 0) {
-            var resultRow = {};
-            self._rowProcess(row, index, resultRow);
-            self.emit("record_parsed", resultRow, row, index - 1);
-            if (started === true) {
-                self.push("," + eol);
-            }
-            self.push(JSON.stringify(resultRow));
-            started = true;
-        }
-    });
 
-    self.on("end", function() {
-        var finalResult = self.param.constructResult ? self.resultObject.getBuffer() : {};
-        self.emit("end_parsed", finalResult);
-        if (self._callback && typeof self._callback == "function") {
-            var func = self._callback;
-            self._callback = null;
-            func(null, finalResult);
-        }
-    });
     this._callback = null;
+    this.init();
     return this;
 };
 utils.inherits(csvAdv, Transform);
+csvAdv.prototype.init=function(){
+  require("./init_onend.js").call(this);
+  require("./init_onrecord.js").call(this);
+}
 csvAdv.prototype._isToogleQuote = function(segment) {
     var quote = this.param.quote;
     var regExp = new RegExp(quote, "g");
