@@ -22,6 +22,17 @@ csvConverter.on("end_parsed",function(jsonObj){
 fileStream.pipe(csvConverter);
 ```
 
+To convert from a string, previously the code was:
+```js
+csvConverter.from(csvString);
+```
+
+Now it is:
+```js
+csvConverter.fromString(csvString,callback);
+```
+
+The callback function above is optional. see [Parse String](#parse-string).
 
 
 ##Menu
