@@ -409,7 +409,7 @@ csvConverter.fromString(data,function(err,jsonObj){
 
 #Empowered JSON Parser
 Since version 0.3.8, csvtojson now can replicate any complex JSON structure.
-As we know, JSON object represents a graph while CSV only contains 2-dimension data (table).
+As we know, JSON object represents a graph while CSV is only 2-dimension data structure (table).
 To make JSON and CSV containing same amount information, we need "flatten" some information in JSON.
 
 Here is an example. Original CSV:
@@ -464,9 +464,9 @@ Using csvtojson to convert, the result would be like:
 
 Here is the rule for CSV data headers:
 
-* Use dot(.) to represent nested JSON. e.g. field1.field2.field3 will be converted to {field1:{field2:{field3:<value>}}}
-* Use square brackets([]) to represent an Array. e.g. field1.field2[< index >] will be converted to {field1:{field2:[<values>]}}. Different column with same header name will be added to same array.
-* Array could contain nested JSON object. e.g. field1.field2[< index >].name will be converted to {field1:{field2:[{name:<value>}]}}
+* Use dot(.) to represent nested JSON. e.g. field1.field2.field3 will be converted to {field1:{field2:{field3:< value >}}}
+* Use square brackets([]) to represent an Array. e.g. field1.field2[< index >] will be converted to {field1:{field2:[< values >]}}. Different column with same header name will be added to same array.
+* Array could contain nested JSON object. e.g. field1.field2[< index >].name will be converted to {field1:{field2:[{name:< value >}]}}
 * The index could be omitted in some situation. However it causes information lost. Therefore Index should **NOT** be omitted if array contains JSON objects with more than 1 field (See example above fieldA.children[1].employee field, it is still ok if child JSON contains only 1 field).
 
 Since 0.3.8, JSON parser is the default parser. It does not need to add "\*json\*" to column titles. Theoretically, the JSON parser now should have functionality of "Array" parser, "JSONArray" parser, and old "JSON" parser.
