@@ -42,13 +42,13 @@ module.exports = function() {
     }
     if (index == 0) {
       self._headRowProcess(row);
-      self.push("[" + eol);
+      self.push("[" + self.eol);
     } else if (rowStr.length > 0) {
       var resultRow = {};
       self._rowProcess(row, index, resultRow);
       self.emit("record_parsed", resultRow, row, index - 1);
       if (started === true) {
-        self.push("," + eol);
+        self.push("," + self.eol);
       }
       self.push(JSON.stringify(resultRow));
       started = true;

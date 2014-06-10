@@ -8,13 +8,14 @@ var Readable = require("stream").Readable;
 var Result = require("./Result");
 var os = require("os");
 var eol = os.EOL;
+
 function csvAdv(params) {
     Transform.call(this);
     var _param = {
         "constructResult": true, //set to false to not construct result in memory. suitable for big csv data
         "delimiter": ",", // change the delimiter of csv columns
         "quote": "\"", //quote for a column containing delimiter.
-        "trim":true //trim column's space charcters
+        "trim": true //trim column's space charcters
     }
     if (params && typeof params == "object") {
         for (var key in params) {
@@ -40,9 +41,9 @@ function csvAdv(params) {
     return this;
 };
 utils.inherits(csvAdv, Transform);
-csvAdv.prototype.init=function(){
-  require("./init_onend.js").call(this);
-  require("./init_onrecord.js").call(this);
+csvAdv.prototype.init = function() {
+    require("./init_onend.js").call(this);
+    require("./init_onrecord.js").call(this);
 }
 csvAdv.prototype._isToogleQuote = function(segment) {
     var quote = this.param.quote;
@@ -61,15 +62,31 @@ csvAdv.prototype._transform = function(data, encoding, cb) {
     }
 
     this._buffer += data.toString(encoding);
-    if (this._buffer.indexOf(eol) > -1) {
-        var arr = this._buffer.split(eol);
-        while (arr.length > 1) {
-            var data = arr.shift();
-            if (data.length > 0) {
-                this.emit("record", data, this.rowIndex++);
-            }
+    if (!this.eol) {
+        if (this._buffer.indexOf("\r\n") > -1) { //csv from windows
+            this.eol = "\r\n";
+        } else if (this._buffer.indexOf("\n") > -1) {
+            this.eol = "\n";
+        } else if (this._buffer.indexof("\r") > -1) {
+            this.eol = "\r";
+        } else if (this._buffer.indexOf(eol)) {
+            this.eol = eol;
         }
-        this._buffer = arr[0];
+
+    }
+    if (this.eol) {
+        //console.log(this._buffer);
+        if (this._buffer.indexOf(this.eol) > -1) {
+            var arr = this._buffer.split(this.eol);
+            while (arr.length > 1) {
+                var data = arr.shift();
+                if (data.length > 0) {
+                    this.emit("record", data, this.rowIndex++);
+                }
+            }
+            this._buffer = arr[0];
+        }
+
     }
     cb();
 };
@@ -77,7 +94,7 @@ csvAdv.prototype._flush = function(cb) {
     if (this._buffer.length != 0) { //emit last line
         this.emit("record", this._buffer, this.rowIndex++, true);
     }
-    this.push(eol + "]");
+    this.push(this.eol + "]");
     cb();
 };
 csvAdv.prototype._headRowProcess = function(headRow) {
