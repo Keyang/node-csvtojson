@@ -67,7 +67,7 @@ csvAdv.prototype._transform = function(data, encoding, cb) {
             this.eol = "\r\n";
         } else if (this._buffer.indexOf("\n") > -1) {
             this.eol = "\n";
-        } else if (this._buffer.indexof("\r") > -1) {
+        } else if (this._buffer.indexOf("\r") > -1) {
             this.eol = "\r";
         } else if (this._buffer.indexOf(eol)) {
             this.eol = eol;
