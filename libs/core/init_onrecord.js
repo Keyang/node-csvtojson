@@ -15,14 +15,14 @@ module.exports = function() {
     var quoteBuff = "";
     for (var i = 0; i < rowArr.length; i++) {
       var ele = rowArr[i];
-      if (self.param.trim){
-        ele=ele.toString().trim();
-      }
       if (self._isToogleQuote(ele)) {
         if (inquote) {
           quoteBuff += delimiter;
           inquote = false;
           quoteBuff += ele.substr(0, ele.length - 1);
+          if (self.param.trim){
+            quoteBuff=quoteBuff.toString().trim();
+          }
           row.push(quoteBuff);
           quoteBuff = "";
         } else {
@@ -31,10 +31,13 @@ module.exports = function() {
         }
       } else {
         if (inquote) {
-          quoteBuff += ele;
+          quoteBuff += delimiter + ele;
         } else {
           if (ele.indexOf(quote) === 0 && ele[ele.length - 1] == quote) {
             ele = ele.substring(1, ele.length - 1);
+          }
+          if (self.param.trim){
+            ele=ele.toString().trim();
           }
           row.push(ele);
         }
