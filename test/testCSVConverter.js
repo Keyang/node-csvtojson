@@ -139,6 +139,7 @@ describe("CSV Converter", function() {
     });
     csvConverter.fromString(data, function(err, jsonObj) {
       assert(jsonObj[0].TIMESTAMP=='13954264""22',JSON.stringify(jsonObj[0].TIMESTAMP));
+      assert(jsonObj[1].TIMESTAMP=='abc, def, ccc',JSON.stringify(jsonObj[1].TIMESTAMP));
       done();
     });
   });
