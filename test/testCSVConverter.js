@@ -135,11 +135,10 @@ describe("CSV Converter", function() {
     var result = {}
     var csvConverter = new CSVAdv();
     //end_parsed will be emitted once parsing finished
-    csvConverter.on("end_parsed", function(jsonObj) {
-    });
+    csvConverter.on("end_parsed", function(jsonObj) {});
     csvConverter.fromString(data, function(err, jsonObj) {
-      assert(jsonObj[0].TIMESTAMP=='13954264""22',JSON.stringify(jsonObj[0].TIMESTAMP));
-      assert(jsonObj[1].TIMESTAMP=='abc, def, ccc',JSON.stringify(jsonObj[1].TIMESTAMP));
+      assert(jsonObj[0].TIMESTAMP == '13954264""22', JSON.stringify(jsonObj[0].TIMESTAMP));
+      assert(jsonObj[1].TIMESTAMP == 'abc, def, ccc', JSON.stringify(jsonObj[1].TIMESTAMP));
       done();
     });
   });
@@ -150,11 +149,21 @@ describe("CSV Converter", function() {
     var result = {}
     var csvConverter = new CSVAdv();
     //end_parsed will be emitted once parsing finished
-    csvConverter.on("end_parsed", function(jsonObj) {
-    });
+    csvConverter.on("end_parsed", function(jsonObj) {});
     csvConverter.fromString(data, function(err, jsonObj) {
-      assert(jsonObj[0].data=="xyabcde",jsonObj);
+      assert(jsonObj[0].data == "xyabcde", jsonObj);
       done();
     });
+  });
+  it("should handle empty csv file", function(done) {
+    var testData = __dirname + "/data/emptyFile";
+    var rs = fs.createReadStream(testData);
+    var result = {}
+    var csvConverter = new CSVAdv();
+    csvConverter.on("end_parsed", function(jsonObj) {
+      console.log(jsonObj);
+      done();
+    });
+    rs.pipe(csvConverter).pipe(process.stdout);
   });
 });
