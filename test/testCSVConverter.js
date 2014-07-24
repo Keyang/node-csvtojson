@@ -161,9 +161,9 @@ describe("CSV Converter", function() {
     var result = {}
     var csvConverter = new CSVAdv();
     csvConverter.on("end_parsed", function(jsonObj) {
-      console.log(jsonObj);
+      assert(jsonObj.length===0)
       done();
     });
-    rs.pipe(csvConverter).pipe(process.stdout);
+    rs.pipe(csvConverter);
   });
 });

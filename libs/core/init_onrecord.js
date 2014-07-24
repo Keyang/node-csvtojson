@@ -2,7 +2,6 @@
  *Subscriptor of record event of Converter
  */
 var os = require("os");
-var eol = os.EOL;
 module.exports = function() {
   var self = this;
   var started = false;
@@ -45,13 +44,12 @@ module.exports = function() {
     }
     if (index == 0) {
       self._headRowProcess(row);
-      self.push("[" + self.eol);
     } else if (rowStr.length > 0) {
       var resultRow = {};
       self._rowProcess(row, index, resultRow);
       self.emit("record_parsed", resultRow, row, index - 1);
       if (started === true) {
-        self.push("," + self.eol);
+        self.push("," + self.getEol());
       }
       self.push(JSON.stringify(resultRow));
       started = true;
