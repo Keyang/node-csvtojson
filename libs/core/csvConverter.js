@@ -93,8 +93,13 @@ csvAdv.prototype._transform = function(data, encoding, cb) {
 csvAdv.prototype._flush = function(cb) {
     if (this._buffer.length != 0) { //emit last line
         this.emit("record", this._buffer, this.rowIndex++, true);
+        this.push(this.eol + "]");
+    } else {
+        if(!this.eol) {
+            this.eol = eol;
+        }
+        this.push("[" + this.eol + "]");
     }
-    this.push(this.eol + "]");
     cb();
 };
 csvAdv.prototype._headRowProcess = function(headRow) {
