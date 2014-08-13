@@ -166,4 +166,20 @@ describe("CSV Converter", function() {
     });
     rs.pipe(csvConverter);
   });
+  it ("shoudl parse large csv file",function(done){
+    var testData=__dirname+"/data/large-csv-sample.csv";
+    var rs=fs.createReadStream(testData);
+    var csvConverter=new CSVAdv({
+      constructResult:false
+    });
+    var count=0;
+    csvConverter.on("record_parsed",function(d){
+      count++;
+    });
+    csvConverter.on("end_parsed",function(){
+      assert(count===5290);
+      done();
+    });
+    rs.pipe(csvConverter);
+  });
 });

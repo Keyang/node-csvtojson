@@ -28,8 +28,9 @@ function csvAdv(params) {
   this.param = _param;
   this.parseRules = [];
   this.resultObject = new Result();
-  if (this.param.constructResult) {
-    this.pipe(this.resultObject);
+  this.pipe(this.resultObject);
+  if (!this.param.constructResult) {
+    this.resultObject.disableConstruct();
   }
   this.headRow = [];
   this._buffer = "";

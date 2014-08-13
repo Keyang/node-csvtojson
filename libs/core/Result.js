@@ -18,3 +18,9 @@ Result.prototype._write=function(data,encoding,cb){
 Result.prototype.getBuffer=function(){
   return JSON.parse(this.buffer);
 }
+
+Result.prototype.disableConstruct=function(){
+  this._write=function(d,e,cb){
+    cb();//do nothing just dropit
+  }
+}
