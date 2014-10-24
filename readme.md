@@ -108,18 +108,21 @@ And then we use curl to perform a web request:
 >2012-03-06,Ted,28,51289,Cambridge Road,Tormore,key3,key4,4" http://127.0.0.1:8801/parseCSV
 
 #Demo Product
-I am hosting a free online service to convert CSV to JSON. The tool can be found from [here](http://keyangxiang.com/projects.html?_ctl=project&_act=csv2json).
-Just paste your CSV data and it will convert to JSON data for you.
-
-The product simply uses csvtojson web interface. All the source code is like below:
+To write a demo app, simply use csvtojson web interface. Paste following code to index.js:
 
 ```js
 var server=require("csvtojson").interfaces.web;
 
 server.startWebServer({
-	"port":process.env.VCAP_APP_PORT || 8801
+	"port":8801
 });
 ```
+Then run the app:
+```
+node ./index.js
+```
+Now you can post any csv data to http://localhost:8801/parseCSV
+
 It uses HTTP Request as readable stream and HTTP Response as writable stream.
 
 # Quick Start
@@ -157,7 +160,7 @@ The parameters for Converter constructor are:
 * delimiter: delimiter used for seperating columns. default: ","
 * quote: If a column contains delimiter, it is able to use quote character to surround the column content. e.g. "hello, world" wont be split into two columns while parsing. default: " (double quote)
 * trim: Indicate if parser trim off spaces surrounding column content. e.g. "  content  " will be trimmed to "content". Default: true
-* checkType: This parameter turns on and off weather check field type. default is true. See [Field type](field-type)
+* checkType: This parameter turns on and off weather check field type. default is true. See [Field type](#field-type)
 
 # Parser
 CSVTOJSON allows adding customised parsers which concentrating on what to parse and how to parse.
