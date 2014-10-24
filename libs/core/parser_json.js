@@ -42,6 +42,10 @@ module.exports = function(params) {
     }
     pointer[key][index]=params.item;
   } else { //last element is normal
-    pointer[key] = params.item;
+	try {
+	  pointer[key] = JSON.parse(params.item);
+	} catch (e) {
+	  pointer[key] = params.item;
+	}
   }
 }
