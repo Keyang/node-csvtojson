@@ -15,7 +15,8 @@ function csvAdv(params) {
     "constructResult": true, //set to false to not construct result in memory. suitable for big csv data
     "delimiter": ",", // change the delimiter of csv columns
     "quote": "\"", //quote for a column containing delimiter.
-    "trim": true //trim column's space charcters
+    "trim": true, //trim column's space charcters
+    "checkType":true //weather check column type
   }
   if (params && typeof params == "object") {
     for (var key in params) {
@@ -101,7 +102,7 @@ csvAdv.prototype._transform = function(data, encoding, cb) {
   cb();
 };
 csvAdv.prototype._flush = function(cb) {
-  this._startInit();
+  this._startInit(); // this is called in case input is empty
   if (this._buffer.length != 0) { //emit last line
     this.emit("record", this._buffer, this.rowIndex++, true);
   }
@@ -113,7 +114,7 @@ csvAdv.prototype.getEol = function() {
 }
 csvAdv.prototype._headRowProcess = function(headRow) {
   this.headRow = headRow;
-  this.parseRules = parserMgr.initParsers(headRow);
+  this.parseRules = parserMgr.initParsers(headRow,this.param.checkType);
 };
 csvAdv.prototype._rowProcess = function(row, index, resultRow) {
   for (var i = 0; i < this.parseRules.length; i++) {
@@ -127,7 +128,8 @@ csvAdv.prototype._rowProcess = function(row, index, resultRow) {
       rawRow: row,
       resultRow: resultRow,
       rowIndex: index,
-      resultObject: this.resultObject
+      resultObject: this.resultObject,
+      config:this.param || {}
     });
   }
 };

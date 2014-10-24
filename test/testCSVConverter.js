@@ -182,4 +182,46 @@ describe("CSV Converter", function() {
     });
     rs.pipe(csvConverter);
   });
+  it ("should parse data and covert to specific types",function(done){
+    var testData=__dirname+"/data/dataWithType";
+    var rs=fs.createReadStream(testData);
+    var csvConverter=new CSVAdv();
+    csvConverter.on("record_parsed",function(d){
+      assert(typeof d.column1 === "number");
+      assert(typeof d.column2 === "string");
+      assert( d.column3 instanceof Date == true);
+      assert(d.colume4==="someinvaliddate");
+      assert(d.column5.hello==="world");
+      assert(d.column6==='{"hello":"world"}');
+      assert(d.column7==="1234");
+      assert(d.column8==="abcd");
+      assert(d.column9===true);
+    });
+    csvConverter.on("end_parsed",function(){
+      done();
+    });
+    rs.pipe(csvConverter);
+  });
+  it ("should turn off field type check",function(done){
+    var testData=__dirname+"/data/dataWithType";
+    var rs=fs.createReadStream(testData);
+    var csvConverter=new CSVAdv({
+      checkType:false
+    });
+    csvConverter.on("record_parsed",function(d){
+      assert(typeof d.column1 === "string");
+      assert(typeof d.column2 === "string");
+      assert( d["date#column3"] ==="2012-01-01");
+      assert(d["date#colume4"]==="someinvaliddate");
+      assert(d["column5"]==='{"hello":"world"}');
+      assert(d["string#column6"]==='{"hello":"world"}');
+      assert(d["string#column7"]==="1234");
+      assert(d["number#column8"]==="abcd");
+      assert(d["column9"]==="true");
+    });
+    csvConverter.on("end_parsed",function(){
+      done();
+    });
+    rs.pipe(csvConverter);
+  });
 });

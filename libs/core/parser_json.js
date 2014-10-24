@@ -37,15 +37,40 @@ module.exports = function(params) {
     if (!pointer[key] || !pointer[key] instanceof Array) {
       pointer[key] = [];
     }
-    if (index==""){
-      index=pointer[key].length;  
+    if (index == "") {
+      index = pointer[key].length;
     }
-    pointer[key][index]=params.item;
+    pointer[key][index] = params.item;
   } else { //last element is normal
-	try {
-	  pointer[key] = JSON.parse(params.item);
-	} catch (e) {
-	  pointer[key] = params.item;
-	}
+    if (params.config && params.config.checkType) {
+      try {
+        switch (this.type) {
+          case "date":
+            var d = new Date(params.item);
+            if (isNaN(d.getTime())) {
+              d = params.item;
+            }
+            pointer[key] = d;
+            break;
+          case "number":
+            if (!isNaN(params.item)) {
+              pointer[key] = parseFloat(params.item);
+            } else {
+              pointer[key] = params.item;
+            }
+            break;
+          case "":
+            pointer[key] = JSON.parse(params.item);
+            break;
+          case "string":
+          default:
+            pointer[key] = params.item;
+        }
+      } catch (e) {
+        pointer[key] = params.item;
+      }
+    } else {
+      pointer[key] = params.item;
+    }
   }
 }

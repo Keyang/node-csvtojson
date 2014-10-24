@@ -3,6 +3,7 @@ module.exports=Parser;
 function Parser(name,regExp,parser){
     this.name=typeof name == "undefined"?"Default":name;
     this.regExp=null;
+    this.type="";
     if (typeof regExp !="undefined"){
         if (typeof regExp =="string"){
             this.regExp=new RegExp(regExp);

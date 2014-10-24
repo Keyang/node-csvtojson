@@ -34,6 +34,7 @@ csvConverter.fromString(csvString,callback);
 
 The callback function above is optional. see [Parse String](#parse-string).
 
+After version 0.3, csvtojson requires node 0.10 and above.
 
 ##Menu
 * [Installation](#installation)
@@ -54,6 +55,7 @@ The callback function above is optional. see [Parse String](#parse-string).
 * [Column Array](#column-array)
 * [Parse String](#parse-string)
 * [Empowered JSON Parser](#empowered-json-parser)
+* [Field Type](#field-type)
 * [Change Log](#change-log)
 
 GitHub: https://github.com/Keyang/node-csvtojson
@@ -155,6 +157,7 @@ The parameters for Converter constructor are:
 * delimiter: delimiter used for seperating columns. default: ","
 * quote: If a column contains delimiter, it is able to use quote character to surround the column content. e.g. "hello, world" wont be split into two columns while parsing. default: " (double quote)
 * trim: Indicate if parser trim off spaces surrounding column content. e.g. "  content  " will be trimmed to "content". Default: true
+* checkType: This parameter turns on and off weather check field type. default is true. See [Field type](field-type)
 
 # Parser
 CSVTOJSON allows adding customised parsers which concentrating on what to parse and how to parse.
@@ -253,15 +256,17 @@ csvConverter.on("record_parsed",function(resultRow,rawRow,rowIndex){
 # Default Parsers
 There are default parsers in the library they are
 
-**Array**: For columns head start with "\*array\*" e.g. "\*array\*fieldName", this parser will combine cells data with same fieldName to one Array.
+~~**Array**: For columns head start with "\*array\*" e.g. "\*array\*fieldName", this parser will combine cells data with same fieldName to one Array.~~
 
-**Nested JSON**: For columns head start with "\*json\*" e.g. "\*json\*my.nested.json.structure", this parser will create nested nested JSON structure: my.nested.json
+~~**Nested JSON**: For columns head start with "\*json\*" e.g. "\*json\*my.nested.json.structure", this parser will create nested nested JSON structure: my.nested.json~~
 
-**Nested JSON Array**: For columns head start with "\*jsonarray\*" e.g. "\*jsonarray\*my.items", this parser will create structure like my.items[].
+~~**Nested JSON Array**: For columns head start with "\*jsonarray\*" e.g. "\*jsonarray\*my.items", this parser will create structure like my.items[].~~
+
+**JSON**: Any valid JSON structure (array, nested json) are supported. see [Empowered JSON Parser](#empowered-json-parser)
 
 **Omitted column**: For columns head start with "\*omit\*" e.g. "\*omit\*id", the parser will omit the column's data.
 
-#Example:
+#~~Example:~~(This example is deprecated see [Empowered JSON Parser](#empowered-json-parser))
 
 Original data:
 
@@ -485,7 +490,91 @@ Since 0.3.8, JSON parser is the default parser. It does not need to add "\*json\
 This mainly purposes on the next few versions where csvtojson could convert a JSON object back to CSV format without losing information.
 It can be used to process JSON data exported from no-sql database like MongoDB.
 
+#Field Type
+
+From version 0.3.14, type of fields are supported by csvtojson.
+The parameter checkType is used to whether to check and convert the field type.
+See [here](#params) for the parameter usage.
+
+Thank all who have contributed to ticket [#20](https://github.com/Keyang/node-csvtojson/issues/20).
+
+##Implict Type
+
+When checkType is turned on, parser will try to convert value to its implicit type if it is not explicitly specified.
+
+For example, csv data:
+```csv
+name, age, married, msg
+Tom, 12, false, {"hello":"world","total":23}
+
+```
+Will be converted into:
+```json
+{
+  "name":"Tom",
+  "age":12,
+  "married":false,
+  "msg":{
+    "hello":"world",
+    "total":"23"
+  }
+}
+```
+If checkType is turned **OFF**, it will be converted to:
+```json
+{
+  "name":"Tom",
+  "age":"12",
+  "married":"false",
+  "msg":"{\"hello\":\"world\",\"total\":23}"
+}
+```
+
+##Explicit Type
+CSV header column can explicitly define the type of the field.
+Simply add type before column name with a hash symbol (#).
+
+###Supported types:
+* string
+* number
+* date
+
+### Define Type
+To define the field type, see following example
+```csv
+string#appNumber, string#finished, date#startDate
+201401010002, true, 2014-01-01
+```
+The data will be converted to:
+```json
+{
+  "appNumber":"201401010002",
+  "finished":"true",
+  "startDate":Wed Jan 01 2014 00:00:00 GMT+0000 (GMT)
+}
+```
+### Invalid Value
+If parser meets invalid value for a type while parsing a value, it will fallback to use string value.
+
+For example:
+```csv
+number#order, date#shipDate
+A00001, Unknown
+```
+
+It will be converted to:
+```json
+{
+  "order":"A00001",
+  "shipDate":"Unknown"
+}
+```
+
 #Change Log
+
+##0.3.14
+* Added field type support
+* Fixed some minor bugs
 
 ##0.3.8
 * Empowered built-in JSON parser.

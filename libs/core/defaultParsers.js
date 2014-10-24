@@ -30,6 +30,7 @@ function _arrayParser(params){
         params.resultRow[fieldName]=[];
     }
     params.resultRow[fieldName].push(params.item);
+    //console.log("array parser has been deprecated. See https://github.com/Keyang/node-csvtojson#default-parsers");
 }
 
 function _jsonArrParser(params){
@@ -48,5 +49,6 @@ function _jsonArrParser(params){
         pointer[arrFieldName]=[];
     }
     pointer[arrFieldName].push(params.item);
+    //console.log("json array parser has been deprecated. See https://github.com/Keyang/node-csvtojson#default-parsers");
 }
 initDefaultParsers();

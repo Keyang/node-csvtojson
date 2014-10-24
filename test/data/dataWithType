@@ -1,0 +1,2 @@
+column1,column2,date#column3, date#colume4, column5, string#column6 , string#column7, number#column8, column9
+1234,a1234,2012-01-01,someinvaliddate, {"hello":"world"}, {"hello":"world"}, 1234,abcd, true
