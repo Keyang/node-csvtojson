@@ -4,7 +4,6 @@
 var os = require("os");
 module.exports = function() {
   var self = this;
-  var started = false;
   self.on("record", function(rowStr, index, lastLine) {
     var quote = self.param.quote;
     var delimiter = self.param.delimiter;
@@ -48,11 +47,7 @@ module.exports = function() {
       var resultRow = {};
       self._rowProcess(row, index, resultRow);
       self.emit("record_parsed", resultRow, row, index - 1);
-      if (started === true) {
-        self.push("," + self.getEol());
-      }
-      self.push(JSON.stringify(resultRow));
-      started = true;
+      self.push(JSON.stringify(resultRow),"utf8");
     }
   });
 }

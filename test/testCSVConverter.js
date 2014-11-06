@@ -224,4 +224,20 @@ describe("CSV Converter", function() {
     });
     rs.pipe(csvConverter);
   });
+  it ("should emit data event correctly",function(done){
+    var testData=__dirname+"/data/large-csv-sample.csv";
+    var rs=fs.createReadStream(testData);
+    var csvConverter=new CSVAdv({
+      constructResult:false
+    });
+    var count=0;
+    csvConverter.on("data",function(d){
+      count++;
+    });
+    csvConverter.on("end",function(){
+      assert(count===5290);
+      done();
+    });
+    rs.pipe(csvConverter);
+  });
 });

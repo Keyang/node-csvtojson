@@ -28,7 +28,7 @@ function csvAdv(params) {
   }
   this.param = _param;
   this.parseRules = [];
-  this.resultObject = new Result();
+  this.resultObject = new Result(this);
   this.pipe(this.resultObject);
   if (!this.param.constructResult) {
     this.resultObject.disableConstruct();
@@ -58,13 +58,6 @@ csvAdv.prototype._isToogleQuote = function(segment) {
     return false;
   }
 }
-csvAdv.prototype._startInit = function() {
-  if (this._isStarted === false) {
-
-    this.push("[" + this.getEol())
-    this._isStarted = true
-  }
-}
 csvAdv.prototype._transform = function(data, encoding, cb) {
   var self = this;
   if (encoding == "buffer") {
@@ -84,7 +77,6 @@ csvAdv.prototype._transform = function(data, encoding, cb) {
     }
 
   }
-  this._startInit()
   if (this.eol) {
     //console.log(this._buffer);
     if (this._buffer.indexOf(this.eol) > -1) {
@@ -102,11 +94,9 @@ csvAdv.prototype._transform = function(data, encoding, cb) {
   cb();
 };
 csvAdv.prototype._flush = function(cb) {
-  this._startInit(); // this is called in case input is empty
   if (this._buffer.length != 0) { //emit last line
     this.emit("record", this._buffer, this.rowIndex++, true);
   }
-  this.push(this.getEol() + "]");
   cb();
 };
 csvAdv.prototype.getEol = function() {
