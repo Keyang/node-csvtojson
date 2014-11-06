@@ -16,6 +16,7 @@ process.stdin.setEncoding('utf8');
 var parsedCmd = commandParser();
 
 if (parsedCmd.cmd == "parse") {
+    process.stdout.write("[\n");
     var args = parsedCmd.options;
     args.constructResult = false;
     var converter = new Converter(args);
@@ -32,7 +33,17 @@ if (parsedCmd.cmd == "parse") {
             process.exit(1);
         }
     }
-    converter.pipe(process.stdout);
+    converter.on("data",function(d){
+      if (!started){
+        started=true;
+      }else{
+        process.stdout.write(",\n");
+      }
+      process.stdout.write(d);
+    });
+    converter.on("end",function(){
+      process.stdout.write("\n]");
+    }); 
 } else if (parsedCmd.cmd == "startserver") {
     var args = parsedCmd.options;
     web.startWebServer(args);
