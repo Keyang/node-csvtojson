@@ -1,0 +1,3 @@
+date|*json*employee.name|*json*employee.age|*json*employee.number|*array*address|*array*address|*jsonarray*employee.key|*jsonarray*employee.key|*omit*id
+2012-02-12|Eric|31|51234|Dunno Street|Kilkeny Road|key1|key2|2
+2012-03-06|Ted|28|51289|O FUTEBOL.¿|Tormore|key3|key4|4

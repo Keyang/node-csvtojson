@@ -124,7 +124,7 @@ function _showHelp() {
     console.log("");
     console.log("Options: ");
     console.log("   parse: ");
-    console.log("       --delimiter: delimiter to separate columns. default comma (,). e.g. --delimiter=|");
+    console.log("       --delimiter: delimiter to separate columns. default comma (,). e.g. --delimiter=#");
     console.log("       --quote: quote surrounding a column content containing delimiters. default double quote (\"). e.g. --quote=# ");
     console.log("   startserver: ");
     console.log("       --port: the port which the web server runs on. default 8801. e.g. --port=8080");
