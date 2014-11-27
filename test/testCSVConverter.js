@@ -240,4 +240,16 @@ describe("CSV Converter", function() {
     });
     rs.pipe(csvConverter);
   });
+  it ("should process column with linebreaks",function(done){
+    var testData=__dirname+"/data/lineBreak";
+    var rs=fs.createReadStream(testData);
+    var csvConverter=new CSVAdv({
+      constructResult:false
+    });
+    csvConverter.on("record_parsed",function(d){
+      assert(d.Period===13);
+      done();
+    });
+    rs.pipe(csvConverter);
+  });
 });

@@ -34,7 +34,8 @@ function csvAdv(params) {
     this.resultObject.disableConstruct();
   }
   this.headRow = [];
-  this._buffer = "";
+  this._buffer = ""; //line buffer 
+  this._recordBuffer=""; //record buffer
   this.rowIndex = 0;
   this._isStarted = false;
   var self = this;
@@ -58,6 +59,21 @@ csvAdv.prototype._isToogleQuote = function(segment) {
     return false;
   }
 }
+//on line poped
+csvAdv.prototype._line=function(line,lastLine){
+  this._recordBuffer+=line;
+  if (!this._isToogleQuote(this._recordBuffer)){ //if a complete record is in buffer. start the parse
+   var data=this._recordBuffer;
+   this._recordBuffer="";
+   this._record(data,this.rowIndex++,lastLine) ;
+  }else{ //if the record in buffer is not a complete record (quote does not match). wait next line
+    this._recordBuffer+=this.eol;
+   if (lastLine){
+     throw ("Incomplete CSV file detected. Quotes does not match in pairs.");
+   }
+   return;
+  }
+}
 csvAdv.prototype._transform = function(data, encoding, cb) {
   var self = this;
   if (encoding == "buffer") {
@@ -79,23 +95,26 @@ csvAdv.prototype._transform = function(data, encoding, cb) {
   }
   if (this.eol) {
     //console.log(this._buffer);
-    if (this._buffer.indexOf(this.eol) > -1) {
+    if (this._buffer.indexOf(this.eol) > -1) { //if current data contains 1..* line break 
       var arr = this._buffer.split(this.eol);
       while (arr.length > 1) {
         var data = arr.shift();
-        if (data.length > 0) {
-          this.emit("record", data, this.rowIndex++);
-        }
+        this._line(data);
+          //this.emit("record", data, this.rowIndex++);
       }
-      this._buffer = arr[0];
+      this._buffer = arr[0]; //whats left (maybe half line). push to buffer
+      cb();
+    }else{ //if there is no line break appeared. wait next loop until it appears.
+      cb();
     }
 
+  }else{
+    cb();
   }
-  cb();
 };
 csvAdv.prototype._flush = function(cb) {
-  if (this._buffer.length != 0) { //emit last line
-    this.emit("record", this._buffer, this.rowIndex++, true);
+  if (this._buffer.length != 0) { //finished but still has buffer data. emit last line
+    this._line(this._buffer,  true);
   }
   cb();
 };

@@ -4,7 +4,7 @@
 var os = require("os");
 module.exports = function() {
   var self = this;
-  self.on("record", function(rowStr, index, lastLine) {
+  this._record=function(rowStr, index, lastLine) {
     var quote = self.param.quote;
     var delimiter = self.param.delimiter;
     var rowArr = rowStr.split(delimiter);
@@ -49,5 +49,5 @@ module.exports = function() {
       self.emit("record_parsed", resultRow, row, index - 1);
       self.push(JSON.stringify(resultRow),"utf8");
     }
-  });
+  };
 }
