@@ -575,6 +575,9 @@ It will be converted to:
 
 #Change Log
 
+##0.3.18
+* Fixed double qoute parse as per CSV standard.
+
 ##0.3.14
 * Added field type support
 * Fixed some minor bugs
