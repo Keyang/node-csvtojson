@@ -137,7 +137,8 @@ describe("CSV Converter", function() {
     //end_parsed will be emitted once parsing finished
     csvConverter.on("end_parsed", function(jsonObj) {});
     csvConverter.fromString(data, function(err, jsonObj) {
-      assert(jsonObj[0].TIMESTAMP == '13954264""22', JSON.stringify(jsonObj[0].TIMESTAMP));
+      //console.log(jsonObj);
+      assert(jsonObj[0].TIMESTAMP == '13954264"22', JSON.stringify(jsonObj[0].TIMESTAMP));
       assert(jsonObj[1].TIMESTAMP == 'abc, def, ccc', JSON.stringify(jsonObj[1].TIMESTAMP));
       done();
     });
@@ -152,6 +153,8 @@ describe("CSV Converter", function() {
     csvConverter.on("end_parsed", function(jsonObj) {});
     csvConverter.fromString(data, function(err, jsonObj) {
       assert(jsonObj[0].data == "xyabcde", jsonObj);
+      assert(jsonObj[0].uuid == "fejal\"eifa", jsonObj);
+      assert(jsonObj[0].fieldA == "bnej\"\"falkfe", jsonObj);
       done();
     });
   });
@@ -248,6 +251,7 @@ describe("CSV Converter", function() {
     });
     csvConverter.on("record_parsed",function(d){
       assert(d.Period===13);
+      assert(d["Apparent age"]=="Unknown");
       done();
     });
     rs.pipe(csvConverter);

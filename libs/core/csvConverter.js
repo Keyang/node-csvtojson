@@ -59,6 +59,12 @@ csvAdv.prototype._isToogleQuote = function(segment) {
     return false;
   }
 }
+//convert two continous double quote to one as per csv definition
+csvAdv.prototype._twoDoubleQuote=function(segment){
+  var quote = this.param.quote;
+  var regExp = new RegExp(quote+quote, "g");
+  return segment.toString().replace(regExp,quote);
+}
 //on line poped
 csvAdv.prototype._line=function(line,lastLine){
   this._recordBuffer+=line;

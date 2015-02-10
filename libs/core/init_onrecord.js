@@ -13,31 +13,31 @@ module.exports = function() {
     var quoteBuff = "";
     for (var i = 0; i < rowArr.length; i++) {
       var ele = rowArr[i];
-      if (self._isToogleQuote(ele)) {
-        if (inquote) {
+      if (self._isToogleQuote(ele)) {//if current col has odd quotes, switch quote status
+        if (inquote) {//if currently in open quote status, close it and output data
           quoteBuff += delimiter;
           inquote = false;
-          quoteBuff += ele.substr(0, ele.length - 1);
+          quoteBuff += this._twoDoubleQuote(ele.substr(0, ele.length - 1));
           if (self.param.trim){
             quoteBuff=quoteBuff.toString().trim();
           }
           row.push(quoteBuff);
           quoteBuff = "";
-        } else {
+        } else {// currently not in open quote status, open it
           inquote = true;
-          quoteBuff += ele.substring(1);
+          quoteBuff += this._twoDoubleQuote(ele.substring(1));
         }
-      } else {
-        if (inquote) {
-          quoteBuff += delimiter + ele;
-        } else {
-          if (ele.indexOf(quote) === 0 && ele[ele.length - 1] == quote) {
+      } else {// if current col has even quotes, do not switch quote status
+        if (inquote) {//if current status is in quote, add to buffer wait to close
+          quoteBuff += delimiter + this._twoDoubleQuote(ele);
+        } else {// if current status is not in quote, out put data
+          if (ele.indexOf(quote) === 0 && ele[ele.length - 1] == quote) {//if current col contain full quote segment,remove quote first
             ele = ele.substring(1, ele.length - 1);
           }
           if (self.param.trim){
             ele=ele.toString().trim();
           }
-          row.push(ele);
+          row.push(this._twoDoubleQuote(ele));
         }
       }
     }
