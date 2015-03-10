@@ -16,7 +16,8 @@ function csvAdv(params) {
     "delimiter": ",", // change the delimiter of csv columns
     "quote": "\"", //quote for a column containing delimiter.
     "trim": true, //trim column's space charcters
-    "checkType":true //weather check column type
+    "checkType":true, //whether check column type
+    "toArrayString":false //stream out array of json string. (usable if downstream is file writer etc)
   }
   if (params && typeof params == "object") {
     for (var key in params) {
@@ -99,6 +100,11 @@ csvAdv.prototype._transform = function(data, encoding, cb) {
     }
 
   }
+  if (this.param.toArrayString){
+    if (this.rowIndex===0){
+      this.push("["+this.getEol(),"utf8");
+    }
+  }
   if (this.eol) {
     //console.log(this._buffer);
     if (this._buffer.indexOf(this.eol) > -1) { //if current data contains 1..* line break 
@@ -121,6 +127,9 @@ csvAdv.prototype._transform = function(data, encoding, cb) {
 csvAdv.prototype._flush = function(cb) {
   if (this._buffer.length != 0) { //finished but still has buffer data. emit last line
     this._line(this._buffer,  true);
+  }
+  if (this.param.toArrayString){
+    this.push(this.getEol()+"]","utf8");
   }
   cb();
 };

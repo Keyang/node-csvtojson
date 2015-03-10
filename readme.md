@@ -161,6 +161,7 @@ The parameters for Converter constructor are:
 * quote: If a column contains delimiter, it is able to use quote character to surround the column content. e.g. "hello, world" wont be split into two columns while parsing. default: " (double quote)
 * trim: Indicate if parser trim off spaces surrounding column content. e.g. "  content  " will be trimmed to "content". Default: true
 * checkType: This parameter turns on and off weather check field type. default is true. See [Field type](#field-type)
+* toArrayString: Stringify the stream output to JSON array. This is useful when pipe output to a file which expects JSON array. default is false and only JSON will be pushed to downstream.
 
 # Parser
 CSVTOJSON allows adding customised parsers which concentrating on what to parse and how to parse.

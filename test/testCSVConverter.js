@@ -256,4 +256,21 @@ describe("CSV Converter", function() {
     });
     rs.pipe(csvConverter);
   });
+  it ("should stream to array string",function(done){
+    var testData=__dirname+"/data/dataDiffDelimiter";
+    var rs=fs.createReadStream(testData)
+    var data="";
+    var st=rs.pipe(new CSVAdv({ constructResult: false, delimiter: ';', trim: true, toArrayString:true}))
+    st.on("data",function(d){
+      data+=d.toString("utf8");
+    });
+    st.on("end",function(){
+      var obj=JSON.parse(data);
+      assert(obj.length===2);
+      assert(obj[0].annee==2015029);
+      assert(obj[1].annee==2015028);
+      done();
+    });
+
+  });
 });
