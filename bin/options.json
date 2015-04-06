@@ -1,0 +1,31 @@
+{
+  "commands": {
+    "parse": "(Default)Parse a csv file to json",
+    "startserver": "(Deprecated)Start a web server"
+  },
+  "options": {
+    "--delimiter": {
+      "desc": "delimiter to separate columns. default comma (,). e.g. --delimiter=#",
+      "type": "string"
+    },
+    "--quote": {
+      "desc": "quote surrounding a column content containing delimiters. default double quote (\"). e.g. --quote=# ",
+      "type": "string"
+    },
+    "--trim": {
+      "desc": "Indicate if parser trim off spaces surrounding column content. e.g. \" content \" will be trimmed to \"content\". Default: true",
+      "type": "boolean"
+    },
+    "--checkType": {
+      "desc": "This parameter turns on and off whether check field type. default is true.",
+      "type": "boolean"
+
+    }
+  },
+  "examples":[
+    "csvtojson < csvfile",
+    "csvtojson <path to csvfile>",
+    "cat <csvfile> | csvtojson",
+    "csvtojson <csvfilepath> --checkType=false --trim=false --delimiter=#"
+  ]
+}
