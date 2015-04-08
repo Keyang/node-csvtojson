@@ -17,7 +17,8 @@ function csvAdv(params) {
     "quote": "\"", //quote for a column containing delimiter.
     "trim": true, //trim column's space charcters
     "checkType":true, //whether check column type
-    "toArrayString":false //stream out array of json string. (usable if downstream is file writer etc)
+    "toArrayString":false, //stream out array of json string. (usable if downstream is file writer etc)
+    "ignoreEmpty":false //Ignore empty value while parsing. if a value of the column is empty, it will be skipped parsing.
   }
   if (params && typeof params == "object") {
     for (var key in params) {
@@ -143,6 +144,9 @@ csvAdv.prototype._headRowProcess = function(headRow) {
 csvAdv.prototype._rowProcess = function(row, index, resultRow) {
   for (var i = 0; i < this.parseRules.length; i++) {
     var item = row[i];
+    if (this.param.ignoreEmpty === true && item === ""){
+      continue;
+    }
     var parser = this.parseRules[i];
     var head = this.headRow[i];
     parser.parse({

@@ -162,6 +162,7 @@ The parameters for Converter constructor are:
 * trim: Indicate if parser trim off spaces surrounding column content. e.g. "  content  " will be trimmed to "content". Default: true
 * checkType: This parameter turns on and off weather check field type. default is true. See [Field type](#field-type)
 * toArrayString: Stringify the stream output to JSON array. This is useful when pipe output to a file which expects JSON array. default is false and only JSON will be pushed to downstream.
+* ignoreEmpty: Ignore the empty value in CSV columns. If a column value is not giving, set this to true to skip them. Defalut: false.
 
 # Parser
 CSVTOJSON allows adding customised parsers which concentrating on what to parse and how to parse.
@@ -575,6 +576,10 @@ It will be converted to:
 ```
 
 #Change Log
+
+##0.3.21
+* Refactored Command Line Tool.
+* Added ignoreEmpty parameter.
 
 ##0.3.18
 * Fixed double qoute parse as per CSV standard.

@@ -273,4 +273,18 @@ describe("CSV Converter", function() {
     });
 
   });
+  it ("be able to ignore empty columns",function(done){
+    var testData=__dirname+"/data/dataIgnoreEmpty";
+    var rs=fs.createReadStream(testData)
+    var st=rs.pipe(new CSVAdv({ignoreEmpty:true}))
+    st.on("end_parsed",function(res){
+      var j=res[0];
+      assert (j.col2.length===1);
+      assert(j.col2[0]==="d3");
+      assert(j.col4.col3===undefined);
+      assert(j.col4.col5==="world");
+      done();
+    });
+
+  });
 });

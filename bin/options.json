@@ -20,6 +20,10 @@
       "desc": "This parameter turns on and off whether check field type. default is true.",
       "type": "boolean"
 
+    },
+    "--ignoreEmpty": {
+      "desc": "This parameter turns on and off whether ignore empty column values while parsing. default is false",
+      "type": "boolean"
     }
   },
   "examples":[
