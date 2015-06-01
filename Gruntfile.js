@@ -22,6 +22,7 @@ module.exports = function (grunt) {
 				'nocomma': true,
 				//'nonew': true, // In the future when all objects are refactored to avoid new.
 				//'strict': true, // in the future when all functions are closer to adhering to strict.
+				'notypeof': true,
 				'undef': true,
 				'unused': true,
 				'node': true // defines node globals

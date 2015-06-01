@@ -1,6 +1,3 @@
-module.exports = csvAdv;
-
-//implementation
 var parserMgr = require("./parserMgr.js");
 var utils = require("util");
 var Transform = require("stream").Transform;
@@ -19,12 +16,14 @@ function csvAdv(params) {
     "checkType":true, //whether check column type
     "toArrayString":false, //stream out array of json string. (usable if downstream is file writer etc)
     "ignoreEmpty":false //Ignore empty value while parsing. if a value of the column is empty, it will be skipped parsing.
-  }
-  if (params && typeof params == "object") {
+  };
+  if (params && typeof params === "object") {
     for (var key in params) {
-      _param[key] = params[key];
+      if (params.hasOwnProperty(key)) {
+        _param[key] = params[key];
+      }
     }
-  } else if (typeof params == "boolean") { //backcompatible with older version
+  } else if (typeof params === "boolean") { //backcompatible with older version
     console.warn("Parameter should be a JSON object like {'constructResult':false}");
     _param.constructResult = params;
   }
@@ -40,33 +39,31 @@ function csvAdv(params) {
   this._recordBuffer=""; //record buffer
   this.rowIndex = 0;
   this._isStarted = false;
-  var self = this;
-
   this._callback = null;
   this.init();
   return this;
-};
+}
 utils.inherits(csvAdv, Transform);
 csvAdv.prototype.init = function() {
   require("./init_onend.js").call(this);
   require("./init_onrecord.js").call(this);
-}
+};
 csvAdv.prototype._isToogleQuote = function(segment) {
   var quote = this.param.quote;
   var regExp = new RegExp(quote, "g");
   var match = segment.toString().match(regExp);
   if (match) {
-    return match.length % 2 != 0;
+    return match.length % 2 !== 0;
   } else {
     return false;
   }
-}
+};
 //convert two continous double quote to one as per csv definition
 csvAdv.prototype._twoDoubleQuote=function(segment){
   var quote = this.param.quote;
   var regExp = new RegExp(quote+quote, "g");
   return segment.toString().replace(regExp,quote);
-}
+};
 //on line poped
 csvAdv.prototype._line=function(line,lastLine){
   this._recordBuffer+=line;
@@ -81,10 +78,10 @@ csvAdv.prototype._line=function(line,lastLine){
    }
    return;
   }
-}
+};
 csvAdv.prototype._transform = function(data, encoding, cb) {
-  var self = this;
-  if (encoding == "buffer") {
+  var data2, arr;
+  if (encoding === "buffer") {
     encoding = "utf8";
   }
 
@@ -109,10 +106,10 @@ csvAdv.prototype._transform = function(data, encoding, cb) {
   if (this.eol) {
     //console.log(this._buffer);
     if (this._buffer.indexOf(this.eol) > -1) { //if current data contains 1..* line break 
-      var arr = this._buffer.split(this.eol);
+      arr = this._buffer.split(this.eol);
       while (arr.length > 1) {
-        var data = arr.shift();
-        this._line(data);
+        data2 = arr.shift();
+        this._line(data2);
           //this.emit("record", data, this.rowIndex++);
       }
       this._buffer = arr[0]; //whats left (maybe half line). push to buffer
@@ -126,7 +123,7 @@ csvAdv.prototype._transform = function(data, encoding, cb) {
   }
 };
 csvAdv.prototype._flush = function(cb) {
-  if (this._buffer.length != 0) { //finished but still has buffer data. emit last line
+  if (this._buffer.length !== 0) { //finished but still has buffer data. emit last line
     this._line(this._buffer,  true);
   }
   if (this.param.toArrayString){
@@ -136,7 +133,7 @@ csvAdv.prototype._flush = function(cb) {
 };
 csvAdv.prototype.getEol = function() {
   return this.eol ? this.eol : eol;
-}
+};
 csvAdv.prototype._headRowProcess = function(headRow) {
   this.headRow = headRow;
   this.parseRules = parserMgr.initParsers(headRow,this.param.checkType);
@@ -167,10 +164,11 @@ csvAdv.prototype.fromString = function(csvString, cb) {
   rs._read = function() {
     this.push(csvString);
     this.push(null);
-  }
+  };
   rs.pipe(this);
-  if (cb && typeof cb == "function") {
+  if (cb && typeof cb === "function") {
     this._callback = cb;
   }
 
 };
+module.exports = csvAdv;

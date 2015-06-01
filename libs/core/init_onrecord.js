@@ -1,11 +1,10 @@
 /**
  *Subscriptor of record event of Converter
  */
-var os = require("os");
 module.exports = function() {
   var self = this;
   
-  this._record=function(rowStr, index, lastLine) {
+  this._record = function(rowStr, index) {
     var quote = self.param.quote;
     var delimiter = self.param.delimiter;
     var rowArr = rowStr.split(delimiter);
@@ -32,7 +31,7 @@ module.exports = function() {
         if (inquote) {//if current status is in quote, add to buffer wait to close
           quoteBuff += delimiter + this._twoDoubleQuote(ele);
         } else {// if current status is not in quote, out put data
-          if (ele.indexOf(quote) === 0 && ele[ele.length - 1] == quote) {//if current col contain full quote segment,remove quote first
+          if (ele.indexOf(quote) === 0 && ele[ele.length - 1] === quote) {//if current col contain full quote segment,remove quote first
             ele = ele.substring(1, ele.length - 1);
           }
           if (self.param.trim){
@@ -42,7 +41,7 @@ module.exports = function() {
         }
       }
     }
-    if (index == 0) {
+    if (index === 0) {
       self._headRowProcess(row);
     } else if (rowStr.length > 0) {
       var resultRow = {};
@@ -56,4 +55,4 @@ module.exports = function() {
       self.push(JSON.stringify(resultRow),"utf8");
     }
   };
-}
+};

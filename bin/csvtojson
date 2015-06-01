@@ -1,10 +1,8 @@
 #!/usr/bin/env node
 
-var web = require("../libs/interfaces").web
+var web = require("../libs/interfaces").web;
 var Converter = require("../libs/core").Converter;
 var fs = require("fs");
-var ws = process.stdout;
-var sin = process.stdin;
 var options = require("./options.json");
 var cmds = options.commands;
 var opts = options.options;
@@ -16,20 +14,27 @@ var parsedCmd = {
   "options": {},
   "inputStream": process.stdin
 };
-
-function run(){
-  switch (parsedCmd.cmd){
-    case "parse":
-      parse();
-    break;
-    case "startserver":
-      startWebServer();
-    break;
-    default:
-      console.log("unknown command %s.",parsedCmd.cmd);
-      _showHelp();
-    break;
-  } 
+function _showHelp() {
+  var key;
+  console.log("Usage: csvtojson [<command>] [<options>] filepath ");
+  console.log("");
+  console.log("Commands: ");
+  for (key in cmds) {
+    if (cmds.hasOwnProperty(key)) {
+      console.log("\t%s: %s", key, cmds[key]);
+    }
+  }
+  console.log("Options: ");
+  for (key in opts) {
+    if (opts.hasOwnProperty(key)) {
+      console.log("\t%s: %s", key, opts[key].desc);
+    }
+  }
+  console.log("Examples: ");
+  for (var i=0;i<exps.length;i++){
+    console.log("\t%s",exps[i]);
+  }
+  process.exit(0);
 }
 function parse(){
   var is=parsedCmd.inputStream;
@@ -49,7 +54,19 @@ function parse(){
 function startWebServer(){
   web.startWebServer(parsedCmd.options);
 }
-
+function run(){
+  switch (parsedCmd.cmd){
+    case "parse":
+      parse();
+    break;
+    case "startserver":
+      startWebServer();
+    break;
+    default:
+      console.log("unknown command %s.",parsedCmd.cmd);
+      _showHelp();
+  }
+}
 function commandParser() {
   var cmdArr = Array.prototype.slice.call(process.argv, 2);
   while (cmdArr.length > 0) {
@@ -96,28 +113,6 @@ function commandParser() {
       }
     }
   }
-}
-
-function isOption(arg) {
-  return arg.indexOf("=") > -1;
-}
-
-function _showHelp() {
-  console.log("Usage: csvtojson [<command>] [<options>] filepath ");
-  console.log("");
-  console.log("Commands: ");
-  for (var key in cmds) {
-    console.log("\t%s: %s", key, cmds[key]);
-  }
-  console.log("Options: ");
-  for (var key in opts) {
-    console.log("\t%s: %s", key, opts[key].desc);
-  }
-  console.log("Examples: ");
-  for (var i=0;i<exps.length;i++){
-    console.log("\t%s",exps[i]);
-  }
-  process.exit(0);
 }
 commandParser();
 run();
