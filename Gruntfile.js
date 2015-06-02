@@ -1,9 +1,17 @@
+/*
+	GRUNT instructions
+	1. ensure you have dependencies installed run `npm install` in the root directory of the repo to get dev dependencies
+	2. run `grunt` in root dir of the repo in a shell to get the watcher started
+		The watcher looks at files. When a file is added or changed it passes the file through jshint
+	3. run `grunt test` to execute all unit tests and get output
+*/
+
 module.exports = function (grunt) {
 	grunt.loadNpmTasks('grunt-contrib-jshint');
 	grunt.loadNpmTasks('grunt-mocha-test');
 	grunt.loadNpmTasks('grunt-contrib-watch');
 	grunt.loadNpmTasks('grunt-newer');
-	var files = ['Gruntfile.js', 'libs/**/*.js', 'test/data/*.js', 'bin/csvtojson', 'bin/csvtojson.js'];
+	var files = ['Gruntfile.js', 'libs/**/*.js', 'test/*.js', 'bin/csvtojson', 'bin/csvtojson.js'];
 	grunt.initConfig({
 		jshint: {
 			all: {
@@ -35,7 +43,9 @@ module.exports = function (grunt) {
 			}
 		},
 		mochaTest: {
-			src: [files[2]]
+			test: {
+				src: (function () {console.log([files[2]]); return [files[2]];}())
+			}
 		},
 		watch: {
 			files: files,
@@ -47,6 +57,5 @@ module.exports = function (grunt) {
 		}
 	});
 	grunt.registerTask('default', ['watch']);
-	grunt.registerTask('test:unit', ['mochaTest']);
-	grunt.registerTask('test', ['test:unit']);
+	grunt.registerTask('test', ['mochaTest']);
 };

@@ -5,7 +5,6 @@ describe("ParserMgr", function() {
   it("should add a correct parser", function() {
     parserMgr.addParser("myparserName", /myParser.+/, function() {});
   });
-
   it("should  add a parser if regular expression is a string", function() {
     parserMgr.addParser("myparserName", "hello regexp", function() {});
   });
