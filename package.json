@@ -43,7 +43,9 @@
     "grunt": "^0.4.5",
     "grunt-contrib-jshint": "^0.11.2",
     "grunt-mocha-test": "^0.12.7",
-    "mocha": "^2.2.5",
+    "mocha": "^2.2.5"
+  },
+  "dependencies":{
     "underscore": "^1.8.3"
   }
 }
