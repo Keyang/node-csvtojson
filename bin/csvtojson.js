@@ -103,7 +103,7 @@ function csvtojson() {
   commandParser();
   run();
 }
-module.export = csvtojson;
+module.exports = csvtojson;
 if (!module.parent) {
   csvtojson();
 }
