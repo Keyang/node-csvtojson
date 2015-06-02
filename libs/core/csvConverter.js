@@ -36,7 +36,7 @@ function csvAdv(params) {
   }
   this.headRow = [];
   this._buffer = ""; //line buffer 
-  this._recordBuffer=""; //record buffer
+  this._recordBuffer = ""; //record buffer
   this.rowIndex = 0;
   this._isStarted = false;
   this._callback = null;
@@ -52,27 +52,23 @@ csvAdv.prototype._isToogleQuote = function(segment) {
   var quote = this.param.quote;
   var regExp = new RegExp(quote, "g");
   var match = segment.toString().match(regExp);
-  if (match) {
-    return match.length % 2 !== 0;
-  } else {
-    return false;
-  }
+  return match && match.length % 2 === 0;
 };
 //convert two continous double quote to one as per csv definition
-csvAdv.prototype._twoDoubleQuote=function(segment){
+csvAdv.prototype._twoDoubleQuote = function(segment){
   var quote = this.param.quote;
   var regExp = new RegExp(quote+quote, "g");
   return segment.toString().replace(regExp,quote);
 };
 //on line poped
-csvAdv.prototype._line=function(line,lastLine){
-  this._recordBuffer+=line;
+csvAdv.prototype._line = function(line,lastLine){
+  this._recordBuffer += line;
   if (!this._isToogleQuote(this._recordBuffer)){ //if a complete record is in buffer. start the parse
-   var data=this._recordBuffer;
+   var data = this._recordBuffer;
    this._recordBuffer="";
    this._record(data,this.rowIndex++,lastLine) ;
   }else{ //if the record in buffer is not a complete record (quote does not match). wait next line
-    this._recordBuffer+=this.eol;
+    this._recordBuffer += this.eol;
    if (lastLine){
      throw ("Incomplete CSV file detected. Quotes does not match in pairs.");
    }
@@ -81,31 +77,32 @@ csvAdv.prototype._line=function(line,lastLine){
 };
 csvAdv.prototype._transform = function(data, encoding, cb) {
   var data2, arr;
+  function contains(str, subString) {
+    return str.indexOf(subString) > -1;
+  }
   if (encoding === "buffer") {
     encoding = "utf8";
   }
 
   this._buffer += data.toString(encoding);
   if (!this.eol) {
-    if (this._buffer.indexOf("\r\n") > -1) { //csv from windows
+    if (contains(this._buffer, "\r\n")) { //csv from windows
       this.eol = "\r\n";
-    } else if (this._buffer.indexOf("\n") > -1) {
+    } else if (contains(this._buffer, "\n")) {
       this.eol = "\n";
-    } else if (this._buffer.indexOf("\r") > -1) {
+    } else if (contains(this._buffer, "\r")) {
       this.eol = "\r";
-    } else if (this._buffer.indexOf(eol)) {
+    } else if (contains(this._buffer, eol)) {
       this.eol = eol;
     }
 
   }
-  if (this.param.toArrayString){
-    if (this.rowIndex===0){
-      this.push("["+this.getEol(),"utf8");
-    }
+  if (this.param.toArrayString && this.rowIndex === 0){
+    this.push("["+this.getEol(),"utf8");
   }
   if (this.eol) {
     //console.log(this._buffer);
-    if (this._buffer.indexOf(this.eol) > -1) { //if current data contains 1..* line break 
+    if (contains(this._buffer, this.eol)) { //if current data contains 1..* line break 
       arr = this._buffer.split(this.eol);
       while (arr.length > 1) {
         data2 = arr.shift();
@@ -113,14 +110,9 @@ csvAdv.prototype._transform = function(data, encoding, cb) {
           //this.emit("record", data, this.rowIndex++);
       }
       this._buffer = arr[0]; //whats left (maybe half line). push to buffer
-      cb();
-    }else{ //if there is no line break appeared. wait next loop until it appears.
-      cb();
     }
-
-  }else{
-    cb();
   }
+  cb();
 };
 csvAdv.prototype._flush = function(cb) {
   if (this._buffer.length !== 0) { //finished but still has buffer data. emit last line

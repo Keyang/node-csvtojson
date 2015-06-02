@@ -11,8 +11,9 @@ module.exports = function() {
     var row = [];
     var inquote = false;
     var quoteBuff = "";
+    var ele;
     for (var i = 0; i < rowArr.length; i++) {
-      var ele = rowArr[i];
+      ele = rowArr[i];
       if (self._isToogleQuote(ele)) {//if current col has odd quotes, switch quote status
         if (inquote) {//if currently in open quote status, close it and output data
           quoteBuff += delimiter;
@@ -35,7 +36,7 @@ module.exports = function() {
             ele = ele.substring(1, ele.length - 1);
           }
           if (self.param.trim){
-            ele=ele.toString().trim();
+            ele = ele.toString().trim();
           }
           row.push(this._twoDoubleQuote(ele));
         }
@@ -48,8 +49,8 @@ module.exports = function() {
       self._rowProcess(row, index, resultRow);
       self.emit("record_parsed", resultRow, row, index - 1);
       if (self.param.toArrayString){
-        if (index>1){
-          self.push(","+self.eol);
+        if (index > 1) {
+          self.push("," + self.eol);
         }
       }
       self.push(JSON.stringify(resultRow),"utf8");

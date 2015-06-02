@@ -10,8 +10,8 @@ function registerParser(parser) {
   }
 }
 function splitTitle(columnTitle){
-  var splitArr=columnTitle.split("#");
-  if (splitArr.length ===1){
+  var splitArr = columnTitle.split("#");
+  if (splitArr.length === 1){
     splitArr.unshift("");
     return splitArr;
   }
@@ -72,7 +72,6 @@ function initParsers(row, checkType) {
   }
   return parsers;
 }
-require("./defaultParsers.js");
 
 //module interfaces
 module.exports.addParser = addParser;
