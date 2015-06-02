@@ -11,13 +11,12 @@ module.exports = function() {
     var row = [];
     var inquote = false;
     var quoteBuff = "";
-    var ele;
     rowArr.forEach(function (ele) {
       if (self._isToogleQuote(ele)) {//if current col has odd quotes, switch quote status
         if (inquote) {//if currently in open quote status, close it and output data
           quoteBuff += delimiter;
           inquote = false;
-          quoteBuff += this._twoDoubleQuote(ele.substr(0, ele.length - 1));
+          quoteBuff += self._twoDoubleQuote(ele.substr(0, ele.length - 1));
           if (self.param.trim){
             quoteBuff = quoteBuff.toString().trim();
           }
@@ -25,11 +24,11 @@ module.exports = function() {
           quoteBuff = "";
         } else {// currently not in open quote status, open it
           inquote = true;
-          quoteBuff += this._twoDoubleQuote(ele.substring(1));
+          quoteBuff += self._twoDoubleQuote(ele.substring(1));
         }
       } else {// if current col has even quotes, do not switch quote status
         if (inquote) {//if current status is in quote, add to buffer wait to close
-          quoteBuff += delimiter + this._twoDoubleQuote(ele);
+          quoteBuff += delimiter + self._twoDoubleQuote(ele);
         } else {// if current status is not in quote, out put data
           if (ele.indexOf(quote) === 0 && ele[ele.length - 1] === quote) {//if current col contain full quote segment,remove quote first
             ele = ele.substring(1, ele.length - 1);
@@ -37,7 +36,7 @@ module.exports = function() {
           if (self.param.trim){
             ele = ele.toString().trim();
           }
-          row.push(this._twoDoubleQuote(ele));
+          row.push(self._twoDoubleQuote(ele));
         }
       }
     });

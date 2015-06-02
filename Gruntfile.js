@@ -1,5 +1,6 @@
 module.exports = function (grunt) {
 	grunt.loadNpmTasks('grunt-contrib-jshint');
+	grunt.loadNpmTasks('grunt-mocha-test');
 	grunt.initConfig({
 		jshint: {
 			files: ['Gruntfile.js', 'libs/**/*.js', 'test/data/*.js', 'bin/csvtojson'],
@@ -27,7 +28,12 @@ module.exports = function (grunt) {
 				'unused': true,
 				'node': true // defines node globals
 			}
-		}
+		},
+    mochaTest:{
+      src:["test/test*.js"]
+    }
 	});
 	grunt.registerTask('default', ['jshint']);
+	grunt.registerTask('test:unit', ['mochaTest']);
+	grunt.registerTask('test', ['test:unit']);
 };

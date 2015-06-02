@@ -52,7 +52,7 @@ csvAdv.prototype._isToogleQuote = function(segment) {
   var quote = this.param.quote;
   var regExp = new RegExp(quote, "g");
   var match = segment.toString().match(regExp);
-  return match && match.length % 2 === 0;
+  return match && match.length % 2 !== 0;
 };
 //convert two continous double quote to one as per csv definition
 csvAdv.prototype._twoDoubleQuote = function(segment){
@@ -70,7 +70,7 @@ csvAdv.prototype._line = function(line,lastLine){
   }else{ //if the record in buffer is not a complete record (quote does not match). wait next line
     this._recordBuffer += this.eol;
    if (lastLine){
-     throw ("Incomplete CSV file detected. Quotes does not match in pairs.");
+     throw ("Incomplete CSV file detected. Quotes does not match in pairs. Buffer:"+this._recordBuffer);
    }
    return;
   }
