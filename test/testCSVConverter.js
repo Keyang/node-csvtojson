@@ -23,9 +23,8 @@ describe("CSV Converter", function() {
   it("should emit record_parsed message once a row is parsed.", function(done) {
     var obj = new CSVAdv();
     var stream = fs.createReadStream(file);
-    obj.on("record_parsed", function(resultRow, row, index) {
+    obj.on("record_parsed", function(resultRow) {
       assert(resultRow);
-      //console.log(resultRow);
     });
     obj.on("end", function() {
       done();
@@ -38,7 +37,7 @@ describe("CSV Converter", function() {
     var stream = fs.createReadStream(file);
     obj.on("end_parsed", function(result) {
       assert(result);
-      assert(result.length == 2);
+      assert(result.length === 2);
       assert(result[0].date);
       assert(result[0].employee);
       assert(result[0].employee.name);
@@ -70,8 +69,8 @@ describe("CSV Converter", function() {
       "quote": "#"
     });
     obj.on("end_parsed", function(result) {
-      assert(result[0].col1 == "\"Mini. Sectt");
-      assert(result[3].col2 == "125001,fenvkdsf");
+      assert(result[0].col1 === "\"Mini. Sectt");
+      assert(result[3].col2 === "125001,fenvkdsf");
       // console.log(result);
       done();
     });
@@ -81,10 +80,10 @@ describe("CSV Converter", function() {
   it("should be able to convert a csv to column array data", function(done) {
     var columArrData = __dirname + "/data/columnArray";
     var rs = fs.createReadStream(columArrData);
-    var result = {}
+    var result = {};
     var csvConverter = new CSVAdv();
     //end_parsed will be emitted once parsing finished
-    csvConverter.on("end_parsed", function(jsonObj) {
+    csvConverter.on("end_parsed", function() {
       assert(result.TIMESTAMP.length === 5);
 
       done();
@@ -92,12 +91,13 @@ describe("CSV Converter", function() {
 
     //record_parsed will be emitted each time a row has been parsed.
     csvConverter.on("record_parsed", function(resultRow, rawRow, rowIndex) {
-
       for (var key in resultRow) {
-        if (!result[key] || !result[key] instanceof Array) {
-          result[key] = [];
+        if (resultRow.hasOwnProperty(key)){
+          if (!result[key] || !(result[key] instanceof Array)) {
+            result[key] = [];
+          }
+          result[key][rowIndex] = resultRow[key];
         }
-        result[key][rowIndex] = resultRow[key];
       }
 
     });
@@ -106,7 +106,6 @@ describe("CSV Converter", function() {
   it("should be able to convert csv string directly", function(done) {
     var testData = __dirname + "/data/testData";
     var data = fs.readFileSync(testData).toString();
-    var result = {}
     var csvConverter = new CSVAdv();
     //end_parsed will be emitted once parsing finished
     csvConverter.on("end_parsed", function(jsonObj) {
@@ -120,7 +119,6 @@ describe("CSV Converter", function() {
   it("should be able to convert csv string without callback provided", function(done) {
     var testData = __dirname + "/data/testData";
     var data = fs.readFileSync(testData).toString();
-    var result = {}
     var csvConverter = new CSVAdv();
     //end_parsed will be emitted once parsing finished
     csvConverter.on("end_parsed", function(jsonObj) {
@@ -132,14 +130,13 @@ describe("CSV Converter", function() {
   it("should be able to handle columns with double quotes", function(done) {
     var testData = __dirname + "/data/dataWithQoutes";
     var data = fs.readFileSync(testData).toString();
-    var result = {}
     var csvConverter = new CSVAdv();
     //end_parsed will be emitted once parsing finished
-    csvConverter.on("end_parsed", function(jsonObj) {});
+    csvConverter.on("end_parsed", function() {});
     csvConverter.fromString(data, function(err, jsonObj) {
       //console.log(jsonObj);
-      assert(jsonObj[0].TIMESTAMP == '13954264"22', JSON.stringify(jsonObj[0].TIMESTAMP));
-      assert(jsonObj[1].TIMESTAMP == 'abc, def, ccc', JSON.stringify(jsonObj[1].TIMESTAMP));
+      assert(jsonObj[0].TIMESTAMP === '13954264"22', JSON.stringify(jsonObj[0].TIMESTAMP));
+      assert(jsonObj[1].TIMESTAMP === 'abc, def, ccc', JSON.stringify(jsonObj[1].TIMESTAMP));
       done();
     });
   });
@@ -147,24 +144,22 @@ describe("CSV Converter", function() {
   it("should be able to handle columns with two double quotes", function(done) {
     var testData = __dirname + "/data/twodoublequotes";
     var data = fs.readFileSync(testData).toString();
-    var result = {}
     var csvConverter = new CSVAdv();
     //end_parsed will be emitted once parsing finished
-    csvConverter.on("end_parsed", function(jsonObj) {});
+    csvConverter.on("end_parsed", function() {});
     csvConverter.fromString(data, function(err, jsonObj) {
-      assert(jsonObj[0].data == "xyabcde", jsonObj);
-      assert(jsonObj[0].uuid == "fejal\"eifa", jsonObj);
-      assert(jsonObj[0].fieldA == "bnej\"\"falkfe", jsonObj);
+      assert(jsonObj[0].data === "xyabcde", jsonObj);
+      assert(jsonObj[0].uuid === "fejal\"eifa", jsonObj);
+      assert(jsonObj[0].fieldA === "bnej\"\"falkfe", jsonObj);
       done();
     });
   });
   it("should handle empty csv file", function(done) {
     var testData = __dirname + "/data/emptyFile";
     var rs = fs.createReadStream(testData);
-    var result = {}
     var csvConverter = new CSVAdv();
     csvConverter.on("end_parsed", function(jsonObj) {
-      assert(jsonObj.length===0)
+      assert(jsonObj.length === 0);
       done();
     });
     rs.pipe(csvConverter);
@@ -176,10 +171,10 @@ describe("CSV Converter", function() {
       constructResult:false
     });
     var count=0;
-    csvConverter.on("record_parsed",function(d){
+    csvConverter.on("record_parsed", function () {
       count++;
     });
-    csvConverter.on("end_parsed",function(){
+    csvConverter.on("end_parsed", function () {
       assert(count===5290);
       done();
     });
@@ -192,7 +187,7 @@ describe("CSV Converter", function() {
     csvConverter.on("record_parsed",function(d){
       assert(typeof d.column1 === "number");
       assert(typeof d.column2 === "string");
-      assert( d.column3 instanceof Date == true);
+      assert( d.column3 instanceof Date === true);
       assert(d.colume4==="someinvaliddate");
       assert(d.column5.hello==="world");
       assert(d.column6==='{"hello":"world"}');
@@ -214,13 +209,13 @@ describe("CSV Converter", function() {
     csvConverter.on("record_parsed",function(d){
       assert(typeof d.column1 === "string");
       assert(typeof d.column2 === "string");
-      assert( d["date#column3"] ==="2012-01-01");
-      assert(d["date#colume4"]==="someinvaliddate");
-      assert(d["column5"]==='{"hello":"world"}');
-      assert(d["string#column6"]==='{"hello":"world"}');
-      assert(d["string#column7"]==="1234");
-      assert(d["number#column8"]==="abcd");
-      assert(d["column9"]==="true");
+      assert( d["date#column3"] === "2012-01-01");
+      assert(d["date#colume4"] === "someinvaliddate");
+      assert(d.column5 === '{"hello":"world"}');
+      assert(d["string#column6"] === '{"hello":"world"}');
+      assert(d["string#column7"] === "1234");
+      assert(d["number#column8"] === "abcd");
+      assert(d.column9 === "true");
     });
     csvConverter.on("end_parsed",function(){
       done();
@@ -234,7 +229,7 @@ describe("CSV Converter", function() {
       constructResult:false
     });
     var count=0;
-    csvConverter.on("data",function(d){
+    csvConverter.on("data", function () {
       count++;
     });
     csvConverter.on("end",function(){
@@ -251,38 +246,38 @@ describe("CSV Converter", function() {
     });
     csvConverter.on("record_parsed",function(d){
       assert(d.Period===13);
-      assert(d["Apparent age"]=="Unknown");
+      assert(d["Apparent age"] === "Unknown");
       done();
     });
     rs.pipe(csvConverter);
   });
   it ("should stream to array string",function(done){
-    var testData=__dirname+"/data/dataDiffDelimiter";
-    var rs=fs.createReadStream(testData)
-    var data="";
-    var st=rs.pipe(new CSVAdv({ constructResult: false, delimiter: ';', trim: true, toArrayString:true}))
+    var testData = __dirname + "/data/dataDiffDelimiter";
+    var rs = fs.createReadStream(testData);
+    var data = "";
+    var st = rs.pipe(new CSVAdv({ constructResult: false, delimiter: ';', trim: true, toArrayString:true}));
     st.on("data",function(d){
-      data+=d.toString("utf8");
+      data += d.toString("utf8");
     });
     st.on("end",function(){
-      var obj=JSON.parse(data);
-      assert(obj.length===2);
-      assert(obj[0].annee==2015029);
-      assert(obj[1].annee==2015028);
+      var obj = JSON.parse(data);
+      assert(obj.length === 2);
+      assert(obj[0].annee === 2015029);
+      assert(obj[1].annee === 2015028);
       done();
     });
 
   });
   it ("be able to ignore empty columns",function(done){
-    var testData=__dirname+"/data/dataIgnoreEmpty";
-    var rs=fs.createReadStream(testData)
-    var st=rs.pipe(new CSVAdv({ignoreEmpty:true}))
+    var testData = __dirname + "/data/dataIgnoreEmpty";
+    var rs = fs.createReadStream(testData);
+    var st = rs.pipe(new CSVAdv({ignoreEmpty:true}));
     st.on("end_parsed",function(res){
-      var j=res[0];
-      assert (j.col2.length===1);
-      assert(j.col2[0]==="d3");
-      assert(j.col4.col3===undefined);
-      assert(j.col4.col5==="world");
+      var j = res[0];
+      assert (j.col2.length === 1);
+      assert(j.col2[0] === "d3");
+      assert(j.col4.col3 === undefined);
+      assert(j.col4.col5 === "world");
       done();
     });
 

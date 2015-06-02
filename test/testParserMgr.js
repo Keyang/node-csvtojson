@@ -28,8 +28,8 @@ describe("ParserMgr", function() {
         "item": "item2",
         "resultRow": resultRow
       });
-      assert(resultRow.myArray[0] == "item1");
-      assert(resultRow.myArray[1] == "item2");
+      assert(resultRow.myArray[0] === "item1");
+      assert(resultRow.myArray[1] === "item2");
     });
   });
   describe("json parser", function() {
@@ -50,8 +50,8 @@ describe("ParserMgr", function() {
         "item": "item2",
         "resultRow": resultRow
       });
-      assert(resultRow.myJSON.item1 == "item1");
-      assert(resultRow.myJSON.item2 == "item2");
+      assert(resultRow.myJSON.item1 === "item1");
+      assert(resultRow.myJSON.item2 === "item2");
     });
     it("should parse a json containing array", function() {
       var parser1 = parserMgr.getParser("*json*myJSON.item1[0]");
@@ -87,7 +87,7 @@ describe("ParserMgr", function() {
       });
       assert(resultRow.myJSON.item1);
       assert(resultRow.myJSON.item1.arr.length === 2);
-      assert(resultRow.myJSON.item1.title == "mytitle");
+      assert(resultRow.myJSON.item1.title === "mytitle");
     });
     it("should parse a json containing child json with array containing child json", function() {
       var parser1 = parserMgr.getParser("*json*myJSON.item1.arr[0].title");
@@ -108,7 +108,7 @@ describe("ParserMgr", function() {
       });
       assert(resultRow.myJSON.item1);
       assert(resultRow.myJSON.item1.arr.length === 3);
-      assert(resultRow.myJSON.item1.arr[0].title == "item1");
+      assert(resultRow.myJSON.item1.arr[0].title === "item1");
     });
     it("should parse a json containing child json with dynamic array containing child json", function() {
       var parser1 = parserMgr.getParser("*json*myJSON.item1.arr[].title");
@@ -129,7 +129,7 @@ describe("ParserMgr", function() {
       });
       assert(resultRow.myJSON.item1);
       assert(resultRow.myJSON.item1.arr.length === 3);
-      assert(resultRow.myJSON.item1.arr[2].title == "item3");
+      assert(resultRow.myJSON.item1.arr[2].title === "item3");
     });
     it("should parse a complex JSON's original CSV file", function(done) {
       var converter = new CSVAdv();
@@ -138,17 +138,17 @@ describe("ParserMgr", function() {
       converter.on("end_parsed", function(res) {
         assert(res);
         assert(res.length === 2);
-        assert(res[0].fieldA.title == "Food Factory");
+        assert(res[0].fieldA.title === "Food Factory");
         assert(res[0].fieldA.children.length === 2);
-        assert(res[0].fieldA.children[0].name == "Oscar");
-        assert(res[0].fieldA.children[0].id == "0023");
-        assert(res[0].fieldA.children[1].name == "Tikka");
+        assert(res[0].fieldA.children[0].name === "Oscar");
+        assert(res[0].fieldA.children[0].id === "0023");
+        assert(res[0].fieldA.children[1].name === "Tikka");
         assert(res[0].fieldA.children[1].employee.length === 2);
-        assert(res[0].fieldA.children[1].employee[0].name == "Tim",JSON.stringify(res[0].fieldA.children[1].employee[0] ));
+        assert(res[0].fieldA.children[1].employee[0].name === "Tim",JSON.stringify(res[0].fieldA.children[1].employee[0] ));
         assert(res[0].fieldA.address.length === 2);
-        assert(res[0].fieldA.address[0] == "3 Lame Road");
-        assert(res[0].fieldA.address[1] == "Grantstown");
-        assert(res[0].description == "A fresh new food factory",res[0].description);
+        assert(res[0].fieldA.address[0] === "3 Lame Road");
+        assert(res[0].fieldA.address[1] === "Grantstown");
+        assert(res[0].description === "A fresh new food factory",res[0].description);
         done();
       });
       r.pipe(converter);
@@ -174,8 +174,8 @@ describe("ParserMgr", function() {
         "item": "item2",
         "resultRow": resultRow
       });
-      assert(resultRow.myJSON.item[0] == "item1");
-      assert(resultRow.myJSON.item[1] == "item2");
+      assert(resultRow.myJSON.item[0] === "item1");
+      assert(resultRow.myJSON.item[1] === "item2");
     });
   });
   describe("*omit* parser", function() {
@@ -199,7 +199,7 @@ describe("ParserMgr", function() {
   it("can parse a csv head to parser array", function() {
     var head = ["*array*myArr", "*json*json.item1"];
     var parsers = parserMgr.initParsers(head);
-    assert(parsers[0].name == "array");
-    assert(parsers[1].name == "json");
+    assert(parsers[0].name === "array");
+    assert(parsers[1].name === "json");
   });
 });

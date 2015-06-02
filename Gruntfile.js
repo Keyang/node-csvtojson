@@ -17,8 +17,9 @@ module.exports = function (grunt) {
 			all: {
 				src: files,
 				options: {
-					'globals': {
-						// Add things that are global but not defined by js nativly. Note that standard node globals are already defined.
+					'globals': { // false makes global variable readonly true is read/write
+						'describe': false,
+						'it': false
 					},
 					// see the docs for full list of options http://jshint.com/docs/options/
 					'bitwise': true,
@@ -44,7 +45,7 @@ module.exports = function (grunt) {
 		},
 		mochaTest: {
 			test: {
-				src: (function () {console.log([files[2]]); return [files[2]];}())
+				src: [files[2]]
 			}
 		},
 		watch: {
