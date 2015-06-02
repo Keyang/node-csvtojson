@@ -4,6 +4,13 @@
 	2. run `grunt` in root dir of the repo in a shell to get the watcher started
 		The watcher looks at files. When a file is added or changed it passes the file through jshint
 	3. run `grunt test` to execute all unit tests and get output
+	4. run `grunt jshint` to pass all files through linter
+
+	MADGE instructions
+	1. run `npm install -g madge` to get madge executable
+	2. Insure graphviz is installed and the bin folder is in your path.
+	3. run `madge -x "node_modules|util|stream|os|assert|fs|http" -i graph.png ./` to generate graph.png 
+		which is the dependency graph for the current build. 
 */
 
 module.exports = function (grunt) {

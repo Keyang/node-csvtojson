@@ -63,13 +63,13 @@ csvAdv.prototype._twoDoubleQuote = function(segment){
 //on line poped
 csvAdv.prototype._line = function(line,lastLine){
   this._recordBuffer += line;
-  if (!this._isToogleQuote(this._recordBuffer)){ //if a complete record is in buffer. start the parse
+  if (!this._isToogleQuote(this._recordBuffer)) { //if a complete record is in buffer. start the parse
    var data = this._recordBuffer;
    this._recordBuffer="";
-   this._record(data,this.rowIndex++,lastLine) ;
-  }else{ //if the record in buffer is not a complete record (quote does not match). wait next line
+   this._record(data,this.rowIndex++,lastLine);
+  } else { //if the record in buffer is not a complete record (quote does not match). wait next line
     this._recordBuffer += this.eol;
-   if (lastLine){
+   if (lastLine) {
      throw ("Incomplete CSV file detected. Quotes does not match in pairs. Buffer:"+this._recordBuffer);
    }
    return;
@@ -98,11 +98,9 @@ csvAdv.prototype._transform = function(data, encoding, cb) {
 
   }
   if (this.param.toArrayString && this.rowIndex === 0){
-    this.push("["+this.getEol(),"utf8");
+    this.push("[" + this.getEol(),"utf8");
   }
-  if (this.eol) {
-    //console.log(this._buffer);
-    if (contains(this._buffer, this.eol)) { //if current data contains 1..* line break 
+  if (this.eol && contains(this._buffer, this.eol)) { //if current data contains 1..* line break 
       arr = this._buffer.split(this.eol);
       while (arr.length > 1) {
         data2 = arr.shift();
@@ -110,7 +108,6 @@ csvAdv.prototype._transform = function(data, encoding, cb) {
           //this.emit("record", data, this.rowIndex++);
       }
       this._buffer = arr[0]; //whats left (maybe half line). push to buffer
-    }
   }
   cb();
 };
