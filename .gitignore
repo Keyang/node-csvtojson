@@ -2,3 +2,11 @@
 node_modules/
 *.swp
 *.swo
+
+# intermediate storage (http://gruntjs.com/creating-plugins#storing-task-files)
+.grunt
+
+pids
+logs
+results
+build
