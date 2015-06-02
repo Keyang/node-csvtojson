@@ -1,6 +1,3 @@
-//module interfaces
-module.exports.startWebServer=startWebServer;
-module.exports.applyWebServer=applyWebServer;
 //implementation
 // var express=require("express");
 // var expressApp=express();
@@ -9,27 +6,32 @@ var CSVConverter=require("../../core").Converter;
 var defaultArgs={
     "port":"8801",
     "urlpath":"/parseCSV"
-}
-var server=null;
+};
+var server = null;
 
-function applyWebServer(app,url){
+function applyWebServer(){
     console.error("applyWebServer is deprecated. Use core you create your own handler.");
 }
+function _POSTData(req,res){
+    var converter=new CSVConverter({constructResult:false});
+    req.pipe(converter).pipe(res);
+   
+}
 function startWebServer(args){
-    if (typeof args=="undefined"){
+    if (typeof args === "undefined"){
         args={};
     }
     var serverArgs={};
     for (var key in defaultArgs){
         if (args[key]){
-            serverArgs[key]=args[key];
-        }else{
-            serverArgs[key]=defaultArgs[key];
+            serverArgs[key] = args[key];
+        } else {
+            serverArgs[key] = defaultArgs[key];
         }
     }
-    server=http.createServer();
-    server.on("request",function(req,res){
-        if (req.url==serverArgs.urlpath && req.method =="POST"){
+    server = http.createServer();
+    server.on("request", function(req, res){
+        if (req.url === serverArgs.urlpath && req.method === "POST"){
             _POSTData(req,res);
         }else{
             res.end("Please post data to: "+serverArgs.urlpath);
@@ -47,9 +49,6 @@ function startWebServer(args){
     console.log("POST to "+serverArgs.urlpath+" with CSV data to get parsed.");
     return server;
 }
-
-function _POSTData(req,res){
-    var converter=new CSVConverter({constructResult:false});
-    req.pipe(converter).pipe(res);
-   
-}
+//module interfaces
+module.exports.startWebServer = startWebServer;
+module.exports.applyWebServer = applyWebServer;

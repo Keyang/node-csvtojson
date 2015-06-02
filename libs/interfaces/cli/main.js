@@ -2,32 +2,19 @@
  * Convert input to process stdout
  */
 
-//module interfaces
-module.exports.convertFile=convertFile;
-module.exports.convertString=convertString;
 //implementation
 var Converter=require("../../core").Converter;
-function convertFile(fileName){
-    var csvConverter=_initConverter();
-    csvConverter.from(fileName);
-}
-
-function convertString(csvString){
-    var csvConverter=_initConverter();
-    csvConverter.from(csvString);
-}
-
 function _initConverter(){
-    var csvConverter=new Converter();
-    var started=false;
-    var writeStream=process.stdout;
-   csvConverter.on("record_parsed",function(rowJSON){
+    var csvConverter = new Converter();
+    var started = false;
+    var writeStream = process.stdout;
+    csvConverter.on("record_parsed",function(rowJSON){
         if (started){
             writeStream.write(",\n");
         }
         writeStream.write(JSON.stringify(rowJSON));  //write parsed JSON object one by one.
-        if (started==false){
-            started=true;
+        if (started === false){
+            started = true;
         }
     });
     writeStream.write("[\n"); //write array symbol
@@ -41,3 +28,15 @@ function _initConverter(){
     });
     return csvConverter;
 }
+function convertFile(fileName){
+    var csvConverter=_initConverter();
+    csvConverter.from(fileName);
+}
+
+function convertString(csvString){
+    var csvConverter=_initConverter();
+    csvConverter.from(csvString);
+}
+//module interfaces
+module.exports.convertFile = convertFile;
+module.exports.convertString = convertString;
