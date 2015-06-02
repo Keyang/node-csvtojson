@@ -29,8 +29,8 @@ function csvtojson() {
       }
     }
     console.log("Examples: ");
-    for (var i = 0;i<exps.length;i++){
-      console.log("\t%s",exps[i]);
+    for (var i = 0; i < exps.length; i++) {
+      console.log("\t%s", exps[i]);
     }
     process.exit(errno);
   }
@@ -51,16 +51,13 @@ function csvtojson() {
     web.startWebServer(parsedCmd.options);
   }
   function run(){
-    switch (parsedCmd.cmd){
-      case "parse":
+    if (parsedCmd.cmd === "parse") {
         parse();
-      break;
-      case "startserver":
+    } else if (parsedCmd.cmd === "startserver") {
         startWebServer();
-      break;
-      default:
-        console.log("unknown command %s.",parsedCmd.cmd);
-        _showHelp(1);
+    } else {
+      console.log("unknown command %s.",parsedCmd.cmd);
+      _showHelp(1);
     }
   }
   function commandParser() {
@@ -68,42 +65,37 @@ function csvtojson() {
       if (item.indexOf("--") > -1) {
         var itemArr = item.split("=");
         var optName = itemArr[0];
-        if (opts[optName] === undefined) {
+        var key, val, type, lVal;
+        if (!opts[optName]) {
           console.log("Option %s not supported.", optName);
-          _showHelp();
+          _showHelp(1);
         }
-        var key = optName.replace("--", "");
-        var val = itemArr[1];
-        if (val === undefined) {
-          val = "";
-        }
-        var type = opts[optName].type;
-        switch (type) {
-          case "string":
-            val = val.toString();
-            break;
-          case "boolean":
-            var lVal = val.toLowerCase();
-            if (lVal === "true" || lVal === "y") {
-              val = true;
-            } else if (lVal === "false" || lVal === "n") {
-              val = false;
-            } else {
-              console.log("Unknown boolean value %s for parameter %s.", val, optName);
-              _showHelp(1);
-            }
-            break;
+        key = optName.replace("--", "");
+        val = itemArr[1] ? itemArr[1] : '';
+        type = opts[optName].type;
+        if (type === "string") {
+            parsedCmd.options[key] = val.toString();
+        } else if (type === "boolean") {
+          lVal = val.toLowerCase();
+          if (lVal === "true" || lVal === "y") {
+            val = true;
+          } else if (lVal === "false" || lVal === "n") {
+            val = false;
+          } else {
+            console.log("Unknown boolean value %s for parameter %s.", val, optName);
+            _showHelp(1);
+          }
+        } else {
+          throw {"name": "UnimplementedException", "message": "Option type parsing not implemented. See bin/options.json"};
         }
         parsedCmd.options[key] = val;
       } else {
         if (cmds[item]) {
           parsedCmd.cmd = item;
-        } else {
-          if (fs.existsSync(item)) {
+        } else if (fs.existsSync(item)) {
             parsedCmd.inputStream = fs.createReadStream(item);
-          } else {
-            console.log("unknow parameter %s.",item);
-          }
+        } else {
+          console.log("unknown parameter %s.",item);
         }
       }
     });

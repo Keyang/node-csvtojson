@@ -10,33 +10,20 @@ function Parser (name, regExp, parser){
         }
     }
     if (typeof parser !== "undefined"){
-        this.parse=parser;
+        this.parse = parser;
     }
 }
 Parser.prototype.test = function(str){
-    if (this.regExp === null){
-         return true;
-    }else{
-        return this.regExp.test(str);
-    }
+    return this.regExp && this.regExp.test(str);
 };
-// Parser.prototype.newProcess=function(mixedColumnTitle){
-//     var title=this.getTitle(mixedColumnTitle);
-//     return {
-//         "title"
-//     }
-// }
-// Parser.prototype.getTitle=function(mixedTitle){
-//     return mixedTitle.replace(this.regExp,"");
-// }
 Parser.prototype.parse = function(params){
-    params.resultRow[params.head]=params.item;
+    params.resultRow[params.head] = params.item;
 };
 Parser.prototype.getHead = function(){
   return this.head;
 };
 Parser.prototype.clone = function(){
-  return new Parser(this.name,this.regExp,this.parse);
+  return new Parser(this.name, this.regExp,this.parse);
 };
 Parser.prototype.getName = function(){
   return this.name;
