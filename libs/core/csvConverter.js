@@ -52,7 +52,7 @@ csvAdv.prototype._isToogleQuote = function(segment) {
   var quote = this.param.quote;
   var regExp = new RegExp(quote, "g");
   var match = segment.toString().match(regExp);
-  return match && match.length % 2 === 0;
+  return match && match.length % 2 !== 0;
 };
 //convert two continous double quote to one as per csv definition
 csvAdv.prototype._twoDoubleQuote = function(segment){
@@ -61,56 +61,43 @@ csvAdv.prototype._twoDoubleQuote = function(segment){
   return segment.toString().replace(regExp,quote);
 };
 //on line poped
-csvAdv.prototype._line = function(line,lastLine){
+csvAdv.prototype._line = function(line, lastLine){
   this._recordBuffer += line;
   if (!this._isToogleQuote(this._recordBuffer)){ //if a complete record is in buffer. start the parse
    var data = this._recordBuffer;
    this._recordBuffer="";
-   this._record(data,this.rowIndex++,lastLine) ;
-  }else{ //if the record in buffer is not a complete record (quote does not match). wait next line
+   this._record(data,this.rowIndex++, lastLine) ;
+  } else { //if the record in buffer is not a complete record (quote does not match). wait next line
     this._recordBuffer += this.eol;
-   if (lastLine){
-     throw ("Incomplete CSV file detected. Quotes does not match in pairs.");
-   }
-   return;
+    if (lastLine){
+      throw "Incomplete CSV file detected. Quotes does not match in pairs.";
+    }
   }
 };
 csvAdv.prototype._transform = function(data, encoding, cb) {
-  var data2, arr;
-  function contains(str, subString) {
-    return str.indexOf(subString) > -1;
+  var arr;
+  function getFirstMatch (str, subStringArr) {
+    for (var i = 0; i < subStringArr; i += 1) {
+      if (str.indexOf(subStringArr[i])) {
+        return subStringArr[i];
+      }
+    }
+    return eol;
   }
-  if (encoding === "buffer") {
-    encoding = "utf8";
-  }
+  encoding = encoding === "buffer" ? "utf8" : encoding;
 
   this._buffer += data.toString(encoding);
-  if (!this.eol) {
-    if (contains(this._buffer, "\r\n")) { //csv from windows
-      this.eol = "\r\n";
-    } else if (contains(this._buffer, "\n")) {
-      this.eol = "\n";
-    } else if (contains(this._buffer, "\r")) {
-      this.eol = "\r";
-    } else if (contains(this._buffer, eol)) {
-      this.eol = eol;
-    }
-
-  }
+  this.eol = this.eol ? this.eol : getFirstMatch(this._buffer, ['\r\n', '\n', '\r']);
+  
   if (this.param.toArrayString && this.rowIndex === 0){
     this.push("["+this.getEol(),"utf8");
   }
-  if (this.eol) {
-    //console.log(this._buffer);
-    if (contains(this._buffer, this.eol)) { //if current data contains 1..* line break 
-      arr = this._buffer.split(this.eol);
-      while (arr.length > 1) {
-        data2 = arr.shift();
-        this._line(data2);
-          //this.emit("record", data, this.rowIndex++);
-      }
-      this._buffer = arr[0]; //whats left (maybe half line). push to buffer
+  if (this.eol && this._buffer.indexOf(this.eol) > -1) { //if current data contains 1..* line break 
+    arr = this._buffer.split(this.eol);
+    while (arr.length) {
+      this._line(arr.shift());
     }
+    this._buffer = arr[0]; //whats left (maybe half line). push to buffer
   }
   cb();
 };
@@ -146,7 +133,7 @@ csvAdv.prototype._rowProcess = function(row, index, resultRow) {
       resultRow: resultRow,
       rowIndex: index,
       resultObject: this.resultObject,
-      config:this.param || {}
+      config: this.param || {}
     });
   }
 };
@@ -158,7 +145,7 @@ csvAdv.prototype.fromString = function(csvString, cb) {
     this.push(null);
   };
   rs.pipe(this);
-  if (cb && typeof cb === "function") {
+  if (typeof cb === "function") {
     this._callback = cb;
   }
 

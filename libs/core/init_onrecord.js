@@ -11,7 +11,6 @@ module.exports = function() {
     var row = [];
     var inquote = false;
     var quoteBuff = "";
-    var ele;
     rowArr.forEach(function (ele) {
       if (self._isToogleQuote(ele)) {//if current col has odd quotes, switch quote status
         if (inquote) {//if currently in open quote status, close it and output data
