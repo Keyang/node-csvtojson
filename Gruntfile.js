@@ -3,7 +3,7 @@ module.exports = function (grunt) {
 	grunt.loadNpmTasks('grunt-mocha-test');
 	grunt.initConfig({
 		jshint: {
-			files: ['Gruntfile.js', 'libs/**/*.js', 'test/data/*.js', 'bin/csvtojson'],
+			files: ['Gruntfile.js', 'libs/**/*.js', 'test/data/*.js', 'bin/csvtojson', 'bin/csvtojson.js'],
 			options: {
 				'globals': {
 					// Add things that are global but not defined by js nativly. Note that standard node globals are already defined.
