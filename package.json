@@ -42,10 +42,12 @@
   "devDependencies": {
     "grunt": "^0.4.5",
     "grunt-contrib-jshint": "^0.11.2",
+    "grunt-contrib-watch": "^0.6.1",
     "grunt-mocha-test": "^0.12.7",
+    "grunt-newer": "^1.1.0",
     "mocha": "^2.2.5"
   },
-  "dependencies":{
+  "dependencies": {
     "underscore": "^1.8.3"
   }
 }
