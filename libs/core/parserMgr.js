@@ -2,7 +2,7 @@
 var registeredParsers = [];
 var Parser = require("./parser.js");
 var _ = require('underscore');
-var defaultParser=require("./defaultParsers.js");
+var defaultParser = require("./defaultParsers");
 
 function registerParser(parser) {
   if (parser instanceof Parser && registeredParsers.indexOf(parser) === -1) {

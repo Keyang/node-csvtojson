@@ -1,1 +1,1 @@
-module.exports=require("./libs/csv2json.js");
+module.exports = require("./libs/csv2json.js");
