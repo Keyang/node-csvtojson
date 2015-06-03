@@ -1,19 +1,18 @@
-var CSVAdv = require("../libs/core/csvConverter.js");
+var Converter = require("../libs/core/csvConverter.js");
 var assert = require("assert");
 var fs = require("fs");
 var file = __dirname + "/data/testData";
 var trailCommaData = __dirname + "/data/trailingComma";
 describe("CSV Converter", function() {
   it("should create new instance of csv", function() {
-    var obj = new CSVAdv();
+    var obj = new Converter();
     assert(obj);
   });
 
   it("should read from a stream", function(done) {
-    var obj = new CSVAdv();
+    var obj = new Converter();
     var stream = fs.createReadStream(file);
-    obj.on("end_parsed", function(obj) {
-      // console.log(obj);
+    obj.on("end_parsed", function (obj) {
       assert(obj.length === 2);
       done();
     });
@@ -21,7 +20,7 @@ describe("CSV Converter", function() {
   });
 
   it("should emit record_parsed message once a row is parsed.", function(done) {
-    var obj = new CSVAdv();
+    var obj = new Converter();
     var stream = fs.createReadStream(file);
     obj.on("record_parsed", function(resultRow) {
       assert(resultRow);
@@ -33,7 +32,7 @@ describe("CSV Converter", function() {
   });
 
   it("should emit end_parsed message once it is finished.", function(done) {
-    var obj = new CSVAdv();
+    var obj = new Converter();
     var stream = fs.createReadStream(file);
     obj.on("end_parsed", function(result) {
       assert(result);
@@ -53,11 +52,10 @@ describe("CSV Converter", function() {
 
   it("should handle traling comma gracefully", function(done) {
     var stream = fs.createReadStream(trailCommaData);
-    var obj = new CSVAdv();
+    var obj = new Converter();
     obj.on("end_parsed", function(result) {
       assert(result);
       assert(result.length > 0);
-      //console.log(JSON.stringify(result));
       done();
     });
     stream.pipe(obj);
@@ -65,7 +63,7 @@ describe("CSV Converter", function() {
   it("should handle comma in column which is surrounded by qoutes", function(done) {
     var testData = __dirname + "/data/dataWithComma";
     var rs = fs.createReadStream(testData);
-    var obj = new CSVAdv({
+    var obj = new Converter({
       "quote": "#"
     });
     obj.on("end_parsed", function(result) {
@@ -81,11 +79,10 @@ describe("CSV Converter", function() {
     var columArrData = __dirname + "/data/columnArray";
     var rs = fs.createReadStream(columArrData);
     var result = {};
-    var csvConverter = new CSVAdv();
+    var csvConverter = new Converter();
     //end_parsed will be emitted once parsing finished
     csvConverter.on("end_parsed", function() {
       assert(result.TIMESTAMP.length === 5);
-
       done();
     });
 
@@ -99,14 +96,13 @@ describe("CSV Converter", function() {
           result[key][rowIndex] = resultRow[key];
         }
       }
-
     });
     rs.pipe(csvConverter);
   });
   it("should be able to convert csv string directly", function(done) {
     var testData = __dirname + "/data/testData";
     var data = fs.readFileSync(testData).toString();
-    var csvConverter = new CSVAdv();
+    var csvConverter = new Converter();
     //end_parsed will be emitted once parsing finished
     csvConverter.on("end_parsed", function(jsonObj) {
       assert(jsonObj.length === 2);
@@ -119,7 +115,7 @@ describe("CSV Converter", function() {
   it("should be able to convert csv string without callback provided", function(done) {
     var testData = __dirname + "/data/testData";
     var data = fs.readFileSync(testData).toString();
-    var csvConverter = new CSVAdv();
+    var csvConverter = new Converter();
     //end_parsed will be emitted once parsing finished
     csvConverter.on("end_parsed", function(jsonObj) {
       assert(jsonObj.length === 2);
@@ -130,8 +126,7 @@ describe("CSV Converter", function() {
   it("should be able to handle columns with double quotes", function(done) {
     var testData = __dirname + "/data/dataWithQoutes";
     var data = fs.readFileSync(testData).toString();
-    var csvConverter = new CSVAdv();
-    //end_parsed will be emitted once parsing finished
+    var csvConverter = new Converter();
     csvConverter.on("end_parsed", function() {});
     csvConverter.fromString(data, function(err, jsonObj) {
       //console.log(jsonObj);
@@ -144,8 +139,7 @@ describe("CSV Converter", function() {
   it("should be able to handle columns with two double quotes", function(done) {
     var testData = __dirname + "/data/twodoublequotes";
     var data = fs.readFileSync(testData).toString();
-    var csvConverter = new CSVAdv();
-    //end_parsed will be emitted once parsing finished
+    var csvConverter = new Converter();
     csvConverter.on("end_parsed", function() {});
     csvConverter.fromString(data, function(err, jsonObj) {
       assert(jsonObj[0].data === "xyabcde", jsonObj);
@@ -157,7 +151,7 @@ describe("CSV Converter", function() {
   it("should handle empty csv file", function(done) {
     var testData = __dirname + "/data/emptyFile";
     var rs = fs.createReadStream(testData);
-    var csvConverter = new CSVAdv();
+    var csvConverter = new Converter();
     csvConverter.on("end_parsed", function(jsonObj) {
       assert(jsonObj.length === 0);
       done();
@@ -166,34 +160,34 @@ describe("CSV Converter", function() {
   });
   it ("shoudl parse large csv file",function(done){
     var testData=__dirname+"/data/large-csv-sample.csv";
-    var rs=fs.createReadStream(testData);
-    var csvConverter=new CSVAdv({
+    var rs = fs.createReadStream(testData);
+    var csvConverter = new Converter({
       constructResult:false
     });
-    var count=0;
+    var count = 0;
     csvConverter.on("record_parsed", function () {
       count++;
     });
     csvConverter.on("end_parsed", function () {
-      assert(count===5290);
+      assert(count === 5290);
       done();
     });
     rs.pipe(csvConverter);
   });
   it ("should parse data and covert to specific types",function(done){
-    var testData=__dirname+"/data/dataWithType";
-    var rs=fs.createReadStream(testData);
-    var csvConverter=new CSVAdv();
+    var testData = __dirname + "/data/dataWithType";
+    var rs = fs.createReadStream(testData);
+    var csvConverter=new Converter();
     csvConverter.on("record_parsed",function(d){
       assert(typeof d.column1 === "number");
       assert(typeof d.column2 === "string");
       assert( d.column3 instanceof Date === true);
-      assert(d.colume4==="someinvaliddate");
-      assert(d.column5.hello==="world");
-      assert(d.column6==='{"hello":"world"}');
-      assert(d.column7==="1234");
-      assert(d.column8==="abcd");
-      assert(d.column9===true);
+      assert(d.colume4 === "someinvaliddate");
+      assert(d.column5.hello === "world");
+      assert(d.column6 === '{"hello":"world"}');
+      assert(d.column7 === "1234");
+      assert(d.column8 === "abcd");
+      assert(d.column9 === true);
     });
     csvConverter.on("end_parsed",function(){
       done();
@@ -201,9 +195,9 @@ describe("CSV Converter", function() {
     rs.pipe(csvConverter);
   });
   it ("should turn off field type check",function(done){
-    var testData=__dirname+"/data/dataWithType";
-    var rs=fs.createReadStream(testData);
-    var csvConverter=new CSVAdv({
+    var testData = __dirname + "/data/dataWithType";
+    var rs = fs.createReadStream(testData);
+    var csvConverter = new Converter({
       checkType:false
     });
     csvConverter.on("record_parsed",function(d){
@@ -223,29 +217,29 @@ describe("CSV Converter", function() {
     rs.pipe(csvConverter);
   });
   it ("should emit data event correctly",function(done){
-    var testData=__dirname+"/data/large-csv-sample.csv";
-    var rs=fs.createReadStream(testData);
-    var csvConverter=new CSVAdv({
-      constructResult:false
+    var testData = __dirname + "/data/large-csv-sample.csv";
+    var rs = fs.createReadStream(testData);
+    var csvConverter = new Converter({
+      constructResult: false
     });
-    var count=0;
+    var count = 0;
     csvConverter.on("data", function () {
       count++;
     });
     csvConverter.on("end",function(){
-      assert(count===5290);
+      assert(count === 5290);
       done();
     });
     rs.pipe(csvConverter);
   });
   it ("should process column with linebreaks",function(done){
-    var testData=__dirname+"/data/lineBreak";
-    var rs=fs.createReadStream(testData);
-    var csvConverter=new CSVAdv({
-      constructResult:false
+    var testData = __dirname + "/data/lineBreak";
+    var rs = fs.createReadStream(testData);
+    var csvConverter = new Converter({
+      constructResult: false
     });
     csvConverter.on("record_parsed",function(d){
-      assert(d.Period===13);
+      assert(d.Period === 13);
       assert(d["Apparent age"] === "Unknown");
       done();
     });
@@ -255,7 +249,7 @@ describe("CSV Converter", function() {
     var testData = __dirname + "/data/dataDiffDelimiter";
     var rs = fs.createReadStream(testData);
     var data = "";
-    var st = rs.pipe(new CSVAdv({ constructResult: false, delimiter: ';', trim: true, toArrayString:true}));
+    var st = rs.pipe(new Converter({ constructResult: false, delimiter: ';', trim: true, toArrayString:true}));
     st.on("data",function(d){
       data += d.toString("utf8");
     });
@@ -271,7 +265,7 @@ describe("CSV Converter", function() {
   it ("be able to ignore empty columns",function(done){
     var testData = __dirname + "/data/dataIgnoreEmpty";
     var rs = fs.createReadStream(testData);
-    var st = rs.pipe(new CSVAdv({ignoreEmpty:true}));
+    var st = rs.pipe(new Converter({ignoreEmpty:true}));
     st.on("end_parsed",function(res){
       var j = res[0];
       assert (j.col2.length === 1);

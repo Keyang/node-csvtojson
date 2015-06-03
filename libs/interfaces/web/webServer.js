@@ -1,44 +1,31 @@
 var http = require("http");
-var CSVConverter = require("../../core/csvConverter");
-var defaultArgs = {
-    "port":"8801",
-    "urlpath":"/parseCSV"
-};
-var server = null;
+var Converter = require("../../core/csvConverter.js");
 
-function applyWebServer(){
+
+function applyWebServer () {
     console.error("applyWebServer is deprecated. Use core you create your own handler.");
 }
-function _POSTData(req,res){
-    var converter=new CSVConverter({constructResult:false});
-    req.pipe(converter).pipe(res);
-   
-}
-function startWebServer(args){
-    if (typeof args === "undefined") {
-        args = {};
-    }
-    var serverArgs = {};
-    for (var key in defaultArgs){
-        if (args[key]){
-            serverArgs[key] = args[key];
-        } else {
-            serverArgs[key] = defaultArgs[key];
-        }
-    }
-    server = http.createServer();
+function startWebServer (args) {
+    args = args || {};
+    var serverArgs = {
+        port: args.port || '8801',
+        urlpath: args.urlpath || '/parseCSV'
+    };
+    var server = http.createServer();
     server.on("request", function(req, res){
         if (req.url === serverArgs.urlpath && req.method === "POST"){
-            _POSTData(req,res);
-        }else{
+            req.pipe(new Converter({constructResult:false})).pipe(res);
+        } else {
             res.end("Please post data to: " + serverArgs.urlpath);
         }
     });
 
     server.listen(serverArgs.port);
-    console.log("CSV Web Server Listen On:"+serverArgs.port);
-    console.log("POST to "+serverArgs.urlpath+" with CSV data to get parsed.");
+    console.log("CSV Web Server Listen On:" + serverArgs.port);
+    console.log("POST to " + serverArgs.urlpath + " with CSV data to get parsed.");
     return server;
 }
 module.exports.startWebServer = startWebServer;
-module.exports.applyWebServer = applyWebServer;
+module.exports.applyWebServer = function applyWebServer () {
+    throw {name: "deprecated", message: "applyWebServer is deprecated. Use core you create your own handler. Will be removed soon."};
+};

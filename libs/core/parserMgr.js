@@ -4,12 +4,12 @@ var Parser = require("./parser.js");
 var _ = require('underscore');
 var defaultParser = require("./defaultParsers");
 
-function registerParser(parser) {
+function registerParser (parser) {
   if (parser instanceof Parser && registeredParsers.indexOf(parser) === -1) {
     registeredParsers.push(parser); // TODO indexOf doesn't work with object references
   }
 }
-function splitTitle(columnTitle){
+function splitTitle (columnTitle){
   var splitArr = columnTitle.split("#");
   if (splitArr.length === 1){
     splitArr.unshift("");
@@ -22,7 +22,7 @@ function splitTitle(columnTitle){
   }
   return splitArr;
 }
-function getParser(columnTitle, checkType) {
+function getParser (columnTitle, checkType) {
   var inst, parser;
   var type = "";
   function getParserByName (parserName, columnTitle) {
@@ -54,12 +54,12 @@ function getParser(columnTitle, checkType) {
   inst.type = type;
   return inst;
 }
-function addParser(name, regExp, parseFunc) {
+function addParser (name, regExp, parseFunc) {
   var parser = new Parser(name, regExp, parseFunc); //TODO remove new
   registerParser(parser);
 }
 
-function initParsers(row, checkType) {
+function initParsers (row, checkType) {
   var parsers = [];
   row.forEach(function (columnTitle) {
     parsers.push(getParser(columnTitle, checkType));

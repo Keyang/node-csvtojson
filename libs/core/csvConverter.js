@@ -125,7 +125,7 @@ csvAdv.prototype.getEol = function() {
 };
 csvAdv.prototype._headRowProcess = function(headRow) {
   this.headRow = headRow;
-  this.parseRules = parserMgr.initParsers(headRow,this.param.checkType);
+  this.parseRules = parserMgr.initParsers(headRow, this.param.checkType);
 };
 csvAdv.prototype._rowProcess = function(row, index, resultRow) {
   for (var i = 0; i < this.parseRules.length; i++) {

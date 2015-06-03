@@ -1,6 +1,6 @@
 function csvtojson() {
   var web = require("../libs/interfaces").web;
-  var Converter = require("../libs/core").Converter;
+  var Converter = require("../libs/core/csvConverter");
   var fs = require("fs");
   var options = require("./options.json");
   var cmds = options.commands;
