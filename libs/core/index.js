@@ -1,1 +1,0 @@
-module.exports.Converter = require("./csvConverter.js");

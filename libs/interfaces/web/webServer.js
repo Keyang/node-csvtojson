@@ -1,5 +1,5 @@
 var http = require("http");
-var CSVConverter = require("../../core").Converter;
+var CSVConverter = require("../../core/csvConverter");
 var defaultArgs = {
     "port":"8801",
     "urlpath":"/parseCSV"
