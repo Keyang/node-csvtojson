@@ -21,9 +21,7 @@ function splitTitle(columnTitle){
     return rtn;
   }
   return splitArr;
-
 }
-
 function getParser(columnTitle, checkType) {
   var inst, parser;
   var type = "";
@@ -36,7 +34,7 @@ function getParser(columnTitle, checkType) {
       inst.head = columnTitle;
       return inst;
     }
-    return new Parser();
+    return new Parser(); //TODO remove new
   }
   columnTitle = columnTitle ? columnTitle : '';
   if (checkType){
@@ -57,7 +55,7 @@ function getParser(columnTitle, checkType) {
   return inst;
 }
 function addParser(name, regExp, parseFunc) {
-  var parser = new Parser(name, regExp, parseFunc);
+  var parser = new Parser(name, regExp, parseFunc); //TODO remove new
   registerParser(parser);
 }
 

@@ -3,7 +3,7 @@
  */
 
 //implementation
-var Converter=require("../../core").Converter;
+var Converter = require("../../core").Converter;
 function _initConverter(){
     var csvConverter = new Converter();
     var started = false;

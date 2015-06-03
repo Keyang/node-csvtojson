@@ -1,9 +1,6 @@
-//implementation
-// var express=require("express");
-// var expressApp=express();
-var http=require("http");
-var CSVConverter=require("../../core").Converter;
-var defaultArgs={
+var http = require("http");
+var CSVConverter = require("../../core").Converter;
+var defaultArgs = {
     "port":"8801",
     "urlpath":"/parseCSV"
 };
@@ -18,10 +15,10 @@ function _POSTData(req,res){
    
 }
 function startWebServer(args){
-    if (typeof args === "undefined"){
-        args={};
+    if (typeof args === "undefined") {
+        args = {};
     }
-    var serverArgs={};
+    var serverArgs = {};
     for (var key in defaultArgs){
         if (args[key]){
             serverArgs[key] = args[key];
@@ -34,21 +31,14 @@ function startWebServer(args){
         if (req.url === serverArgs.urlpath && req.method === "POST"){
             _POSTData(req,res);
         }else{
-            res.end("Please post data to: "+serverArgs.urlpath);
+            res.end("Please post data to: " + serverArgs.urlpath);
         }
     });
 
     server.listen(serverArgs.port);
-   //expressApp.use(express.bodyParser());
-    // expressApp.post(serverArgs.urlpath,_POSTData);
-    // expressApp.get("/",function(req,res){
-    //     res.end("POST to "+serverArgs.urlpath+" with CSV data to get parsed.");
-    // });
-    // expressApp.listen(serverArgs.port);
     console.log("CSV Web Server Listen On:"+serverArgs.port);
     console.log("POST to "+serverArgs.urlpath+" with CSV data to get parsed.");
     return server;
 }
-//module interfaces
 module.exports.startWebServer = startWebServer;
 module.exports.applyWebServer = applyWebServer;
