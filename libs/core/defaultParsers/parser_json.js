@@ -11,21 +11,16 @@ module.exports = {
       if (type === 'date') {
           var d = new Date(item);
           return isNaN(d.getTime()) ? item : d;
-      } else if (type === 'number') {
-          if (!isNaN(item)) {
-            return parseFloat(item);
-          } else {
-            return item;
-          }
+      } else if (type === 'number' && !isNaN(item)) {
+        return parseFloat(item);
       } else if (type === '') {
         try {
           return JSON.parse(item);
         } catch (e) {
           return item;
         }
-      } else {
-          return item;
       }
+      return item;
     }
     while (headArr.length > 1) { //go through all children
       var headStr = headArr.shift();
@@ -35,7 +30,7 @@ module.exports = {
           pointer[headStr.replace(match[0], '')] = [];
         }
         index = match[1]; //get index where json object should stay 
-        pointer = pointer[headStr.replace(match[0], "")];
+        pointer = pointer[headStr.replace(match[0], '')];
         if (index === "") { //if its dynamic array index, push to the end
           index = pointer.length;
         }
@@ -55,16 +50,16 @@ module.exports = {
     match = key.match(arrReg);
     if (match) { // the last element is an array, we need check and treat it as an array.
       index = match[1];
-      key = key.replace(match[0], "");
+      key = key.replace(match[0], '');
       if (!pointer[key] || !(pointer[key] instanceof Array)) {
         pointer[key] = [];
       }
-      if (index === "") {
+      if (index === '') {
         index = pointer[key].length;
       }
       pointer[key][index] = params.item;
     } else if (params.config && params.config.checkType) {   //last element is normal   
-      pointer[key] = parseParamType(this.type, params.item); 
+      pointer[key] = parseParamType(this.type, params.item);
     } else {
         pointer[key] = params.item;
     }
