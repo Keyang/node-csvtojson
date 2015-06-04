@@ -6,8 +6,8 @@ var Result = require("./Result");
 var os = require("os");
 var eol = os.EOL;
 
-function csvAdv(params) {
-  Transform.call(this);
+function Converter (params) {
+  Transform.call(this); //TODO what does this do?
   var _param = {
     "constructResult": true, //set to false to not construct result in memory. suitable for big csv data
     "delimiter": ",", // change the delimiter of csv columns
@@ -43,39 +43,39 @@ function csvAdv(params) {
   this.init();
   return this;
 }
-utils.inherits(csvAdv, Transform);
-csvAdv.prototype.init = function() {
+utils.inherits(Converter, Transform);
+Converter.prototype.init = function () {
   require("./init_onend.js").call(this);
   require("./init_onrecord.js").call(this);
 };
-csvAdv.prototype._isToogleQuote = function(segment) {
+Converter.prototype._isToogleQuote = function (segment) {
   var quote = this.param.quote;
   var regExp = new RegExp(quote, "g");
   var match = segment.toString().match(regExp);
   return match && match.length % 2 !== 0;
 };
 //convert two continous double quote to one as per csv definition
-csvAdv.prototype._twoDoubleQuote = function(segment){
+Converter.prototype._twoDoubleQuote = function (segment){
   var quote = this.param.quote;
   var regExp = new RegExp(quote+quote, "g");
   return segment.toString().replace(regExp,quote);
 };
 //on line poped
-csvAdv.prototype._line = function(line,lastLine){
+Converter.prototype._line = function (line, lastLine){
   this._recordBuffer += line;
   if (!this._isToogleQuote(this._recordBuffer)) { //if a complete record is in buffer. start the parse
    var data = this._recordBuffer;
    this._recordBuffer="";
-   this._record(data,this.rowIndex++,lastLine);
+   this._record(data, this.rowIndex++, lastLine);
   } else { //if the record in buffer is not a complete record (quote does not match). wait next line
     this._recordBuffer += this.eol;
    if (lastLine) {
-     throw ("Incomplete CSV file detected. Quotes does not match in pairs. Buffer:"+this._recordBuffer);
+     throw ("Incomplete CSV file detected. Quotes does not match in pairs. Buffer:" + this._recordBuffer);
    }
    return;
   }
 };
-csvAdv.prototype._transform = function(data, encoding, cb) {
+Converter.prototype._transform = function (data, encoding, cb) {
   var data2, arr;
   function contains(str, subString) {
     return str.indexOf(subString) > -1;
@@ -105,13 +105,12 @@ csvAdv.prototype._transform = function(data, encoding, cb) {
       while (arr.length > 1) {
         data2 = arr.shift();
         this._line(data2);
-          //this.emit("record", data, this.rowIndex++);
       }
       this._buffer = arr[0]; //whats left (maybe half line). push to buffer
   }
   cb();
 };
-csvAdv.prototype._flush = function(cb) {
+Converter.prototype._flush = function (cb) {
   if (this._buffer.length !== 0) { //finished but still has buffer data. emit last line
     this._line(this._buffer,  true);
   }
@@ -120,14 +119,14 @@ csvAdv.prototype._flush = function(cb) {
   }
   cb();
 };
-csvAdv.prototype.getEol = function() {
+Converter.prototype.getEol = function () {
   return this.eol ? this.eol : eol;
 };
-csvAdv.prototype._headRowProcess = function(headRow) {
+Converter.prototype._headRowProcess = function (headRow) {
   this.headRow = headRow;
   this.parseRules = parserMgr.initParsers(headRow, this.param.checkType);
 };
-csvAdv.prototype._rowProcess = function(row, index, resultRow) {
+Converter.prototype._rowProcess = function (row, index, resultRow) {
   for (var i = 0; i < this.parseRules.length; i++) {
     var item = row[i];
     if (this.param.ignoreEmpty === true && item === ""){
@@ -143,14 +142,14 @@ csvAdv.prototype._rowProcess = function(row, index, resultRow) {
       resultRow: resultRow,
       rowIndex: index,
       resultObject: this.resultObject,
-      config:this.param || {}
+      config: this.param || {}
     });
   }
 };
 
-csvAdv.prototype.fromString = function(csvString, cb) {
+Converter.prototype.fromString = function (csvString, cb) {
   var rs = new Readable();
-  rs._read = function() {
+  rs._read = function () {
     this.push(csvString);
     this.push(null);
   };
@@ -160,4 +159,4 @@ csvAdv.prototype.fromString = function(csvString, cb) {
   }
 
 };
-module.exports = csvAdv;
+module.exports = Converter;

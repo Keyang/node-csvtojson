@@ -3,7 +3,7 @@
  */
 
 //implementation
-var Converter = require("../../core/csvConverter");
+var Converter = require("../../core/Converter.js");
 function _initConverter(){
     var csvConverter = new Converter();
     var started = false;

@@ -1,2 +1,2 @@
-module.exports.core = require("./core");
+module.exports.Converter = require("./core/Converter.js");
 module.exports.interfaces = require("./interfaces");

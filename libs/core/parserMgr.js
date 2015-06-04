@@ -11,11 +11,12 @@ function registerParser (parser) {
 }
 function splitTitle (columnTitle){
   var splitArr = columnTitle.split("#");
+  var rtn;
   if (splitArr.length === 1){
     splitArr.unshift("");
     return splitArr;
   } else if (splitArr.length > 2) {
-    var rtn = [];
+    rtn = [];
     rtn.push(splitArr.shift());
     rtn.push(splitArr.join("#"));
     return rtn;
@@ -40,7 +41,7 @@ function getParser (columnTitle, checkType) {
   if (checkType){
     var split = splitTitle(columnTitle);
     type = split[0];
-    columnTitle=split[1];
+    columnTitle = split[1];
   }
   parser = _.find(registeredParsers, function (parser) {
     return parser.test(columnTitle);
@@ -66,7 +67,7 @@ function initParsers (row, checkType) {
   });
   return parsers;
 }
-defaultParser.forEach(function(parserCfg){
+defaultParser.forEach(function (parserCfg){
   addParser(parserCfg.name, parserCfg.regExp, parserCfg.parserFunc);
 });
 

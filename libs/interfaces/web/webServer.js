@@ -1,10 +1,5 @@
 var http = require("http");
-var Converter = require("../../core/csvConverter.js");
-
-
-function applyWebServer () {
-    console.error("applyWebServer is deprecated. Use core you create your own handler.");
-}
+var Converter = require("../../core/Converter.js");
 function startWebServer (args) {
     args = args || {};
     var serverArgs = {
@@ -26,6 +21,3 @@ function startWebServer (args) {
     return server;
 }
 module.exports.startWebServer = startWebServer;
-module.exports.applyWebServer = function applyWebServer () {
-    throw {name: "deprecated", message: "applyWebServer is deprecated. Use core you create your own handler. Will be removed soon."};
-};

@@ -1,6 +1,7 @@
 var assert = require("assert");
 var parserMgr = require("../libs/core/parserMgr.js");
-var Converter = require("../libs/core/csvConverter.js");
+var Converter = require("../libs/core/Converter.js");
+var fs = require("fs");
 describe("ParserMgr", function() {
   it("should add a correct parser", function() {
     parserMgr.addParser("myparserName", /myParser.+/, function() {});
@@ -131,9 +132,8 @@ describe("ParserMgr", function() {
       assert(resultRow.myJSON.item1.arr.length === 3);
       assert(resultRow.myJSON.item1.arr[2].title === "item3");
     });
-    it("should parse a complex JSON's original CSV file", function(done) {
+    it("should parse a complex JSON's original CSV file", function (done) {
       var converter = new Converter();
-      var fs = require("fs");
       var r = fs.createReadStream(__dirname + "/data/complexJSONCSV");
       converter.on("end_parsed", function (res) {
         assert(res);
@@ -154,13 +154,13 @@ describe("ParserMgr", function() {
       r.pipe(converter);
     });
   });
-  describe("json array parser", function() {
-    it("should return an json array parser with specific column title", function() {
+  describe("json array parser", function () {
+    it("should return an json array parser with specific column title", function () {
       var parser = parserMgr.getParser("*jsonarray*myJSON.item");
       assert(parser.name === "jsonarray");
     });
 
-    it("should parse as an json array with multiple columns", function() {
+    it("should parse as an json array with multiple columns", function () {
       var parser1 = parserMgr.getParser("*jsonarray*myJSON.item");
       var parser2 = parserMgr.getParser("*jsonarray*myJSON.item");
       var resultRow = {};
