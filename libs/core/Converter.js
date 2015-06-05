@@ -61,9 +61,10 @@ Converter.prototype._twoDoubleQuote = function (segment){
 };
 //on line poped
 Converter.prototype._line = function (line, lastLine){
+  var data;
   this._recordBuffer += line;
   if (!this._isToogleQuote(this._recordBuffer)) { //if a complete record is in buffer. start the parse
-   var data = this._recordBuffer;
+   data = this._recordBuffer;
    this._recordBuffer = '';
    this._record(data, this.rowIndex++, lastLine);
   } else { //if the record in buffer is not a complete record (quote does not match). wait next line
@@ -74,35 +75,27 @@ Converter.prototype._line = function (line, lastLine){
   }
 };
 Converter.prototype._transform = function (data, encoding, cb) {
-  var data2, arr;
-  function contains(str, subString) {
+  var arr;
+  function contains (str, subString) {
     return str.indexOf(subString) > -1;
   }
   if (encoding === "buffer") {
     encoding = "utf8";
   }
-
   this._buffer += data.toString(encoding);
   if (!this.eol) {
-    if (contains(this._buffer, "\r\n")) { //csv from windows
-      this.eol = "\r\n";
-    } else if (contains(this._buffer, "\n")) {
-      this.eol = "\n";
-    } else if (contains(this._buffer, "\r")) {
-      this.eol = "\r";
-    } else if (contains(this._buffer, eol)) {
-      this.eol = eol;
-    }
-
+    this.eol = contains(this._buffer, '\r\n') ? '\r\n' :
+               contains(this._buffer, '\n')   ? '\n'   :
+               contains(this._buffer, '\r')   ? '\r'   :
+               eol;
   }
   if (this.param.toArrayString && this.rowIndex === 0){
     this.push("[" + this.getEol(),"utf8");
   }
-  if (this.eol && contains(this._buffer, this.eol)) { //if current data contains 1..* line break 
-      arr = this._buffer.split(this.eol);
+  if (contains(this._buffer, this.getEol())) { //if current data contains 1..* line break 
+      arr = this._buffer.split(this.getEol());
       while (arr.length > 1) {
-        data2 = arr.shift();
-        this._line(data2);
+        this._line(arr.shift());
       }
       this._buffer = arr[0]; //whats left (maybe half line). push to buffer
   }
