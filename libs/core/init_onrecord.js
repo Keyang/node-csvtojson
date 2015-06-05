@@ -1,55 +1,55 @@
 /**
  *Subscriptor of record event of Converter
  */
-module.exports = function() {
-  var self = this;
+module.exports = function () {
+  var that = this;
   
-  this._record = function(rowStr, index) {
-    var quote = self.param.quote;
-    var delimiter = self.param.delimiter;
+  this._record = function (rowStr, index) {
+    var quote = that.param.quote;
+    var delimiter = that.param.delimiter;
     var rowArr = rowStr.split(delimiter);
     var row = [];
     var inquote = false;
-    var quoteBuff = "";
+    var quoteBuff = '';
     rowArr.forEach(function (ele) {
-      if (self._isToogleQuote(ele)) {//if current col has odd quotes, switch quote status
+      if (that._isToogleQuote(ele)) {//if current col has odd quotes, switch quote status
         if (inquote) {//if currently in open quote status, close it and output data
           quoteBuff += delimiter;
           inquote = false;
-          quoteBuff += self._twoDoubleQuote(ele.substr(0, ele.length - 1));
-          if (self.param.trim){
+          quoteBuff += that._twoDoubleQuote(ele.substr(0, ele.length - 1));
+          if (that.param.trim){
             quoteBuff = quoteBuff.toString().trim();
           }
           row.push(quoteBuff);
           quoteBuff = "";
         } else {// currently not in open quote status, open it
           inquote = true;
-          quoteBuff += self._twoDoubleQuote(ele.substring(1));
+          quoteBuff += that._twoDoubleQuote(ele.substring(1));
         }
       } else {// if current col has even quotes, do not switch quote status
         if (inquote) {//if current status is in quote, add to buffer wait to close
-          quoteBuff += delimiter + self._twoDoubleQuote(ele);
+          quoteBuff += delimiter + that._twoDoubleQuote(ele);
         } else {// if current status is not in quote, out put data
           if (ele.indexOf(quote) === 0 && ele[ele.length - 1] === quote) {//if current col contain full quote segment,remove quote first
             ele = ele.substring(1, ele.length - 1);
           }
-          if (self.param.trim){
+          if (that.param.trim){
             ele = ele.toString().trim();
           }
-          row.push(self._twoDoubleQuote(ele));
+          row.push(that._twoDoubleQuote(ele));
         }
       }
     });
     if (index === 0) {
-      self._headRowProcess(row);
+      that._headRowProcess(row);
     } else if (rowStr.length > 0) {
       var resultRow = {};
-      self._rowProcess(row, index, resultRow);
-      self.emit("record_parsed", resultRow, row, index - 1);
-      if (self.param.toArrayString && index > 1){
-        self.push("," + self.eol);
+      that._rowProcess(row, index, resultRow);
+      that.emit("record_parsed", resultRow, row, index - 1);
+      if (that.param.toArrayString && index > 1){
+        that.push("," + that.eol);
       }
-      self.push(JSON.stringify(resultRow), "utf8");
+      that.push(JSON.stringify(resultRow), "utf8");
     }
   };
 };

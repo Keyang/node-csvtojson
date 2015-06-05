@@ -72,7 +72,6 @@ Converter.prototype._line = function (line, lastLine){
    if (lastLine) {
      throw ("Incomplete CSV file detected. Quotes does not match in pairs. Buffer:" + this._recordBuffer);
    }
-   return;
   }
 };
 Converter.prototype._transform = function (data, encoding, cb) {
@@ -159,4 +158,5 @@ Converter.prototype.fromString = function (csvString, cb) {
   }
 
 };
+
 module.exports = Converter;

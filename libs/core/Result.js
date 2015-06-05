@@ -4,8 +4,8 @@ var util = require("util");
 function Result(csvParser) {
   Writable.call(this);
   this.parser = csvParser;
-  this.param=csvParser.param;
-  this.buffer =this.param.toArrayString?"":"["+csvParser.getEol();
+  this.param = csvParser.param;
+  this.buffer = this.param.toArrayString?"":"["+csvParser.getEol();
   this.started = false;
   var self = this;
   this.parser.on("end", function() {
