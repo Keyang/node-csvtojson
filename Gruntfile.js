@@ -18,7 +18,7 @@ module.exports = function (grunt) {
 	grunt.loadNpmTasks('grunt-mocha-test');
 	grunt.loadNpmTasks('grunt-contrib-watch');
 	grunt.loadNpmTasks('grunt-newer');
-	var files = ['Gruntfile.js', 'libs/**/*.js', 'libs/**/**/*.js', 'test/*.js', 'bin/csvtojson', 'bin/csvtojson.js'];
+	var files = ['Gruntfile.js', 'libs/**/*.js', 'libs/**/**/*.js', 'test/*.js', 'bin/csvtojson', 'bin/csvtojson.js', 'devops/*.js'];
 	grunt.initConfig({
 		jshint: {
 			all: {

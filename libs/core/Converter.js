@@ -1,5 +1,5 @@
 var parserMgr = require("./parserMgr.js");
-var utils = require("util");
+var util = require("util");
 var Transform = require("stream").Transform;
 var Readable = require("stream").Readable;
 var Result = require("./Result");
@@ -9,13 +9,13 @@ var eol = os.EOL;
 function Converter (params) {
   Transform.call(this); //TODO what does this do?
   var _param = {
-    "constructResult": true, //set to false to not construct result in memory. suitable for big csv data
-    "delimiter": ",", // change the delimiter of csv columns
-    "quote": "\"", //quote for a column containing delimiter.
-    "trim": true, //trim column's space charcters
-    "checkType":true, //whether check column type
-    "toArrayString":false, //stream out array of json string. (usable if downstream is file writer etc)
-    "ignoreEmpty":false //Ignore empty value while parsing. if a value of the column is empty, it will be skipped parsing.
+    constructResult: true, //set to false to not construct result in memory. suitable for big csv data
+    delimiter: ',', // change the delimiter of csv columns
+    quote: '"', //quote for a column containing delimiter.
+    trim: true, //trim column's space charcters
+    checkType: true, //whether check column type
+    toArrayString: false, //stream out array of json string. (usable if downstream is file writer etc)
+    ignoreEmpty: false //Ignore empty value while parsing. if a value of the column is empty, it will be skipped parsing.
   };
   if (params && typeof params === "object") {
     for (var key in params) {
@@ -43,7 +43,7 @@ function Converter (params) {
   this.init();
   return this;
 }
-utils.inherits(Converter, Transform);
+util.inherits(Converter, Transform);
 Converter.prototype.init = function () {
   require("./init_onend.js").call(this);
   require("./init_onrecord.js").call(this);
@@ -118,13 +118,14 @@ Converter.prototype._headRowProcess = function (headRow) {
   this.parseRules = parserMgr.initParsers(headRow, this.param.checkType);
 };
 Converter.prototype._rowProcess = function (row, index, resultRow) {
-  for (var i = 0; i < this.parseRules.length; i++) {
-    var item = row[i];
-    if (this.param.ignoreEmpty === true && item === ""){
+  var i, item, parser, head;
+  for (i = 0; i < this.parseRules.length; i++) {
+    item = row[i];
+    if (this.param.ignoreEmpty && item === ''){
       continue;
     }
-    var parser = this.parseRules[i];
-    var head = this.headRow[i];
+    parser = this.parseRules[i];
+    head = this.headRow[i];
     parser.parse({
       head: head,
       item: item,

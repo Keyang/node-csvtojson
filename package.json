@@ -47,6 +47,7 @@
     "grunt-madge": "0.0.6",
     "grunt-mocha-test": "^0.12.7",
     "grunt-newer": "^1.1.0",
+    "imgur": "^0.1.5",
     "mocha": "^2.2.5"
   },
   "dependencies": {
