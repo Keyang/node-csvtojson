@@ -3,13 +3,13 @@
  */
 
 module.exports = function () {
-  var self = this;
-  self.on("end", function () {
-    var finalResult = self.param.constructResult ? self.resultObject.getBuffer() : {};
-    self.emit("end_parsed", finalResult);
-    if (typeof self._callback === "function") {
-      var func = self._callback;
-      self._callback = null;
+  var that = this;
+  that.on("end", function () {
+    var finalResult = that.param.constructResult ? that.resultObject.getBuffer() : {};
+    that.emit("end_parsed", finalResult);
+    if (typeof that._callback === "function") {
+      var func = that._callback;
+      that._callback = null;
       func(null, finalResult);
     }
   });

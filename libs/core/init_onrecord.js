@@ -11,33 +11,28 @@ module.exports = function () {
     var row = [];
     var inquote = false;
     var quoteBuff = '';
-    rowArr.forEach(function (ele) {
-      if (that._isToogleQuote(ele)) {//if current col has odd quotes, switch quote status
+    rowArr.forEach(function (e) {
+      if (that._isToogleQuote(e)) {//if current col has odd quotes, switch quote status
         if (inquote) {//if currently in open quote status, close it and output data
           quoteBuff += delimiter;
-          inquote = false;
-          quoteBuff += that._twoDoubleQuote(ele.substr(0, ele.length - 1));
-          if (that.param.trim){
-            quoteBuff = quoteBuff.toString().trim();
-          }
-          row.push(quoteBuff);
-          quoteBuff = "";
+          quoteBuff += that._twoDoubleQuote(e.substr(0, e.length - 1));
+          row.push(that.param.trim ? quoteBuff.toString().trim() : quoteBuff);
+          quoteBuff = '';
         } else {// currently not in open quote status, open it
-          inquote = true;
-          quoteBuff += that._twoDoubleQuote(ele.substring(1));
+          quoteBuff += that._twoDoubleQuote(e.substring(1));
         }
-      } else {// if current col has even quotes, do not switch quote status
-        if (inquote) {//if current status is in quote, add to buffer wait to close
-          quoteBuff += delimiter + that._twoDoubleQuote(ele);
-        } else {// if current status is not in quote, out put data
-          if (ele.indexOf(quote) === 0 && ele[ele.length - 1] === quote) {//if current col contain full quote segment,remove quote first
-            ele = ele.substring(1, ele.length - 1);
-          }
-          if (that.param.trim){
-            ele = ele.toString().trim();
-          }
-          row.push(that._twoDoubleQuote(ele));
+        inquote = !inquote;
+      } else if (inquote) {// if current col has even quotes, do not switch quote status
+        //if current status is in quote, add to buffer wait to close
+        quoteBuff += delimiter + that._twoDoubleQuote(e);
+      } else {// if current status is not in quote, out put data
+        if (e.indexOf(quote) === 0 && e[e.length - 1] === quote) {//if current col contain full quote segment,remove quote first
+          e = e.substring(1, e.length - 1);
         }
+        if (that.param.trim){
+          e = e.toString().trim();
+        }
+        row.push(that._twoDoubleQuote(e));
       }
     });
     if (index === 0) {

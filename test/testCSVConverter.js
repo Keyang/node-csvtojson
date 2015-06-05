@@ -156,7 +156,7 @@ describe("CSV Converter", function () {
     });
     rs.pipe(csvConverter);
   });
-  it ("shoudl parse large csv file",function (done){
+  it ("should parse large csv file",function (done){
     var testData=__dirname+"/data/large-csv-sample.csv";
     var rs = fs.createReadStream(testData);
     var csvConverter = new Converter({

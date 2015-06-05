@@ -49,15 +49,14 @@ Converter.prototype.init = function () {
   require("./init_onrecord.js").call(this);
 };
 Converter.prototype._isToogleQuote = function (segment) {
-  var quote = this.param.quote;
-  var regExp = new RegExp(quote, "g");
-  var match = segment.toString().match(regExp);
+  var reg = new RegExp(this.param.quote, 'g');
+  var match = segment.toString().match(reg);
   return match && match.length % 2 !== 0;
 };
 //convert two continous double quote to one as per csv definition
 Converter.prototype._twoDoubleQuote = function (segment){
   var quote = this.param.quote;
-  var regExp = new RegExp(quote+quote, "g");
+  var regExp = new RegExp(quote+quote, 'g');
   return segment.toString().replace(regExp,quote);
 };
 //on line poped
@@ -65,13 +64,13 @@ Converter.prototype._line = function (line, lastLine){
   this._recordBuffer += line;
   if (!this._isToogleQuote(this._recordBuffer)) { //if a complete record is in buffer. start the parse
    var data = this._recordBuffer;
-   this._recordBuffer="";
+   this._recordBuffer = '';
    this._record(data, this.rowIndex++, lastLine);
   } else { //if the record in buffer is not a complete record (quote does not match). wait next line
     this._recordBuffer += this.eol;
-   if (lastLine) {
-     throw ("Incomplete CSV file detected. Quotes does not match in pairs. Buffer:" + this._recordBuffer);
-   }
+    if (lastLine) {
+      throw ("Incomplete CSV file detected. Quotes does not match in pairs. Buffer:" + this._recordBuffer);
+    }
   }
 };
 Converter.prototype._transform = function (data, encoding, cb) {
