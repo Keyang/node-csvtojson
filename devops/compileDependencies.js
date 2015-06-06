@@ -15,17 +15,17 @@ function appendFile (file, data) {
 	overwriteFile(file, fileToString(file) + data);
 }
 function prependLink (link) {
-	prependFile('../../node-csvtojson.wiki/links.txt', '![dependencies](' + link + ')\r\n');
+	prependFile('../node-csvtojson.wiki/links.txt', '![dependencies](' + link + ')\r\n');
 }
 function createFile (file) {
 	overwriteFile(file, '');
 }
 module.exports = function (link) {
-	var file = '../../node-csvtojson.wiki/dependencies.md';
+	var file = '../node-csvtojson.wiki/dependencies.md';
 	if (link) {
 		prependLink(link);
 	}
 	createFile(file);
-	appendFile(file, fileToString('../../node-csvtojson.wiki/dependencyHeader.txt'));
-	appendFile(file, fileToString('../../node-csvtojson.wiki/links.txt'));
+	appendFile(file, fileToString('../node-csvtojson.wiki/dependencyHeader.txt'));
+	appendFile(file, fileToString('../node-csvtojson.wiki/links.txt'));
 };
