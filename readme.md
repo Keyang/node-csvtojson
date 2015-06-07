@@ -7,7 +7,7 @@ Since version 0.3, the core class of csvtojson has been inheriting from stream.T
 //Converter Class
 var fs = require("fs");
 var Converter = require("csvtojson").Converter;
-var fileStream = fs.createReadStream("./file.csv);
+var fileStream = fs.createReadStream("./file.csv");
 //new converter instance
 var converter = new Converter({constructResult:true});
 //end_parsed will be emitted once parsing finished
