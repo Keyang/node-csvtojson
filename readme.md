@@ -5,21 +5,17 @@ All you need nodejs csv to json converter. Support big json data, CLI, web serve
 Since version 0.3, the core class of csvtojson has been inheriting from stream.Transform class. Therefore, it will behave like a normal Stream object and CSV features will not be available any more. Now the usage is like:
 ```js
 //Converter Class
-var Converter=require("csvtojson").core.Converter;
-var fs=require("fs");
-
-var csvFileName="./myCSVFile";
-var fileStream=fs.createReadStream(csvFileName);
+var fs = require("fs");
+var Converter = require("csvtojson").Converter;
+var fileStream = fs.createReadStream("./file.csv);
 //new converter instance
-var csvConverter=new Converter({constructResult:true});
-
+var converter = new Converter({constructResult:true});
 //end_parsed will be emitted once parsing finished
-csvConverter.on("end_parsed",function(jsonObj){
+converter.on("end_parsed", function (jsonObj) {
    console.log(jsonObj); //here is your result json object
 });
-
 //read from file
-fileStream.pipe(csvConverter);
+fileStream.pipe(converter);
 ```
 
 To convert from a string, previously the code was:
@@ -29,7 +25,7 @@ csvConverter.from(csvString);
 
 Now it is:
 ```js
-csvConverter.fromString(csvString,callback);
+csvConverter.fromString(csvString, callback);
 ```
 
 The callback function above is optional. see [Parse String](#parse-string).
@@ -111,8 +107,7 @@ And then we use curl to perform a web request:
 To write a demo app, simply use csvtojson web interface. Paste following code to index.js:
 
 ```js
-var server=require("csvtojson").interfaces.web;
-
+var server = require("csvtojson").interfaces.web;
 server.startWebServer({
 	"port":8801
 });
@@ -136,22 +131,20 @@ Import csvtojson to your package.json or install through npm:
 
 ```js
 //Converter Class
-var Converter=require("csvtojson").core.Converter;
-var fs=require("fs");
-
-var csvFileName="./myCSVFile";
-var fileStream=fs.createReadStream(csvFileName);
+var fs = require("fs");
+var Converter = require("csvtojson").core.Converter;
+var fileStream = fs.createReadStream("./file.csv");
 //new converter instance
 var param={};
-var csvConverter=new Converter(param);
+var converter = new Converter(param);
 
 //end_parsed will be emitted once parsing finished
-csvConverter.on("end_parsed",function(jsonObj){
+converter.on("end_parsed", function (jsonObj) {
    console.log(jsonObj); //here is your result json object
 });
 
 //read from file
-fileStream.pipe(csvConverter);
+fileStream.pipe(converter);
 ```
 # Params
 The parameters for Converter constructor are:
