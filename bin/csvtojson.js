@@ -1,4 +1,4 @@
-function csvtojson () {
+function csvtojson() {
   var web = require("../libs/interfaces").web;
   var Converter = require("../libs/core/Converter.js");
   var fs = require("fs");
@@ -6,8 +6,17 @@ function csvtojson () {
   var cmds = options.commands;
   var opts = options.options;
   var exps = options.examples;
+  /**
+   *{
+    "cmd": "parse", command to run
+    "options": {}, options to passe to the command
+    "inputStream": process.stdin // input stream for the command. default is stdin
+  };
+   *
+   */
   var parsedCmd;
-  function _showHelp (errno) {
+
+  function _showHelp(errno) {
     var key;
     errno = typeof errno === "number" ? errno : 0;
     console.log("Usage: csvtojson [<command>] [<options>] filepath\n");
@@ -29,33 +38,37 @@ function csvtojson () {
     }
     process.exit(errno);
   }
-  function parse () {
+
+  function parse() {
     var is = parsedCmd.inputStream;
     parsedCmd.options.constructResult = false;
     parsedCmd.options.toArrayString = true;
-    if (is === process.stdin && is.isTTY){
+    if (is === process.stdin && is.isTTY) {
       console.log("Please specify csv file path or pipe the csv data through.\n");
       _showHelp(1);
     }
     is.pipe(new Converter(parsedCmd.options)).pipe(process.stdout);
   }
-  function run (cmd, options) {
+
+  function run(cmd, options) {
     if (cmd === "parse") {
-        parse();
+      parse();
     } else if (cmd === "startserver") {
-        web.startWebServer(options);
+      web.startWebServer(options);
     } else {
       console.log("unknown command %s.", cmd);
       _showHelp(1);
     }
   }
-  function commandParser () {
+
+  function commandParser() {
     var parsedCmd = {
       "cmd": "parse",
       "options": {},
       "inputStream": process.stdin
     };
-    function parseBool (str, optName) {
+
+    function parseBool(str, optName) {
       str = str.toLowerCase();
       if (str === "true" || str === "y") {
         return true;
@@ -65,7 +78,7 @@ function csvtojson () {
       console.log("Unknown boolean value %s for parameter %s.", str, optName);
       _showHelp(1);
     }
-    process.argv.slice(2).forEach(function (item) {
+    process.argv.slice(2).forEach(function(item) {
       if (item.indexOf("--") > -1) {
         var itemArr = item.split("=");
         var optName = itemArr[0];
@@ -78,12 +91,14 @@ function csvtojson () {
         val = itemArr[1] || '';
         type = opts[optName].type;
         if (type === "string") {
-            parsedCmd.options[key] = val.toString();
+          parsedCmd.options[key] = val.toString();
         } else if (type === "boolean") {
           parsedCmd.options[key] = parseBool(val, optName);
         } else {
-          throw {name: "UnimplementedException",
-                message: "Option type parsing not implemented. See bin/options.json"};
+          throw {
+            name: "UnimplementedException",
+            message: "Option type parsing not implemented. See bin/options.json"
+          };
         }
         parsedCmd.options[key] = val;
       } else if (cmds[item]) {

@@ -132,7 +132,7 @@ Import csvtojson to your package.json or install through npm:
 ```js
 //Converter Class
 var fs = require("fs");
-var Converter = require("csvtojson").core.Converter;
+var Converter = require("csvtojson").Converter;
 var fileStream = fs.createReadStream("./file.csv");
 //new converter instance
 var param={};
@@ -165,7 +165,7 @@ How to add a customised parser:
 
 ```js
 //Parser Manager
-var parserMgr=require("csvtojson").core.parserMgr;
+var parserMgr=require("csvtojson").parserMgr;
 
 parserMgr.addParser("myParserName",/^\*parserRegExp\*/,function (params){
    var columnTitle=params.head; //params.head be like: *parserRegExp*ColumnName;
@@ -238,7 +238,7 @@ To subscribe the event:
 
 ```js
 //Converter Class
-var Converter=require("csvtojson").core.Converter;
+var Converter=require("csvtojson").Converter;
 
 //end_parsed will be emitted once parsing finished
 csvConverter.on("end_parsed",function(jsonObj){
@@ -317,7 +317,7 @@ Output data:
 csvtojson library was designed to accept big csv file converting. To avoid memory consumption, it is recommending to use read stream and write stream.
 
 ```js
-var Converter=require("csvtojson").core.Converter;
+var Converter=require("csvtojson").Converter;
 var csvConverter=new Converter({constructResult:false}); // The parameter false will turn off final result construction. It can avoid huge memory consumption while parsing. The trade off is final result will not be populated to end_parsed event.
 
 var readStream=require("fs").createReadStream("inputData.csv");
