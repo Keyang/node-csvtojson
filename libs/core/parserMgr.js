@@ -55,8 +55,8 @@ function getParser (columnTitle, checkType) {
   inst.type = type;
   return inst;
 }
-function addParser (name, regExp, parseFunc) {
-  var parser = new Parser(name, regExp, parseFunc); //TODO remove new
+function addParser (name, regExp, parseFunc,processSafe) {
+  var parser = new Parser(name, regExp, parseFunc,processSafe); //TODO remove new
   registerParser(parser);
 }
 
@@ -68,7 +68,7 @@ function initParsers (row, checkType) {
   return parsers;
 }
 defaultParser.forEach(function (parserCfg){
-  addParser(parserCfg.name, parserCfg.regExp, parserCfg.parserFunc);
+  addParser(parserCfg.name, parserCfg.regExp, parserCfg.parserFunc,parserCfg.processSafe);
 });
 
 //module interfaces

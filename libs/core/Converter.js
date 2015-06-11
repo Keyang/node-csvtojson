@@ -1,13 +1,15 @@
-var parserMgr = require("./parserMgr.js");
 var util = require("util");
 var Transform = require("stream").Transform;
 var Readable = require("stream").Readable;
 var Result = require("./Result");
 var os = require("os");
 var eol = os.EOL;
+var Processor = require("./Processor.js");
+var Worker = require("./Worker.js");
+var CSVLine = require("./CSVLine.js");
 
-function Converter (params) {
-  Transform.call(this); //TODO what does this do?
+function Converter(params) {
+  Transform.call(this); //TODO what does this do? -->This calls the constructor of Transform and initialise anything the Transform needs.(like var initialisation)
   var _param = {
     constructResult: true, //set to false to not construct result in memory. suitable for big csv data
     delimiter: ',', // change the delimiter of csv columns
@@ -15,7 +17,8 @@ function Converter (params) {
     trim: true, //trim column's space charcters
     checkType: true, //whether check column type
     toArrayString: false, //stream out array of json string. (usable if downstream is file writer etc)
-    ignoreEmpty: false //Ignore empty value while parsing. if a value of the column is empty, it will be skipped parsing.
+    ignoreEmpty: false, //Ignore empty value while parsing. if a value of the column is empty, it will be skipped parsing.
+    workerNum: 1 //number of parallel workers. If multi-core CPU available, increase the number will get better performance for large csv data.
   };
   if (params && typeof params === "object") {
     for (var key in params) {
@@ -28,120 +31,111 @@ function Converter (params) {
     _param.constructResult = params;
   }
   this.param = _param;
-  this.parseRules = [];
   this.resultObject = new Result(this);
+  this.started = false;
+  this._callback = null;
+  this.lineParser = new CSVLine(this.param);
+  this.processor = new Processor(this.param);
+  this.recordNum = 0;
+  var syncWorker = new Worker(this.param, true);
+  this.processor.addWorker(syncWorker);
+  if (this.param.workerNum > 1) {
+    for (var i = 1; i < this.param.workerNum; i++) {
+      this.processor.addWorker(new Worker(this.param, false));
+    }
+  }else if (this.param.workerNum<1){
+    this.param.workerNum=1;
+  }
   this.pipe(this.resultObject);
   if (!this.param.constructResult) {
     this.resultObject.disableConstruct();
   }
-  this.headRow = [];
-  this._buffer = ""; //line buffer 
-  this._recordBuffer = ""; //record buffer
-  this.rowIndex = 0;
-  this._isStarted = false;
-  this._callback = null;
+  this.lineParser.pipe(this.processor);
+  //this._pipe(this.lineParser).pipe(this.processor);
   this.init();
+  this.flushCb = null;
+  this.processEnd = false;
+  this.sequenceBuffer = [];
   return this;
 }
 util.inherits(Converter, Transform);
-Converter.prototype.init = function () {
-  require("./init_onend.js").call(this);
-  require("./init_onrecord.js").call(this);
-};
-Converter.prototype._isToogleQuote = function (segment) {
-  var reg = new RegExp(this.param.quote, 'g');
-  var match = segment.toString().match(reg);
-  return match && match.length % 2 !== 0;
-};
-//convert two continous double quote to one as per csv definition
-Converter.prototype._twoDoubleQuote = function (segment){
-  var quote = this.param.quote;
-  var regExp = new RegExp(quote+quote, 'g');
-  return segment.toString().replace(regExp,quote);
-};
-//on line poped
-Converter.prototype._line = function (line, lastLine){
-  var data;
-  this._recordBuffer += line;
-  if (!this._isToogleQuote(this._recordBuffer)) { //if a complete record is in buffer. start the parse
-   data = this._recordBuffer;
-   this._recordBuffer = '';
-   this._record(data, this.rowIndex++, lastLine);
-  } else { //if the record in buffer is not a complete record (quote does not match). wait next line
-    this._recordBuffer += this.eol;
-    if (lastLine) {
-      throw ("Incomplete CSV file detected. Quotes does not match in pairs. Buffer:" + this._recordBuffer);
+Converter.prototype.init = function() {
+  var syncLock=false;
+  this.processor.on("record_parsed", function(resultRow, row, index) {
+    this.sequenceBuffer[index] = {
+      resultRow: resultRow,
+      row: row,
+      index: index
+    };
+    //critical area
+    if (!syncLock){
+      syncLock=true;
+      this.flushBuffer();
+      syncLock=false;
     }
-  }
+  }.bind(this));
+  this.processor.on("end_parse", function() {
+    this.processEnd = true;
+    this.flushBuffer();
+    this.checkAndFlush();
+  }.bind(this));
+  this.on("end", function() {
+    var finalResult = this.param.constructResult ? this.resultObject.getBuffer() : {};
+    this.emit("end_parsed", finalResult);
+    if (typeof this._callback === "function") {
+      var func = this._callback;
+      this._callback = null;
+      func(null, finalResult);
+    }
+  }.bind(this));
+  //require("./init_onend.js").call(this);
+  //require("./init_onrecord.js").call(this);
+
 };
-Converter.prototype._transform = function (data, encoding, cb) {
-  var arr;
-  function contains (str, subString) {
-    return str.indexOf(subString) > -1;
+Converter.prototype.flushBuffer = function() {
+  while (this.sequenceBuffer[this.recordNum]) {
+    var index = this.recordNum;
+    var obj = this.sequenceBuffer[index];
+    this.sequenceBuffer[index] = undefined;
+    var resultRow = obj.resultRow;
+    var row = obj.row;
+    this.emit("record_parsed", resultRow, row, index);
+    if (this.param.toArrayString && this.recordNum > 0) {
+      this.push("," + this.getEol());
+    }
+    this.push(JSON.stringify(resultRow), "utf8");
+    this.recordNum++;
   }
-  if (encoding === "buffer") {
-    encoding = "utf8";
+}
+Converter.prototype._transform = function(data, encoding, cb) {
+  if (this.param.toArrayString && this.started === false) {
+    this.started = true;
+    this.push("[" + this.getEol(), "utf8");
   }
-  this._buffer += data.toString(encoding);
-  if (!this.eol) {
-    this.eol = contains(this._buffer, '\r\n') ? '\r\n' :
-               contains(this._buffer, '\n')   ? '\n'   :
-               contains(this._buffer, '\r')   ? '\r'   :
-               eol;
-  }
-  if (this.param.toArrayString && this.rowIndex === 0){
-    this.push("[" + this.getEol(),"utf8");
-  }
-  if (contains(this._buffer, this.getEol())) { //if current data contains 1..* line break 
-      arr = this._buffer.split(this.getEol());
-      while (arr.length > 1) {
-        this._line(arr.shift());
-      }
-      this._buffer = arr[0]; //whats left (maybe half line). push to buffer
-  }
+  this.lineParser.write(data, encoding);
+  //this.push(data,encoding);
   cb();
 };
-Converter.prototype._flush = function (cb) {
-  if (this._buffer.length !== 0) { //finished but still has buffer data. emit last line
-    this._line(this._buffer,  true);
-  }
-  if (this.param.toArrayString){
-    this.push(this.getEol()+"]","utf8");
-  }
-  cb();
+Converter.prototype._flush = function(cb) {
+  this.lineParser.end();
+  this.flushCb = cb;
+  this.checkAndFlush();
+  //cb();
 };
-Converter.prototype.getEol = function () {
+Converter.prototype.checkAndFlush = function() {
+  if (this.processEnd && this.flushCb) {
+    if (this.param.toArrayString) {
+      this.push(this.getEol() + "]", "utf8");
+    }
+    this.flushCb();
+  }
+}
+Converter.prototype.getEol = function() {
   return this.eol ? this.eol : eol;
 };
-Converter.prototype._headRowProcess = function (headRow) {
-  this.headRow = headRow;
-  this.parseRules = parserMgr.initParsers(headRow, this.param.checkType);
-};
-Converter.prototype._rowProcess = function (row, index, resultRow) {
-  var i, item, parser, head;
-  for (i = 0; i < this.parseRules.length; i++) {
-    item = row[i];
-    if (this.param.ignoreEmpty && item === ''){
-      continue;
-    }
-    parser = this.parseRules[i];
-    head = this.headRow[i];
-    parser.parse({
-      head: head,
-      item: item,
-      itemIndex: i,
-      rawRow: row,
-      resultRow: resultRow,
-      rowIndex: index,
-      resultObject: this.resultObject,
-      config: this.param || {}
-    });
-  }
-};
-
-Converter.prototype.fromString = function (csvString, cb) {
+Converter.prototype.fromString = function(csvString, cb) {
   var rs = new Readable();
-  rs._read = function () {
+  rs._read = function() {
     this.push(csvString);
     this.push(null);
   };

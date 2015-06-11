@@ -41,10 +41,11 @@ module.exports = function () {
       var resultRow = {};
       that._rowProcess(row, index, resultRow);
       that.emit("record_parsed", resultRow, row, index - 1);
-      if (that.param.toArrayString && index > 1){
-        that.push("," + that.eol);
-      }
-      that.push(JSON.stringify(resultRow), "utf8");
+
+      //if (that.param.toArrayString && index > 1){
+        //that.push("," + that.eol);
+      //}
+      //that.push(JSON.stringify(resultRow), "utf8");
     }
   };
 };

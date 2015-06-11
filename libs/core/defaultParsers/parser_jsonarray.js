@@ -1,5 +1,6 @@
 module.exports = {
   "name": "jsonarray",
+  "processSafe":true,
   "regExp": /^\*jsonarray\*/,
   "parserFunc": function parser_jsonarray (params) {
     var fieldStr = params.head.replace(this.regExp, "");

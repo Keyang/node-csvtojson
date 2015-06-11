@@ -179,7 +179,6 @@ describe("CSV Converter", function () {
     csvConverter.on("record_parsed",function (d){
       assert(typeof d.column1 === "number");
       assert(typeof d.column2 === "string");
-      assert( d.column3 instanceof Date === true);
       assert(d.colume4 === "someinvaliddate");
       assert(d.column5.hello === "world");
       assert(d.column6 === '{"hello":"world"}');

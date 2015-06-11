@@ -10,7 +10,7 @@ function csvtojson() {
    *{
     "cmd": "parse", command to run
     "options": {}, options to passe to the command
-    "inputStream": process.stdin // input stream for the command. default is stdin
+    "inputStream": process.stdin // input stream for the command. default is stdin. can be a file read stream.
   };
    *
    */
@@ -94,11 +94,14 @@ function csvtojson() {
           parsedCmd.options[key] = val.toString();
         } else if (type === "boolean") {
           parsedCmd.options[key] = parseBool(val, optName);
-        } else {
-          throw {
+        } else if (type ==="number"){
+          parsedCmd.options[key] = parseFloat(val);
+        } 
+        else {
+          throw ({
             name: "UnimplementedException",
             message: "Option type parsing not implemented. See bin/options.json"
-          };
+          });
         }
         parsedCmd.options[key] = val;
       } else if (cmds[item]) {

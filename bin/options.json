@@ -24,6 +24,10 @@
     "--ignoreEmpty": {
       "desc": "This parameter turns on and off whether ignore empty column values while parsing. default is false",
       "type": "boolean"
+    },
+    "--workerNum": {
+      "desc": "Number of worker processes. The worker process will use multi-cores to help process CSV data. Set to number of Core to improve the performance of processing large csv file. Keep 1 for small csv files. Default 1.",
+      "type": "number"
     }
   },
   "examples":[

@@ -1,5 +1,6 @@
 module.exports = {
   "name": "json",
+  "processSafe":true,
   "regExp": /^\*json\*/,
   "parserFunc": function parser_json (params) {
     var fieldStr = this.getHead().replace(this.regExp, '');
@@ -7,10 +8,7 @@ module.exports = {
     var arrReg = /\[([0-9]*)\]/;
     var match, index, key, pointer;
     function parseParamType (type, item) {
-      if (type === 'date') {
-          var d = new Date(item);
-          return isNaN(d.getTime()) ? item : d;
-      } else if (type === 'number' && !isNaN(item)) {
+      if (type === 'number' && !isNaN(item)) {
         return parseFloat(item);
       } else if (type === '') {
         try {

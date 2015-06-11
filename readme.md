@@ -156,6 +156,7 @@ The parameters for Converter constructor are:
 * checkType: This parameter turns on and off weather check field type. default is true. See [Field type](#field-type)
 * toArrayString: Stringify the stream output to JSON array. This is useful when pipe output to a file which expects JSON array. default is false and only JSON will be pushed to downstream.
 * ignoreEmpty: Ignore the empty value in CSV columns. If a column value is not giving, set this to true to skip them. Defalut: false.
+* workerNum: Number of worker processes. The worker process will use multi-cores to help process CSV data. Set to number of Core to improve the performance of processing large csv file. Keep 1 for small csv files. Default 1.
 
 # Parser
 CSVTOJSON allows adding customised parsers which concentrating on what to parse and how to parse.
@@ -535,12 +536,12 @@ Simply add type before column name with a hash symbol (#).
 ###Supported types:
 * string
 * number
-* date
+* date (Not supported since 0.3.22)
 
 ### Define Type
 To define the field type, see following example
 ```csv
-string#appNumber, string#finished, date#startDate
+string#appNumber, string#finished, startDate
 201401010002, true, 2014-01-01
 ```
 The data will be converted to:
@@ -548,23 +549,7 @@ The data will be converted to:
 {
   "appNumber":"201401010002",
   "finished":"true",
-  "startDate":Wed Jan 01 2014 00:00:00 GMT+0000 (GMT)
-}
-```
-### Invalid Value
-If parser meets invalid value for a type while parsing a value, it will fallback to use string value.
-
-For example:
-```csv
-number#order, date#shipDate
-A00001, Unknown
-```
-
-It will be converted to:
-```json
-{
-  "order":"A00001",
-  "shipDate":"Unknown"
+  "startDate":"2014-01-01"
 }
 ```
 
