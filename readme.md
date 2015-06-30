@@ -60,7 +60,7 @@ After version 0.3, csvtojson requires node 0.10 and above.
 * [Parse String](#parse-string)
 * [Empowered JSON Parser](#empowered-json-parser)
 * [Field Type](#field-type)
-* [Multi-Core / Fork Process](#multi-cpu-(core))
+* [Multi-Core / Fork Process](#multi-cpu-core)
 * [Change Log](#change-log)
 
 GitHub: https://github.com/Keyang/node-csvtojson
