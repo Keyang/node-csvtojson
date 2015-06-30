@@ -1,5 +1,13 @@
-#CSV2JSON
-All you need nodejs csv to json converter. Support big json data, CLI, web server, powerful nested JSON, customised parser, stream, pipe, and more!
+#CSVTOJSON
+All you need nodejs csv to json converter. 
+* Large CSV data
+* Command Line Tool and Node.JS Lib
+* Complex/nested JSON
+* Easy Customised Parser
+* Stream based
+* multi CPU core support
+* Easy Usage
+* more!
 
 #IMPORTANT!!
 Since version 0.3, the core class of csvtojson has been inheriting from stream.Transform class. Therefore, it will behave like a normal Stream object and CSV features will not be available any more. Now the usage is like:
@@ -52,6 +60,7 @@ After version 0.3, csvtojson requires node 0.10 and above.
 * [Parse String](#parse-string)
 * [Empowered JSON Parser](#empowered-json-parser)
 * [Field Type](#field-type)
+* [Multi-Core / Fork Process](#multi-cpu-(core))
 * [Change Log](#change-log)
 
 GitHub: https://github.com/Keyang/node-csvtojson
@@ -63,6 +72,7 @@ GitHub: https://github.com/Keyang/node-csvtojson
 ##Features
 
 * Powerful library for you nodejs applications processing csv data.
+* Multi cpu core support
 * Extremly straight forward
 * Multiple input support: CSV File, Readable Stream, CSV String etc.
 * Highly extendible with your own rules and parsers for outputs.
@@ -157,6 +167,7 @@ The parameters for Converter constructor are:
 * toArrayString: Stringify the stream output to JSON array. This is useful when pipe output to a file which expects JSON array. default is false and only JSON will be pushed to downstream.
 * ignoreEmpty: Ignore the empty value in CSV columns. If a column value is not giving, set this to true to skip them. Defalut: false.
 * workerNum: Number of worker processes. The worker process will use multi-cores to help process CSV data. Set to number of Core to improve the performance of processing large csv file. Keep 1 for small csv files. Default 1.
+* fork: Use another CPU core to convert the CSV stream
 
 # Parser
 CSVTOJSON allows adding customised parsers which concentrating on what to parse and how to parse.
@@ -508,6 +519,7 @@ Tom, 12, false, {"hello":"world","total":23}
 
 ```
 Will be converted into:
+
 ```json
 {
   "name":"Tom",
@@ -520,6 +532,7 @@ Will be converted into:
 }
 ```
 If checkType is turned **OFF**, it will be converted to:
+
 ```json
 {
   "name":"Tom",
@@ -536,15 +549,17 @@ Simply add type before column name with a hash symbol (#).
 ###Supported types:
 * string
 * number
-* date (Not supported since 0.3.22)
+* date (Not supported since 0.3.21)
 
 ### Define Type
 To define the field type, see following example
+
 ```csv
 string#appNumber, string#finished, startDate
 201401010002, true, 2014-01-01
 ```
 The data will be converted to:
+
 ```json
 {
   "appNumber":"201401010002",
@@ -553,7 +568,44 @@ The data will be converted to:
 }
 ```
 
+## Multi-CPU (Core)
+Since version 0.4.0, csvtojson supports multiple CPU cores to process large csv files.
+The implementation and benchmark result can be found [here](http://keyangxiang.com/2015/06/11/node-js-multi-core-programming-pracitse/).
+
+To enable multi-core, just pass the worker number as parameter of constructor:
+
+```js
+  var Converter=require("csvtojson").Converter;
+  var converter=new Converter({
+      workerNum:2 //use two cores
+  });
+```
+The minimum worker number is 1. When worker number is larger than 1, the parser will balance the job load among workers.
+
+For command line, to use worker just use ```--workerNum``` argument:
+
+```
+csvtojson --workerNum=4 ./myfile.csv 
+```
+It is worth to mention that for small size of CSV file it actually costs more time to create processes and keep the communication between them. Therefore, use less workers for small CSV files.
+
+### Fork Process
+Node.JS is running on single thread. You will not want to convert a large csv file on the same process where your node.js webserver is running. csvtojson gives an option to fork the whole conversion process to a new system process while the origin process will only pipe the input and result in and out. It very simple to enable this feature:
+
+```js
+var Converter=require("csvtojson").Converter;
+  var converter=new Converter({
+      fork:true //use child process to convert
+  });
+```
+Same as multi-workers, fork a new process will cause extra cost on process communication and life cycle management. Use it wisely.
+
 #Change Log
+
+##0.4.0
+* Added Multi-core CPU support to increase performance
+* Added "fork" option to delegate csv converting work to another process.
+* Refactoring general flow
 
 ##0.3.21
 * Refactored Command Line Tool.
@@ -586,3 +638,4 @@ The data will be converted to:
 * Deprecated applyWebServer
 * Added construct parameter for Converter Class
 * Converter Class now works as a proper stream object
+

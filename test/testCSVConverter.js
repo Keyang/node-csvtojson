@@ -164,6 +164,7 @@ describe("CSV Converter", function () {
     });
     var count = 0;
     csvConverter.on("record_parsed", function () {
+      //console.log(arguments);
       count++;
     });
     csvConverter.on("end_parsed", function () {
@@ -220,7 +221,7 @@ describe("CSV Converter", function () {
       constructResult: false
     });
     var count = 0;
-    csvConverter.on("data", function () {
+    csvConverter.on("data", function (d) {
       count++;
     });
     csvConverter.on("end",function (){
