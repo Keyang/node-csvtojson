@@ -89,8 +89,8 @@ Converter.prototype.initFork = function() {
   //var syncLock=false;
   //if (msg.action=="record_parsed"){
   //this.sequenceBuffer[msg.index]=msg;
-  //if 
-  //} 
+  //if
+  //}
   //}.bind(this));
   //child.on("exit",function(code){
   //this.processEnd=true;
@@ -152,13 +152,14 @@ Converter.prototype.flushBuffer = function() {
   }
 }
 Converter.prototype._transformNoFork = function(data, encoding, cb) {
+  // console.log("con",data.length);
   if (this.param.toArrayString && this.started === false) {
     this.started = true;
     this.push("[" + this.getEol(), "utf8");
   }
-  this.lineParser.write(data, encoding);
+  this.lineParser.write(data, encoding,cb);
   //this.push(data,encoding);
-  cb();
+  // cb();
 };
 Converter.prototype._flushNoFork = function(cb) {
   this.lineParser.end();
@@ -167,8 +168,7 @@ Converter.prototype._flushNoFork = function(cb) {
   //cb();
 };
 Converter.prototype._transformFork = function(data, encoding, cb) {
-  this.child.stdin.write(data, encoding);
-  cb();
+  this.child.stdin.write(data, encoding,cb);
 }
 Converter.prototype._flushFork = function(cb) {
   this.child.stdin.end();
@@ -187,9 +187,18 @@ Converter.prototype.getEol = function() {
 };
 Converter.prototype.fromString = function(csvString, cb) {
   var rs = new Readable();
-  rs._read = function() {
-    this.push(csvString);
-    this.push(null);
+  var offset=0;
+  if (typeof csvString !="string"){
+    return cb(new Error("Passed CSV Data is not a string."));
+  }
+  rs._read = function(len) {
+    // console.log(offset,len,csvString.length);
+    var sub=csvString.substr(offset,len);
+    this.push(sub);
+    offset+=len;
+    if (offset>=csvString.length){
+      this.push(null);
+    }
   };
   rs.pipe(this);
   if (cb && typeof cb === "function") {

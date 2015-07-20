@@ -34,6 +34,7 @@ function Processor(params) {
 }
 util.inherits(Processor, Transform);
 Processor.prototype._transform = function(data, encoding, cb) {
+  // console.log("pro",data.length);
   this.recordNumber++;
   if (this.recordNumber === 0) { //router handle header processing
     var csvRow = data.toString("utf8");
@@ -100,7 +101,7 @@ Processor.prototype.processHeadRow = function(headRow, cb) {
 Processor.prototype.rowProcess = function(data,  cb) {
   var worker;
   if (this.workers.length > 1) {// if multi-worker enabled
-    if (this.workers.length>2){// for 2+ workers, host process will concentrate on csv parsing while workers will convert csv lines to JSON. 
+    if (this.workers.length>2){// for 2+ workers, host process will concentrate on csv parsing while workers will convert csv lines to JSON.
       worker = this.workers[(this.recordNumber % (this.workers.length - 1)) + 1];
     }else{//for 2 workers, leverage it as first worker has like 50% cpu used for csv parsing. the weight would be like 0,1,1,0,1,1,0
       var index=this.recordNumber%3;

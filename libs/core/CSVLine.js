@@ -23,7 +23,7 @@ function CSVLine(params) {
     }
   }
   this.param = _param;
-  this._buffer = ""; //line buffer; buffer for a complete line 
+  this._buffer = ""; //line buffer; buffer for a complete line
   this._recordBuffer = ""; //csv line record buffer ; buffer for a complete csv line
   this.rowIndex = 0; //indicating current row number of csv file;
 }
@@ -31,7 +31,7 @@ util.inherits(CSVLine, Transform);
 
 CSVLine.prototype._transform = function(data, encoding, cb) {
   var arr;
-
+  // console.log("line",data.length);
   function contains(str, subString) {
     return str.lastIndexOf(subString) > -1;
   }
@@ -62,7 +62,7 @@ CSVLine.prototype._flush = function(cb) {
 CSVLine.prototype._line = function(line, lastLine) {
   var data;
   this._recordBuffer += line;
-  if (!this._isToogleQuote(this._recordBuffer)) { //if a complete record is in buffer.push to downstream 
+  if (!this._isToogleQuote(this._recordBuffer)) { //if a complete record is in buffer.push to downstream
     data = this._recordBuffer;
     this._recordBuffer = '';
     this.push(data, "utf8");
