@@ -14,7 +14,6 @@ var utils = require("./utils.js");
 function CSVLine(params) {
   Transform.call(this);
   var _param = {
-    eol: eol,
     quote: "\""
   }
   for (var key in params) {
