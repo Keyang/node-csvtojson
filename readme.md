@@ -9,36 +9,6 @@ All you need nodejs csv to json converter.
 * Easy Usage
 * more!
 
-#IMPORTANT!!
-Since version 0.3, the core class of csvtojson has been inheriting from stream.Transform class. Therefore, it will behave like a normal Stream object and CSV features will not be available any more. Now the usage is like:
-```js
-//Converter Class
-var fs = require("fs");
-var Converter = require("csvtojson").Converter;
-var fileStream = fs.createReadStream("./file.csv");
-//new converter instance
-var converter = new Converter({constructResult:true});
-//end_parsed will be emitted once parsing finished
-converter.on("end_parsed", function (jsonObj) {
-   console.log(jsonObj); //here is your result json object
-});
-//read from file
-fileStream.pipe(converter);
-```
-
-To convert from a string, previously the code was:
-```js
-csvConverter.from(csvString);
-```
-
-Now it is:
-```js
-csvConverter.fromString(csvString, callback);
-```
-
-The callback function above is optional. see [Parse String](#parse-string).
-
-After version 0.3, csvtojson requires node 0.10 and above.
 
 ##Menu
 * [Installation](#installation)
@@ -67,20 +37,55 @@ After version 0.3, csvtojson requires node 0.10 and above.
 GitHub: https://github.com/Keyang/node-csvtojson
 
 ##Installation
+
 >npm install -g csvtojson
 
-
-##Features
-
-* Powerful library for you nodejs applications processing csv data.
-* Multi cpu core support
-* Extremly straight forward
-* Multiple input support: CSV File, Readable Stream, CSV String etc.
-* Highly extendible with your own rules and parsers for outputs.
-* Multiple interfaces (webservice, command line)
-
+>npm install csvtojson --save
 
 ##Usage
+
+### library
+
+**From File**
+```js
+//Converter Class
+var Converter = require("csvtojson").Converter;
+var converter = new Converter({});
+
+//end_parsed will be emitted once parsing finished
+converter.on("end_parsed", function (jsonArray) {
+   console.log(jsonArray); //here is your result jsonarray
+});
+
+//read from file
+require("fs").createReadStream("./file.csv").pipe(converter);
+```
+
+**From Web Server**
+
+```js
+//Converter Class
+var Converter = require("csvtojson").Converter;
+var converter = new Converter({constructResult:false}); //for big csv data
+
+//record_parsed will be emitted each csv row being processed
+converter.on("record_parsed", function (jsonObj) {
+   console.log(jsonObj); //here is your result json object
+});
+
+require("request").get("http://csvwebserver").pipe(converter);
+
+```
+
+**From String**
+
+```js
+var Converter = require("csvtojson").Converter;
+var converter = new Converter({}); //for big csv data
+converter.fromString(csvString, function(err,result){
+  //your code here
+});
+```
 
 ###Command Line Tools
 
@@ -102,75 +107,31 @@ Advanced usage with parameters support, check help:
 
 >csvtojson --help
 
-### WebService
-After webserve being initialised, it is able to use http post with CSV data as body.
-For example, we start web server with default configuration:
->csvtojson startserver
-
-And then we use curl to perform a web request:
->curl -X POST -d "date,\*json\*employee.name,\*json\*employee.age,\*json\*employee.number,\*array\*address,\*array\*address,\*jsonarray\*employee.key,\*jsonarray\*employee.key,\*omit\*id
->
->2012-02-12,Eric,31,51234,Dunno Street,Kilkeny Road,key1,key2,2
->
->2012-03-06,Ted,28,51289,Cambridge Road,Tormore,key3,key4,4" http://127.0.0.1:8801/parseCSV
-
-#Demo Product
-To write a demo app, simply use csvtojson web interface. Paste following code to index.js:
-
-```js
-var server = require("csvtojson").interfaces.web;
-server.startWebServer({
-	"port":8801
-});
-```
-Then run the app:
-```
-node ./index.js
-```
-Now you can post any csv data to http://localhost:8801/parseCSV
-
-It uses HTTP Request as readable stream and HTTP Response as writable stream.
-
-# Quick Start
-Use csvtojson library to your own project.
-
-Import csvtojson to your package.json or install through npm:
-
->npm install csvtojson
-
-~~The core of the tool is Converter class. It is based on node-csv library (version 0.3.6). Therefore it has all features of [node-csv](http://www.adaltas.com/projects/node-csv/).~~ To start a parse, simply use following code:
-
-```js
-//Converter Class
-var fs = require("fs");
-var Converter = require("csvtojson").Converter;
-var fileStream = fs.createReadStream("./file.csv");
-//new converter instance
-var param={};
-var converter = new Converter(param);
-
-//end_parsed will be emitted once parsing finished
-converter.on("end_parsed", function (jsonObj) {
-   console.log(jsonObj); //here is your result json object
-});
-
-//read from file
-fileStream.pipe(converter);
-```
 # Params
-The parameters for Converter constructor are:
 
-* constructResult: true/false. Whether to constrcut final json object in memory which will be populated in "end_parsed" event. Set to false if deal with huge csv data. default: true.
-* delimiter: delimiter used for seperating columns. default: ","
-* quote: If a column contains delimiter, it is able to use quote character to surround the column content. e.g. "hello, world" wont be split into two columns while parsing. default: " (double quote)
-* trim: Indicate if parser trim off spaces surrounding column content. e.g. "  content  " will be trimmed to "content". Default: true
-* checkType: This parameter turns on and off weather check field type. default is true. See [Field type](#field-type)
-* toArrayString: Stringify the stream output to JSON array. This is useful when pipe output to a file which expects JSON array. default is false and only JSON will be pushed to downstream.
-* ignoreEmpty: Ignore the empty value in CSV columns. If a column value is not giving, set this to true to skip them. Defalut: false.
-* workerNum: Number of worker processes. The worker process will use multi-cores to help process CSV data. Set to number of Core to improve the performance of processing large csv file. Keep 1 for small csv files. Default 1.
-* fork: Use another CPU core to process the CSV stream.
-* noheader:Indicating csv data has no header row and first row is data row. Default is false. See [header configuration](#header-configuration)
-* headers: An array to specify the headers of CSV data. If --noheader is false, this value will override CSV header row. Default: null. Example: ["my field","name"]. See [header configuration](#header-configuration)
+The constructor of csv Converter allows parameters:
+
+```js
+var converter=new require("csvtojson").Converter({
+  constructResult:false,
+  workerNum:4,
+  noheader:true
+});
+```
+
+Following parameters are supported:
+
+* **constructResult**: true/false. Whether to constrcut final json object in memory which will be populated in "end_parsed" event. Set to false if deal with huge csv data. default: true.
+* **delimiter**: delimiter used for seperating columns. default: ","
+* **quote**: If a column contains delimiter, it is able to use quote character to surround the column content. e.g. "hello, world" wont be split into two columns while parsing. default: " (double quote)
+* **trim**: Indicate if parser trim off spaces surrounding column content. e.g. "  content  " will be trimmed to "content". Default: true
+* **checkType**: This parameter turns on and off weather check field type. default is true. See [Field type](#field-type)
+* **toArrayString**: Stringify the stream output to JSON array. This is useful when pipe output to a file which expects JSON array. default is false and only JSON will be pushed to downstream.
+* **ignoreEmpty**: Ignore the empty value in CSV columns. If a column value is not giving, set this to true to skip them. Defalut: false.
+* **workerNum**: Number of worker processes. The worker process will use multi-cores to help process CSV data. Set to number of Core to improve the performance of processing large csv file. Keep 1 for small csv files. Default 1.
+* **fork**: Use another CPU core to process the CSV stream.
+* **noheader**:Indicating csv data has no header row and first row is data row. Default is false. See [header configuration](#header-configuration)
+* **headers**: An array to specify the headers of CSV data. If --noheader is false, this value will override CSV header row. Default: null. Example: ["my field","name"]. See [header configuration](#header-configuration)
 
 # Parser
 CSVTOJSON allows adding customised parsers which concentrating on what to parse and how to parse.
@@ -665,7 +626,7 @@ var converter=new require("csvtojson").Converter({headers:["my header1","hello w
 ##0.4.3
 * Added header configuration
 * Refactored worker code
-* Number type field now returns 0 if parseFloat returns NaN with the value of the field. Previously it returns original value in string.
+* **Number type field now returns 0 if parseFloat returns NaN with the value of the field. Previously it returns original value in string.**
 
 ##0.4.0
 * Added Multi-core CPU support to increase performance
@@ -703,3 +664,34 @@ var converter=new require("csvtojson").Converter({headers:["my header1","hello w
 * Deprecated applyWebServer
 * Added construct parameter for Converter Class
 * Converter Class now works as a proper stream object
+
+#IMPORTANT!!
+Since version 0.3, the core class of csvtojson has been inheriting from stream.Transform class. Therefore, it will behave like a normal Stream object and CSV features will not be available any more. Now the usage is like:
+```js
+//Converter Class
+var fs = require("fs");
+var Converter = require("csvtojson").Converter;
+var fileStream = fs.createReadStream("./file.csv");
+//new converter instance
+var converter = new Converter({constructResult:true});
+//end_parsed will be emitted once parsing finished
+converter.on("end_parsed", function (jsonObj) {
+   console.log(jsonObj); //here is your result json object
+});
+//read from file
+fileStream.pipe(converter);
+```
+
+To convert from a string, previously the code was:
+```js
+csvConverter.from(csvString);
+```
+
+Now it is:
+```js
+csvConverter.fromString(csvString, callback);
+```
+
+The callback function above is optional. see [Parse String](#parse-string).
+
+After version 0.3, csvtojson requires node 0.10 and above.
