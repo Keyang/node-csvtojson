@@ -81,7 +81,7 @@ require("request").get("http://csvwebserver").pipe(converter);
 
 ```js
 var Converter = require("csvtojson").Converter;
-var converter = new Converter({}); //for big csv data
+var converter = new Converter({}); 
 converter.fromString(csvString, function(err,result){
   //your code here
 });
