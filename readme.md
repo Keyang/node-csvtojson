@@ -1,5 +1,5 @@
 #CSVTOJSON
-All you need nodejs csv to json converter. 
+All you need nodejs csv to json converter.
 * Large CSV data
 * Command Line Tool and Node.JS Lib
 * Complex/nested JSON
@@ -61,6 +61,7 @@ After version 0.3, csvtojson requires node 0.10 and above.
 * [Empowered JSON Parser](#empowered-json-parser)
 * [Field Type](#field-type)
 * [Multi-Core / Fork Process](#multi-cpu-core)
+* [Header Configuration](#header-configuration)
 * [Change Log](#change-log)
 
 GitHub: https://github.com/Keyang/node-csvtojson
@@ -167,7 +168,9 @@ The parameters for Converter constructor are:
 * toArrayString: Stringify the stream output to JSON array. This is useful when pipe output to a file which expects JSON array. default is false and only JSON will be pushed to downstream.
 * ignoreEmpty: Ignore the empty value in CSV columns. If a column value is not giving, set this to true to skip them. Defalut: false.
 * workerNum: Number of worker processes. The worker process will use multi-cores to help process CSV data. Set to number of Core to improve the performance of processing large csv file. Keep 1 for small csv files. Default 1.
-* fork: Use another CPU core to convert the CSV stream
+* fork: Use another CPU core to process the CSV stream.
+* noheader:Indicating csv data has no header row and first row is data row. Default is false. See [header configuration](#header-configuration)
+* headers: An array to specify the headers of CSV data. If --noheader is false, this value will override CSV header row. Default: null. Example: ["my field","name"]. See [header configuration](#header-configuration)
 
 # Parser
 CSVTOJSON allows adding customised parsers which concentrating on what to parse and how to parse.
@@ -279,11 +282,11 @@ There are default parsers in the library they are
 #~~Example:~~(This example is deprecated see [Empowered JSON Parser](#empowered-json-parser))
 
 Original data:
-
+```csv
     date,*json*employee.name,*json*employee.age,*json*employee.number,*array*address,*array*address,*jsonarray*employee.key,*jsonarray*employee.key,*omit*id
     2012-02-12,Eric,31,51234,Dunno Street,Kilkeny Road,key1,key2,2
     2012-03-06,Ted,28,51289,Cambridge Road,Tormore,key3,key4,4
-
+```
 Output data:
 
 ```json
@@ -391,12 +394,14 @@ rs.pipe(csvConverter);
 
 Here is an example:
 
+```csv
     TIMESTAMP,UPDATE,UID,BYTES SENT,BYTES RCVED
     1395426422,n,10028,1213,5461
     1395426422,n,10013,9954,13560
     1395426422,n,10109,221391500,141836
     1395426422,n,10007,53448,308549
     1395426422,n,10022,15506,72125
+```
 
 It will be converted to:
 
@@ -440,7 +445,7 @@ To make JSON and CSV containing same amount information, we need "flatten" some 
 
 Here is an example. Original CSV:
 
-```
+```csv
 fieldA.title, fieldA.children[0].name, fieldA.children[0].id,fieldA.children[1].name, fieldA.children[1].employee[].name,fieldA.children[1].employee[].name, fieldA.address[],fieldA.address[], description
 Food Factory, Oscar, 0023, Tikka, Tim, Joe, 3 Lame Road, Grantstown, A fresh new food factory
 Kindom Garden, Ceil, 54, Pillow, Amst, Tom, 24 Shaker Street, HelloTown, Awesome castle
@@ -585,7 +590,7 @@ The minimum worker number is 1. When worker number is larger than 1, the parser 
 For command line, to use worker just use ```--workerNum``` argument:
 
 ```
-csvtojson --workerNum=4 ./myfile.csv 
+csvtojson --workerNum=4 ./myfile.csv
 ```
 It is worth to mention that for small size of CSV file it actually costs more time to create processes and keep the communication between them. Therefore, use less workers for small CSV files.
 
@@ -600,7 +605,67 @@ var Converter=require("csvtojson").Converter;
 ```
 Same as multi-workers, fork a new process will cause extra cost on process communication and life cycle management. Use it wisely.
 
+### Header configuration
+
+CSV header row can be configured programmatically.
+
+the *noheader* parameter indicate if first row of csv is header row or not. e.g. CSV data:
+
+```
+CC102-PDMI-001,eClass_5.1.3,10/3/2014,12,40,green,40
+CC200-009-001,eClass_5.1.3,11/3/2014,5,3,blue,38
+```
+
+With noheader=true
+
+```
+csvtojson  ./test/data/noheadercsv  --noheader=true
+```
+
+we can get following result:
+
+```json
+[
+{"field1":"CC102-PDMI-001","field2":"eClass_5.1.3","field3":"10/3/2014","field4":"12","field5":"40","field6":"green","field7":"40"},
+{"field1":"CC200-009-001","field2":"eClass_5.1.3","field3":"11/3/2014","field4":"5","field5":"3","field6":"blue","field7":"38"}
+]
+```
+
+or we can use it in code:
+
+```js
+var converter=new require("csvtojson").Converter({noheader:true});
+```
+
+the *headers* parameter specify the header row in an array. If *noheader* is false, this value will override csv header row. With csv data above, run command:
+
+```
+csvtojson  ./test/data/noheadercsv  --noheader=true --headers='["hell","csv"]'
+```
+
+we get following results:
+
+```json
+[
+{"hello":"CC102-PDMI-001","csv":"eClass_5.1.3","field1":"10/3/2014","field2":12,"field3":40,"field4":"green","field5":40},
+{"hello":"CC200-009-001","csv":"eClass_5.1.3","field1":"11/3/2014","field2":5,"field3":3,"field4":"blue","field5":38}
+]
+```
+
+If length of headers array is smaller than the column of csv, converter will automatically fill the column with "field*".
+
+Also we can use it in code:
+
+```js
+var converter=new require("csvtojson").Converter({headers:["my header1","hello world"]});
+```
+
 #Change Log
+
+##0.4.3
+* Added header configuration
+* Refactored worker code
+* Number type field now returns 0 if parseFloat returns NaN with the value of the field. Previously it returns original value in string.
 
 ##0.4.0
 * Added Multi-core CPU support to increase performance
@@ -638,4 +703,3 @@ Same as multi-workers, fork a new process will cause extra cost on process commu
 * Deprecated applyWebServer
 * Added construct parameter for Converter Class
 * Converter Class now works as a proper stream object
-

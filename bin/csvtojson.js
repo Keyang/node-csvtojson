@@ -67,7 +67,14 @@ function csvtojson() {
       "options": {},
       "inputStream": process.stdin
     };
-
+    function parseObject(val){
+      try {
+        return JSON.parse(val);
+      }catch(e){
+        console.error(e);
+        process.exit(1);
+      }
+    }
     function parseBool(str, optName) {
       str = str.toLowerCase();
       if (str === "true" || str === "y") {
@@ -96,14 +103,14 @@ function csvtojson() {
           parsedCmd.options[key] = parseBool(val, optName);
         } else if (type ==="number"){
           parsedCmd.options[key] = parseFloat(val);
-        } 
-        else {
+        } else if (type ==="object"){
+          parsedCmd.options[key] = parseObject(val);
+        } else {
           throw ({
             name: "UnimplementedException",
             message: "Option type parsing not implemented. See bin/options.json"
           });
         }
-        parsedCmd.options[key] = val;
       } else if (cmds[item]) {
         parsedCmd.cmd = item;
       } else if (fs.existsSync(item)) {

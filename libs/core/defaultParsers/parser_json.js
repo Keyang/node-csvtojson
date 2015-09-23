@@ -8,8 +8,13 @@ module.exports = {
     var arrReg = /\[([0-9]*)\]/;
     var match, index, key, pointer;
     function parseParamType (type, item) {
-      if (type === 'number' && !isNaN(item)) {
-        return parseFloat(item);
+      if (type === 'number') {
+        var rtn=parseFloat(item);
+        if (isNaN(rtn)){
+          return 0;
+        }else{
+          return rtn;
+        }
       } else if (type === '') {
         try {
           return JSON.parse(item);
@@ -28,7 +33,7 @@ module.exports = {
           if (pointer[headStr.replace(match[0], '')] === undefined) {
             pointer[headStr.replace(match[0], '')] = [];
           }
-          index = match[1]; //get index where json object should stay 
+          index = match[1]; //get index where json object should stay
           pointer = pointer[headStr.replace(match[0], '')];
           if (index === '') { //if its dynamic array index, push to the end
             index = pointer.length;
@@ -50,7 +55,7 @@ module.exports = {
     pointer = processHead(params.resultRow, headArr, arrReg);
     key = headArr.shift();
     match = key.match(arrReg);
-    if (match) { // the last element is an array, we need check and treat it as an array.  
+    if (match) { // the last element is an array, we need check and treat it as an array.
       key = key.replace(match[0], '');
       if (!pointer[key] || !(pointer[key] instanceof Array)) {
         pointer[key] = [];

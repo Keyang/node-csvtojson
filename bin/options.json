@@ -28,6 +28,14 @@
     "--workerNum": {
       "desc": "Number of worker processes. The worker process will use multi-cores to help process CSV data. Set to number of Core to improve the performance of processing large csv file. Keep 1 for small csv files. Default 1.",
       "type": "number"
+    },
+    "--noheader":{
+      "desc":"Indicating csv data has no header row and first row is data row. Default is false",
+      "type":"boolean"
+    },
+    "--headers":{
+      "desc":"An array to specify the headers of CSV data. If --noheader is false, this value will override CSV header. Default: null. Example: [\"my field\",\"name\"]",
+      "type":"object"
     }
   },
   "examples":[

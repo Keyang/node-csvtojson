@@ -19,7 +19,9 @@ function Converter(params) {
     toArrayString: false, //stream out array of json string. (usable if downstream is file writer etc)
     ignoreEmpty: false, //Ignore empty value while parsing. if a value of the column is empty, it will be skipped parsing.
     workerNum: 1, //number of parallel workers. If multi-core CPU available, increase the number will get better performance for large csv data.
-    fork: false //use another CPU core to convert the csv stream
+    fork: false, //use another CPU core to convert the csv stream
+    noheader:false, //indicate if first line of CSV file is header or not.
+    headers:null //an array of header strings. If noheader is false and headers is array, csv header will be ignored.
   };
   if (params && typeof params === "object") {
     for (var key in params) {

@@ -184,7 +184,7 @@ describe("CSV Converter", function () {
       assert(d.column5.hello === "world");
       assert(d.column6 === '{"hello":"world"}');
       assert(d.column7 === "1234");
-      assert(d.column8 === "abcd");
+      assert(d.column8 === 0);
       assert(d.column9 === true);
     });
     csvConverter.on("end_parsed",function (){
@@ -274,4 +274,46 @@ describe("CSV Converter", function () {
     });
 
   });
+  it ("should allow no header",function(done){
+    var testData = __dirname + "/data/noheadercsv";
+    var rs = fs.createReadStream(testData);
+    var st = rs.pipe(new Converter({noheader:true}));
+    st.on("end_parsed",function (res){
+      var j = res[0];
+      assert(res.length===5);
+      assert(j.field1==="CC102-PDMI-001");
+      assert(j.field2==="eClass_5.1.3");
+      done();
+    });
+  })
+  it ("should allow customised header",function(done){
+    var testData = __dirname + "/data/noheadercsv";
+    var rs = fs.createReadStream(testData);
+    var st = rs.pipe(new Converter({
+      noheader:true,
+      headers:["a","b"]
+    }));
+    st.on("end_parsed",function (res){
+      var j = res[0];
+      assert(res.length===5);
+      assert(j.a==="CC102-PDMI-001");
+      assert(j.b==="eClass_5.1.3");
+      assert(j.field1==="10/3/2014");
+      done();
+    });
+  })
+  it ("should allow customised header to override existing header",function(done){
+    var testData = __dirname + "/data/complexJSONCSV";
+    var rs = fs.createReadStream(testData);
+    var st = rs.pipe(new Converter({
+      headers:[]
+    }));
+    st.on("end_parsed",function (res){
+      var j = res[0];
+      assert(res.length===2);
+      assert(j.field1==="Food Factory");
+      assert(j.field2==="Oscar");
+      done();
+    });
+  })
 });

@@ -18,6 +18,7 @@ function Worker(params, sync) {
   }
   this.param = _param;
   this.sync = sync ? true : false;
+  this.funcs = require("./workerRunner")();
   if (!this.sync) {
     this.child = require("child_process").fork(__dirname + "/workerRunner.js");
     this.child.on("message", this.onChildMsg.bind(this));
@@ -30,39 +31,14 @@ Worker.prototype.release = function() {
     this.child.kill();
   }
 }
-Worker.prototype.processRow = function(data,index, cb) {
-  if (this.sync) {
-      var i, item, parser, head, 
-      row = utils.rowSplit(data, this.param.delimiter, this.param.quote, this.param.trim);
-    var resultRow = {};
-    for (i = 0; i < this.parseRules.length; i++) {
-      item = row[i];
-      if (this.param.ignoreEmpty && item === '') {
-        continue;
-      }
-      parser = this.parseRules[i];
-      head = this.headRow[i];
-      parser.parse({
-        head: head,
-        item: item,
-        itemIndex: i,
-        rawRow: row,
-        resultRow: resultRow,
-        rowIndex: index,
-        config: this.param || {}
-      });
-    }
-    cb(null, resultRow,row,index);
-  } else {
-    this.send({
-      action: this.genAction("processRow"),
-      data: data,
-      index:index,
-      param: this.param
-    }, function(err,res){
-      cb(null,res.resultRow,res.row,res.index);
-    });
-  }
+Worker.prototype.processRow = function(data, index, cb) {
+  this.send({
+    action: "processRow",
+    data: data,
+    index: index
+  }, function(err, res) {
+    cb(null, res.resultRow, res.row, res.index);
+  });
 }
 Worker.prototype.onChildMsg = function(m) {
   var action = m.action;
@@ -72,26 +48,31 @@ Worker.prototype.onChildMsg = function(m) {
     cb(null, m);
     delete this.childCallbacks[action];
   } else {
-    //None register child action 
+    //None register child action
   }
 }
 Worker.prototype.send = function(msg, cb) {
-  var action = msg.action;
-  this.childCallbacks[action] = cb;
-  this.child.send(msg);
+  msg.param=this.param;
+  if (this.sync) {
+    this.funcs[msg.action](msg, cb);
+  } else {
+    var action = this.genAction(msg.action);
+    msg.action=action;
+    this.childCallbacks[action] = cb;
+    this.child.send(msg);
+  }
+}
+Worker.prototype.genConstHeadRow = function(number, cb) {
+  this.send({
+    action: "genConstHeadRow",
+    number: number
+  }, cb);
 }
 Worker.prototype.processHeadRow = function(headRow, cb) {
-  if (this.sync) {
-    this.headRow = headRow;
-    this.parseRules = parserMgr.initParsers(headRow, this.param.checkType);
-    cb();
-  } else {
-    this.send({
-      action: this.genAction("processHeadRow"),
-      row: headRow,
-      param: this.param
-    }, cb);
-  }
+  this.send({
+    action: "processHeadRow",
+    row: headRow
+  }, cb);
 }
 Worker.prototype.genAction = function(action) {
   var d = "" + new Date().getTime() + Math.round(Math.random() * 1000000);

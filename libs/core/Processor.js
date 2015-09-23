@@ -39,14 +39,41 @@ Processor.prototype._transform = function(data, encoding, cb) {
   if (this.recordNumber === 0) { //router handle header processing
     var csvRow = data.toString("utf8");
     var row = utils.rowSplit(csvRow, this.param.delimiter, this.param.quote, this.param.trim);
-    this.processHeadRow(row, cb);
+    async.each(this.workers, function(worker, scb) {
+      if (this.param.headers && this.param.headers instanceof Array){
+        var counter=1;
+        while (this.param.headers.length<row.length){
+          this.param.headers.push("field"+counter++);
+        }
+        while (this.param.headers.length>row.length){
+          this.param.headers.pop();
+        }
+        row=this.param.headers;
+      }
+      if (this.param.noheader && !this.param.headers) {
+        worker.genConstHeadRow(row.length,scb);
+      } else {
+        worker.processHeadRow(row, scb);
+      }
+    }.bind(this), function() {
+      //console.log(arguments);
+      if (this.param.noheader){
+        this.recordNumber++;
+        rowProcess.call(this);
+      }else{
+        cb();
+      }
+    }.bind(this));
   } else { //pass the data to worker
+    rowProcess.call(this);
+  }
+  function rowProcess(){
     this.runningWorker++;
-    this.rowProcess(data.toString("utf8"),  function(err, resultRow,row,index) {
+    this.rowProcess(data.toString("utf8"), function(err, resultRow, row, index) {
       if (err) {
         this.emit("error", err);
       } else {
-        this.emit("record_parsed", resultRow, row, index-1);
+        this.emit("record_parsed", resultRow, row, index - 1);
         //this.push(JSON.stringify([resultRow,row,obj.rowIndex]),"utf8");
       }
       this.runningWorker--;
@@ -98,22 +125,22 @@ Processor.prototype.processHeadRow = function(headRow, cb) {
     cb();
   });
 }
-Processor.prototype.rowProcess = function(data,  cb) {
+Processor.prototype.rowProcess = function(data, cb) {
   var worker;
-  if (this.workers.length > 1) {// if multi-worker enabled
-    if (this.workers.length>2){// for 2+ workers, host process will concentrate on csv parsing while workers will convert csv lines to JSON.
+  if (this.workers.length > 1) { // if multi-worker enabled
+    if (this.workers.length > 2) { // for 2+ workers, host process will concentrate on csv parsing while workers will convert csv lines to JSON.
       worker = this.workers[(this.recordNumber % (this.workers.length - 1)) + 1];
-    }else{//for 2 workers, leverage it as first worker has like 50% cpu used for csv parsing. the weight would be like 0,1,1,0,1,1,0
-      var index=this.recordNumber%3;
-      if (index>1){
-        index=1;
+    } else { //for 2 workers, leverage it as first worker has like 50% cpu used for csv parsing. the weight would be like 0,1,1,0,1,1,0
+      var index = this.recordNumber % 3;
+      if (index > 1) {
+        index = 1;
       }
       worker = this.workers[index];
     }
-  } else {//if only 1 worker
+  } else { //if only 1 worker
     worker = this.workers[0];
   }
-  worker.processRow(data,this.recordNumber,  cb);
+  worker.processRow(data, this.recordNumber, cb);
 }
 Processor.prototype.checkAndFlush = function() {
   if (this.runningWorker === 0 && this.flushCb) {
