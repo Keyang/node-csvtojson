@@ -12,18 +12,12 @@ All you need nodejs csv to json converter.
 
 ##Menu
 * [Installation](#installation)
-* [Example](#example)
-* [CLI Usage](#usage)
-    * [CLI Tool](#command-line-tools)
-    * [Web Service](#webservice)
-* [Demo Product](#demo-product)
-* [Quick Start](#quick-start)
+* [Usage](#usage)
 * [Parameters](#params)
 * [Customised Parser](#parser)
 * [Webserver](#webserver)
 * [Events](#events)
 * [Built-in Parsers](#default-parsers)
-* [Example](#example)
 * [Big CSV File Streaming](#big-csv-file)
 * [Process Big CSV File in CLI](#convert-big-csv-file-with-command-line-tool)
 * [Column Array](#column-array)
@@ -233,64 +227,10 @@ csvConverter.on("record_parsed",function(resultRow,rawRow,rowIndex){
 # Default Parsers
 There are default parsers in the library they are
 
-~~**Array**: For columns head start with "\*array\*" e.g. "\*array\*fieldName", this parser will combine cells data with same fieldName to one Array.~~
-
-~~**Nested JSON**: For columns head start with "\*json\*" e.g. "\*json\*my.nested.json.structure", this parser will create nested nested JSON structure: my.nested.json~~
-
-~~**Nested JSON Array**: For columns head start with "\*jsonarray\*" e.g. "\*jsonarray\*my.items", this parser will create structure like my.items[].~~
-
 **JSON**: Any valid JSON structure (array, nested json) are supported. see [Empowered JSON Parser](#empowered-json-parser)
 
 **Omitted column**: For columns head start with "\*omit\*" e.g. "\*omit\*id", the parser will omit the column's data.
 
-#~~Example:~~(This example is deprecated see [Empowered JSON Parser](#empowered-json-parser))
-
-Original data:
-```csv
-    date,*json*employee.name,*json*employee.age,*json*employee.number,*array*address,*array*address,*jsonarray*employee.key,*jsonarray*employee.key,*omit*id
-    2012-02-12,Eric,31,51234,Dunno Street,Kilkeny Road,key1,key2,2
-    2012-03-06,Ted,28,51289,Cambridge Road,Tormore,key3,key4,4
-```
-Output data:
-
-```json
-{
-   "csvRows": [
-      {
-         "date": "2012-02-12",
-         "employee": {
-            "name": "Eric",
-            "age": "31",
-            "number": "51234",
-            "key": [
-              "key1",
-              "key2"
-            ]
-          },
-          "address": [
-            "Dunno Street",
-            "Kilkeny Road"
-          ]
-        },
-        {
-          "date": "2012-03-06",
-          "employee": {
-            "name": "Ted",
-            "age": "28",
-           "number": "51289",
-            "key": [
-              "key3",
-              "key4"
-            ]
-         },
-         "address": [
-            "Cambridge Road",
-            "Tormore"
-         ]
-      }
-   ]
-}
-```
 
 # Big CSV File
 csvtojson library was designed to accept big csv file converting. To avoid memory consumption, it is recommending to use read stream and write stream.
