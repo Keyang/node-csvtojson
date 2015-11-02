@@ -26,6 +26,7 @@ All you need nodejs csv to json converter.
 * [Field Type](#field-type)
 * [Multi-Core / Fork Process](#multi-cpu-core)
 * [Header Configuration](#header-configuration)
+* [Error Handling](#error-handling)
 * [Change Log](#change-log)
 
 GitHub: https://github.com/Keyang/node-csvtojson
@@ -564,7 +565,7 @@ Also we can use it in code:
 var converter=new require("csvtojson").Converter({headers:["my header1","hello world"]});
 ```
 
-### Error handling
+# Error handling
 
 Since version 0.4.4, parser detects CSV data corruption. It is important to catch those erros if CSV data is not guranteed correct. Just simply register a listener to error event:
 
