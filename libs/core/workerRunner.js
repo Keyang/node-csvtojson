@@ -5,11 +5,11 @@ if (process.send) {
   process.on("message", function(m) {
     var action = getAction(m.action);
     inst[action](m, function(err, res) {
-      if (err) {
-        //error handling
-      }
       if (!res){
         res={};
+      }
+      if (err) {
+        res.error=err;
       }
       res.action = m.action;
       process.send(res);
@@ -53,6 +53,10 @@ function init() {
       param = msg.param,
       index = msg.index;
     var row = utils.rowSplit(data, param.delimiter, param.quote, param.trim);
+    debugger;
+    if (param.checkColumn && row.length !=parseRules.length ){
+      return cb("Error: column_mismatched. Data: "+data+". Row index: "+index);
+    }
     var resultRow = {};
     for (i = 0; i < parseRules.length; i++) {
       item = row[i];

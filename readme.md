@@ -81,7 +81,7 @@ require("request").get("http://csvwebserver").pipe(converter);
 
 ```js
 var Converter = require("csvtojson").Converter;
-var converter = new Converter({}); 
+var converter = new Converter({});
 converter.fromString(csvString, function(err,result){
   //your code here
 });
@@ -126,12 +126,15 @@ Following parameters are supported:
 * **quote**: If a column contains delimiter, it is able to use quote character to surround the column content. e.g. "hello, world" wont be split into two columns while parsing. default: " (double quote)
 * **trim**: Indicate if parser trim off spaces surrounding column content. e.g. "  content  " will be trimmed to "content". Default: true
 * **checkType**: This parameter turns on and off weather check field type. default is true. See [Field type](#field-type)
-* **toArrayString**: Stringify the stream output to JSON array. This is useful when pipe output to a file which expects JSON array. default is false and only JSON will be pushed to downstream.
+* **toArrayString**: Stringify the stream output to JSON array. This is useful when pipe output to a file which expects stringified JSON array. default is false and only stringified JSON (without []) will be pushed to downstream.
 * **ignoreEmpty**: Ignore the empty value in CSV columns. If a column value is not giving, set this to true to skip them. Defalut: false.
 * **workerNum**: Number of worker processes. The worker process will use multi-cores to help process CSV data. Set to number of Core to improve the performance of processing large csv file. Keep 1 for small csv files. Default 1.
 * **fork**: Use another CPU core to process the CSV stream.
 * **noheader**:Indicating csv data has no header row and first row is data row. Default is false. See [header configuration](#header-configuration)
 * **headers**: An array to specify the headers of CSV data. If --noheader is false, this value will override CSV header row. Default: null. Example: ["my field","name"]. See [header configuration](#header-configuration)
+* **maxRowLength**: the max character a csv row could have. 0 means infinite. If max number exceeded, parser will emit "error" of "row_exceed". if a possibly corrupted csv data provided, give it a number like 65535 so the parser wont consume memory. default: 0
+* **checkColumn**: whether check column number of a row is the same as headers. If column number mismatched headers number, an error of "mismatched_column" will be emitted.. default: false
+* **eol**: End of line character. If omitted, parser will attempt retrieve it from first chunk of CSV data. If no valid eol found, then operation system eol will be used.
 
 # Parser
 CSVTOJSON allows adding customised parsers which concentrating on what to parse and how to parse.
@@ -621,7 +624,30 @@ Also we can use it in code:
 var converter=new require("csvtojson").Converter({headers:["my header1","hello world"]});
 ```
 
+### Error handling
+
+Since version 0.4.4, parser detects CSV data corruption. It is important to catch those erros if CSV data is not guranteed correct. Just simply register a listener to error event:
+
+```js
+  var converter=new require("csvtojson").Converter();
+  converter.on("error",function(errMsg,errData){
+    //do error handling here
+  });
+```
+
+Once an error is emitted, the parser will continously parse csv data if up stream is still populating data. Therefore, a general practise is to close / destroy up stream once error is captured.
+
+Here are built-in error messages and corresponding error data:
+
+* unclosed_quote: If quote in csv is not closed, this error will be populated. The error data is a string which contains un-closed csv row.
+* row_exceed: If maxRowLength is given a number larger than 0 and a row is longer than the value, this error will be populated. The error data is a string which contains the csv row exceeding the length.
+* row_process: Any error happened while parser processing a csv row will populate this error message. The error data is detailed error message (e.g. checkColumn is true and column size of a row does not match that of header).
+
 #Change Log
+
+##0.4.4
+* Add error handling for corrupted CSV data
+* Exposed "eol" param
 
 ##0.4.3
 * Added header configuration

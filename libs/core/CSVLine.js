@@ -15,15 +15,15 @@ function CSVLine(params) {
   Transform.call(this);
   var _param = {
     quote: "\""
-  }
+  };
   for (var key in params) {
     if (params.hasOwnProperty(key)) {
       _param[key] = params[key];
     }
   }
   this.param = _param;
-  this._buffer = ""; //line buffer; buffer for a complete line
-  this._recordBuffer = ""; //csv line record buffer ; buffer for a complete csv line
+  this._buffer = ""; //line buffer; buffer for a complete line which ends with a line break
+  this._recordBuffer = ""; //csv line record buffer ; buffer for a complete csv line which could contain multiple line breaks
   this.rowIndex = 0; //indicating current row number of csv file;
 }
 util.inherits(CSVLine, Transform);
@@ -50,17 +50,26 @@ CSVLine.prototype._transform = function(data, encoding, cb) {
     this._line(arr.shift());
   }
   this._buffer = arr[0]; //whats left (maybe half line). push to buffer
+  if (this.param.maxRowLength && this._buffer.length>this.param.maxRowLength){
+    this.emit("error","row_exceed",this._buffer);
+  }
   cb();
-}
+};
 CSVLine.prototype._flush = function(cb) {
   if (this._buffer.length !== 0) { //finished but still has buffer data. emit last line
     this._line(this._buffer, true);
+  }
+  if (this._recordBuffer.length !==0){
+    this.emit("error","unclosed_quote",this._recordBuffer);
   }
   cb();
 }
 CSVLine.prototype._line = function(line, lastLine) {
   var data;
   this._recordBuffer += line;
+  if (this.param.maxRowLength && this._recordBuffer.length>this.param.maxRowLength){
+    this.emit("error","row_exceed",this._recordBuffer);
+  }
   if (!this._isToogleQuote(this._recordBuffer)) { //if a complete record is in buffer.push to downstream
     data = this._recordBuffer;
     this._recordBuffer = '';
@@ -69,7 +78,7 @@ CSVLine.prototype._line = function(line, lastLine) {
   } else { //if the record in buffer is not a complete record (quote does not match). wait next line
     this._recordBuffer += this.getEol();
     if (lastLine) {
-      throw ("Incomplete CSV file detected. Quotes does not match in pairs. Buffer:" + this._recordBuffer);
+      this.emit("error","unclosed_quote",this._recordBuffer);
     }
   }
 };

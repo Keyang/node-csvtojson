@@ -9,7 +9,7 @@ converter.on("record_parsed", function() {
   var args = Array.prototype.slice.call(arguments, 0)
     process.send({
       action: "record_parsed",
-      arguments:args 
+      arguments:args
     });
 });
 converter.on("end_parsed", function() {
@@ -21,5 +21,12 @@ converter.on("data", function() {
   process.send({
     action: "data",
     arguments: args
+  });
+});
+converter.on("error",function(){
+  var args = Array.prototype.slice.call(arguments, 0);
+  process.send({
+    action:"error",
+    arguments:args
   });
 });

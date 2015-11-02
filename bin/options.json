@@ -29,16 +29,24 @@
       "desc": "Number of worker processes. The worker process will use multi-cores to help process CSV data. Set to number of Core to improve the performance of processing large csv file. Keep 1 for small csv files. Default 1.",
       "type": "number"
     },
-    "--noheader":{
-      "desc":"Indicating csv data has no header row and first row is data row. Default is false",
-      "type":"boolean"
+    "--noheader": {
+      "desc": "Indicating csv data has no header row and first row is data row. Default is false",
+      "type": "boolean"
     },
-    "--headers":{
-      "desc":"An array to specify the headers of CSV data. If --noheader is false, this value will override CSV header. Default: null. Example: [\"my field\",\"name\"]",
-      "type":"object"
+    "--headers": {
+      "desc": "An array to specify the headers of CSV data. If --noheader is false, this value will override CSV header. Default: null. Example: [\"my field\",\"name\"]",
+      "type": "object"
+    },
+    "--maxRowLength": {
+      "desc": "the max character a csv row could have. 0 means infinite. If max number exceeded, parser will emit \"error\" of \"row_exceed\". if a possibly corrupted csv data provided, give it a number like 65535 so the parser wont consume memory. default: 0",
+      "type": "number"
+    },
+    "--checkColumn": {
+      "desc": "whether check column number of a row is the same as headers. If column number mismatched headers number, an error of \"mismatched_column\" will be emitted.. default: false",
+      "type": "boolean"
     }
   },
-  "examples":[
+  "examples": [
     "csvtojson < csvfile",
     "csvtojson <path to csvfile>",
     "cat <csvfile> | csvtojson",

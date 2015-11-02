@@ -9,8 +9,8 @@
 	MADGE instructions
 	1. run `npm install -g madge` to get madge executable
 	2. Insure graphviz is installed and the bin folder is in your path.
-	3. run `madge -x "node_modules|util|stream|os|assert|fs|http" -i graph.png ./` to generate graph.png 
-		which is the dependency graph for the current build. 
+	3. run `madge -x "node_modules|util|stream|os|assert|fs|http" -i graph.png ./` to generate graph.png
+		which is the dependency graph for the current build.
 */
 
 module.exports = function(grunt) {
@@ -39,7 +39,7 @@ module.exports = function(grunt) {
           'freeze': true,
           'funcscope': true,
           'futurehostile': true,
-          'latedef': true,
+          'latedef': false,
           'maxcomplexity': 10, // arbitrary but anything over 10 quickly becomes hard to think about
           'maxdepth': 3, // also arbitrary. Deeply nested functions should be refactored to use helper functions.
           'maxparams': 4, // arbitrary. Consider using an object literal instead of list of params.

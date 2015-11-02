@@ -71,7 +71,7 @@ Processor.prototype._transform = function(data, encoding, cb) {
     this.runningWorker++;
     this.rowProcess(data.toString("utf8"), function(err, resultRow, row, index) {
       if (err) {
-        this.emit("error", err);
+        this.emit("error","row_process", err);
       } else {
         this.emit("record_parsed", resultRow, row, index - 1);
         //this.push(JSON.stringify([resultRow,row,obj.rowIndex]),"utf8");

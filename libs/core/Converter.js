@@ -16,12 +16,14 @@ function Converter(params) {
     quote: '"', //quote for a column containing delimiter.
     trim: true, //trim column's space charcters
     checkType: true, //whether check column type
-    toArrayString: false, //stream out array of json string. (usable if downstream is file writer etc)
+    toArrayString: false, //stream down stringified json array instead of string of json. (useful if downstream is file writer etc)
     ignoreEmpty: false, //Ignore empty value while parsing. if a value of the column is empty, it will be skipped parsing.
     workerNum: 1, //number of parallel workers. If multi-core CPU available, increase the number will get better performance for large csv data.
     fork: false, //use another CPU core to convert the csv stream
     noheader:false, //indicate if first line of CSV file is header or not.
-    headers:null //an array of header strings. If noheader is false and headers is array, csv header will be ignored.
+    headers:null, //an array of header strings. If noheader is false and headers is array, csv header will be ignored.
+    maxRowLength:0, //the max character a csv row could have. 0 means infinite. If max number exceeded, parser will emit "error" of "row_exceed". if a possibly corrupted csv data provided, give it a number like 65535 so the parser wont consume memory. default: 0
+    checkColumn:false //whether check column number of a row is the same as headers. If column number mismatched headers number, an error of "mismatched_column" will be emitted.. default: false
   };
   if (params && typeof params === "object") {
     for (var key in params) {
@@ -57,6 +59,7 @@ function Converter(params) {
       func(null, finalResult);
     }
   }.bind(this));
+  this.on("error",function(){});
   return this;
 }
 util.inherits(Converter, Transform);
@@ -83,6 +86,10 @@ Converter.prototype.initFork = function() {
     } else if (msg.action === "data") {
       var args = msg.arguments;
       this.push(new Buffer(args[0]), args[1]);
+    }else if (msg.action==="error"){
+      var args=msg.arguments;
+      args.unshift("error");
+      this.emit.apply(this,args);
     }
   }.bind(this));
   this._transform = this._transformFork;
@@ -101,13 +108,29 @@ Converter.prototype.initFork = function() {
   //}.bind(this));
 }
 Converter.prototype.initNoFork = function() {
+  function onError(){
+      var args=Array.prototype.slice.call(arguments,0);
+      args.unshift("error");
+      this.hasError=true;
+      this.emit.apply(this,args);
+      if (typeof this._callback === "function") {
+        var func = this._callback;
+        this._callback = null;
+        func(args, []);
+      }
+  };
   this.lineParser = new CSVLine(this.param);
+  this.lineParser.on("error",onError.bind(this));
   this.processor = new Processor(this.param);
+  this.processor.on("error",onError.bind(this));
   var syncWorker = new Worker(this.param, true);
+  // syncWorker.on("error",onError);
   this.processor.addWorker(syncWorker);
   if (this.param.workerNum > 1) {
     for (var i = 1; i < this.param.workerNum; i++) {
-      this.processor.addWorker(new Worker(this.param, false));
+      var worker=new Worker(this.param, false);
+      // worker.on("error",onError);
+      this.processor.addWorker(worker);
     }
   } else if (this.param.workerNum < 1) {
     this.param.workerNum = 1;

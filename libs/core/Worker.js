@@ -5,7 +5,6 @@
 module.exports = Worker;
 var parserMgr = require("./parserMgr.js");
 var utils = require("./utils.js");
-
 function Worker(params, sync) {
   var _param = {
     checkType: true,
@@ -37,7 +36,11 @@ Worker.prototype.processRow = function(data, index, cb) {
     data: data,
     index: index
   }, function(err, res) {
-    cb(null, res.resultRow, res.row, res.index);
+    if (err){
+      cb(err);
+    }else{
+      cb(null, res.resultRow, res.row, res.index);
+    }
   });
 }
 Worker.prototype.onChildMsg = function(m) {
@@ -45,7 +48,7 @@ Worker.prototype.onChildMsg = function(m) {
   var cb = this.childCallbacks[action];
   if (cb) {
     delete m.action;
-    cb(null, m);
+    cb(m.error, m);
     delete this.childCallbacks[action];
   } else {
     //None register child action
