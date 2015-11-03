@@ -53,7 +53,6 @@ function init() {
       param = msg.param,
       index = msg.index;
     var row = utils.rowSplit(data, param.delimiter, param.quote, param.trim);
-    debugger;
     if (param.checkColumn && row.length !=parseRules.length ){
       return cb("Error: column_mismatched. Data: "+data+". Row index: "+index);
     }
