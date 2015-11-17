@@ -1,7 +1,6 @@
 //implementation
 var registeredParsers = [];
 var Parser = require("./parser.js");
-var _ = require('underscore');
 var defaultParser = require("./defaultParsers");
 
 function registerParser (parser) {
@@ -27,8 +26,11 @@ function getParser (columnTitle, checkType) {
   var inst, parser;
   var type = "";
   function getParserByName (parserName, columnTitle) {
-    var parser = _.find(registeredParsers, function (parser){
-      return parser.getName() === parserName;
+    var parser;
+    registeredParsers.forEach(function(p){
+      if (p.getName() === parserName){
+        parser=p;
+      }
     });
     if (parser) {
       var inst = parser.clone();
@@ -43,8 +45,10 @@ function getParser (columnTitle, checkType) {
     type = split[0];
     columnTitle = split[1];
   }
-  parser = _.find(registeredParsers, function (parser) {
-    return parser.test(columnTitle);
+  registeredParsers.forEach(function(p){
+    if (p.test(columnTitle)){
+      parser=p;
+    }
   });
   if (parser) {
     inst = parser.clone();
@@ -55,9 +59,12 @@ function getParser (columnTitle, checkType) {
   inst.type = type;
   return inst;
 }
-function addParser (name, regExp, parseFunc,processSafe) {
-  var parser = new Parser(name, regExp, parseFunc,processSafe); //TODO remove new
+function addParser (name, regExp, parseFunc) {
+  var parser = new Parser(name, regExp, parseFunc,false); //TODO remove new
   registerParser(parser);
+}
+function addSafeParser(parserPath){
+  //TODO impl
 }
 
 function initParsers (row, checkType) {
@@ -68,6 +75,7 @@ function initParsers (row, checkType) {
   return parsers;
 }
 defaultParser.forEach(function (parserCfg){
+  //TODO refactor this
   addParser(parserCfg.name, parserCfg.regExp, parserCfg.parserFunc,parserCfg.processSafe);
 });
 

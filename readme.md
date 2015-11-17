@@ -120,7 +120,7 @@ Following parameters are supported:
 * **delimiter**: delimiter used for seperating columns. default: ","
 * **quote**: If a column contains delimiter, it is able to use quote character to surround the column content. e.g. "hello, world" wont be split into two columns while parsing. default: " (double quote)
 * **trim**: Indicate if parser trim off spaces surrounding column content. e.g. "  content  " will be trimmed to "content". Default: true
-* **checkType**: This parameter turns on and off weather check field type. default is true. See [Field type](#field-type)
+* **checkType**: This parameter turns on and off weather check field type. default is true. Change to false to increase performance. See [Field type](#field-type)
 * **toArrayString**: Stringify the stream output to JSON array. This is useful when pipe output to a file which expects stringified JSON array. default is false and only stringified JSON (without []) will be pushed to downstream.
 * **ignoreEmpty**: Ignore the empty value in CSV columns. If a column value is not giving, set this to true to skip them. Defalut: false.
 * **workerNum**: Number of worker processes. The worker process will use multi-cores to help process CSV data. Set to number of Core to improve the performance of processing large csv file. Keep 1 for small csv files. Default 1.
@@ -451,6 +451,8 @@ If checkType is turned **OFF**, it will be converted to:
   "msg":"{\"hello\":\"world\",\"total\":23}"
 }
 ```
+
+Implict type check will consume a significant amount of CPU power which will lead the CSV conversion like 2-3 times slower than turning it off. If this is not needed, simply set "checkType:false".
 
 ##Explicit Type
 CSV header column can explicitly define the type of the field.
