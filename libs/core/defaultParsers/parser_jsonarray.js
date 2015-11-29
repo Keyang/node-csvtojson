@@ -4,7 +4,7 @@ module.exports = {
   "regExp": /^\*jsonarray\*/,
   "parserFunc": function parser_jsonarray (params) {
     var fieldStr = params.head.replace(this.regExp, "");
-    var headArr = fieldStr.split(".");
+    var headArr = (params.config && params.config.noNesting === true) ? [fieldStr] : fieldStr.split('.');
     var pointer = params.resultRow;
     while (headArr.length > 1) {
       var headStr = headArr.shift();
