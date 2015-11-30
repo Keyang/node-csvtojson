@@ -38,7 +38,7 @@
       "type": "object"
     },
     "--noNesting": {
-      "desc": "Handle dots (.) in header fields like regular characters for json field values and don't interprete them as delimiter for nested objects. Default: false.",
+      "desc": "Don't interpret dots (.) in header fields as delimiter for nested objects and handle them like regular characters for JSON field identifiers. Default: false.",
       "type": "boolean"
     },
     "--maxRowLength": {
