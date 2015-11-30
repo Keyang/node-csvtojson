@@ -1,4 +1,4 @@
-#CSVTOJSON
+# CSVTOJSON
 All you need nodejs csv to json converter.
 * Large CSV data
 * Command Line Tool and Node.JS Lib
@@ -10,7 +10,7 @@ All you need nodejs csv to json converter.
 * more!
 
 
-##Menu
+## Menu
 * [Installation](#installation)
 * [Usage](#usage)
 * [Parameters](#params)
@@ -31,13 +31,13 @@ All you need nodejs csv to json converter.
 
 GitHub: https://github.com/Keyang/node-csvtojson
 
-##Installation
+## Installation
 
 >npm install -g csvtojson
 
 >npm install csvtojson --save
 
-##Usage
+## Usage
 
 ### library
 
@@ -82,7 +82,7 @@ converter.fromString(csvString, function(err,result){
 });
 ```
 
-###Command Line Tools
+### Command Line Tools
 
 >csvtojson <csv file path>
 
@@ -127,7 +127,7 @@ Following parameters are supported:
 * **fork**: Use another CPU core to process the CSV stream.
 * **noheader**:Indicating csv data has no header row and first row is data row. Default is false. See [header configuration](#header-configuration)
 * **headers**: An array to specify the headers of CSV data. If --noheader is false, this value will override CSV header row. Default: null. Example: ["my field","name"]. See [header configuration](#header-configuration)
-* **noNesting**: Don't interpret dots (.) in header fields as delimiter for nested objects and handle them like regular characters for JSON field identifiers. Default: false.
+* **flatKeys**: Don't interpret dots (.) and square brackets in header fields as nested object or array identifiers at all (treat them like regular characters for JSON field identifiers). Default: false.
 * **maxRowLength**: the max character a csv row could have. 0 means infinite. If max number exceeded, parser will emit "error" of "row_exceed". if a possibly corrupted csv data provided, give it a number like 65535 so the parser wont consume memory. default: 0
 * **checkColumn**: whether check column number of a row is the same as headers. If column number mismatched headers number, an error of "mismatched_column" will be emitted.. default: false
 * **eol**: End of line character. If omitted, parser will attempt retrieve it from first chunk of CSV data. If no valid eol found, then operation system eol will be used.
@@ -344,7 +344,11 @@ csvConverter.fromString(data,function(err,jsonObj){
 
 ```
 
-#Empowered JSON Parser
+# Empowered JSON Parser
+
+*Note: If you want to maintain the original CSV data header values as JSON keys "as is" without being
+interpreted as (complex) JSON structures you can set the option `--flatKeys=true`.*
+
 Since version 0.3.8, csvtojson now can replicate any complex JSON structure.
 As we know, JSON object represents a graph while CSV is only 2-dimension data structure (table).
 To make JSON and CSV containing same amount information, we need "flatten" some information in JSON.
@@ -411,7 +415,7 @@ Since 0.3.8, JSON parser is the default parser. It does not need to add "\*json\
 This mainly purposes on the next few versions where csvtojson could convert a JSON object back to CSV format without losing information.
 It can be used to process JSON data exported from no-sql database like MongoDB.
 
-#Field Type
+# Field Type
 
 From version 0.3.14, type of fields are supported by csvtojson.
 The parameter checkType is used to whether to check and convert the field type.
@@ -419,7 +423,7 @@ See [here](#params) for the parameter usage.
 
 Thank all who have contributed to ticket [#20](https://github.com/Keyang/node-csvtojson/issues/20).
 
-##Implict Type
+## Implict Type
 
 When checkType is turned on, parser will try to convert value to its implicit type if it is not explicitly specified.
 
@@ -453,11 +457,11 @@ If checkType is turned **OFF**, it will be converted to:
 }
 ```
 
-##Explicit Type
+## Explicit Type
 CSV header column can explicitly define the type of the field.
 Simply add type before column name with a hash symbol (#).
 
-###Supported types:
+### Supported types:
 * string
 * number
 * date (Not supported since 0.3.21)
@@ -587,53 +591,53 @@ Here are built-in error messages and corresponding error data:
 
 #Change Log
 
-##0.4.4
+## 0.4.4
 * Add error handling for corrupted CSV data
 * Exposed "eol" param
 
-##0.4.3
+## 0.4.3
 * Added header configuration
 * Refactored worker code
 * **Number type field now returns 0 if parseFloat returns NaN with the value of the field. Previously it returns original value in string.**
 
-##0.4.0
+## 0.4.0
 * Added Multi-core CPU support to increase performance
 * Added "fork" option to delegate csv converting work to another process.
 * Refactoring general flow
 
-##0.3.21
+## 0.3.21
 * Refactored Command Line Tool.
 * Added ignoreEmpty parameter.
 
-##0.3.18
+## 0.3.18
 * Fixed double qoute parse as per CSV standard.
 
-##0.3.14
+## 0.3.14
 * Added field type support
 * Fixed some minor bugs
 
-##0.3.8
+## 0.3.8
 * Empowered built-in JSON parser.
 * Change: Use JSON parser as default parser.
 * Added parameter trim in constructor. default: true. trim will trim content spaces.
 
-##0.3.5
+## 0.3.5
 * Added fromString method to support direct string input
 
-##0.3.4
+## 0.3.4
 * Added more parameters to command line tool.
 
-##0.3.2
+## 0.3.2
 * Added quote in parameter to support quoted column content containing delimiters
 * Changed row index starting from 0 instead of 1 when populated from record_parsed event
 
-##0.3
+## 0.3
 * Removed all dependencies
 * Deprecated applyWebServer
 * Added construct parameter for Converter Class
 * Converter Class now works as a proper stream object
 
-#IMPORTANT!!
+# IMPORTANT!!
 Since version 0.3, the core class of csvtojson has been inheriting from stream.Transform class. Therefore, it will behave like a normal Stream object and CSV features will not be available any more. Now the usage is like:
 ```js
 //Converter Class

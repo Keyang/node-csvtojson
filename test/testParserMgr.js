@@ -153,22 +153,22 @@ describe("ParserMgr", function() {
       });
       r.pipe(converter);
     });
-    it("should parse as a flat json key if header field nesting should be ignored", function() {
-      var parser1 = parserMgr.getParser("*json*myJSON.item1");
-      var parser2 = parserMgr.getParser("*json*myJSON.item2");
+    it("should parse as flat json keys containing dots and square brackets in 'flatKeys' mode", function() {
+      var parser1 = parserMgr.getParser("*json*myJSON.item[0].foo");
+      var parser2 = parserMgr.getParser("*json*myJSON.item[1].foo");
       var resultRow = {};
       parser1.parse({
         "item": "item1",
         "resultRow": resultRow,
-        config: { noNesting: true }
+        config: { flatKeys: true }
       });
       parser2.parse({
         "item": "item2",
         "resultRow": resultRow,
-        config: { noNesting: true }
+        config: { flatKeys: true }
       });
-      assert(resultRow[ "myJSON.item1" ] === "item1");
-      assert(resultRow[ "myJSON.item2" ] === "item2");
+      assert(resultRow[ "myJSON.item[0].foo" ] === "item1");
+      assert(resultRow[ "myJSON.item[1].foo" ] === "item2");
     });
   });
   describe("json array parser", function () {
