@@ -153,7 +153,7 @@ describe("ParserMgr", function() {
       });
       r.pipe(converter);
     });
-    it("should parse as a flat one-dimensional json if header field nesting should be ignored", function() {
+    it("should parse as a flat json key if header field nesting should be ignored", function() {
       var parser1 = parserMgr.getParser("*json*myJSON.item1");
       var parser2 = parserMgr.getParser("*json*myJSON.item2");
       var resultRow = {};
