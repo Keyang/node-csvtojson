@@ -127,6 +127,7 @@ Following parameters are supported:
 * **fork**: Use another CPU core to process the CSV stream.
 * **noheader**:Indicating csv data has no header row and first row is data row. Default is false. See [header configuration](#header-configuration)
 * **headers**: An array to specify the headers of CSV data. If --noheader is false, this value will override CSV header row. Default: null. Example: ["my field","name"]. See [header configuration](#header-configuration)
+* **noNesting**: Don't interpret dots (.) in header fields as delimiter for nested objects and handle them like regular characters for JSON field identifiers. Default: false.
 * **maxRowLength**: the max character a csv row could have. 0 means infinite. If max number exceeded, parser will emit "error" of "row_exceed". if a possibly corrupted csv data provided, give it a number like 65535 so the parser wont consume memory. default: 0
 * **checkColumn**: whether check column number of a row is the same as headers. If column number mismatched headers number, an error of "mismatched_column" will be emitted.. default: false
 * **eol**: End of line character. If omitted, parser will attempt retrieve it from first chunk of CSV data. If no valid eol found, then operation system eol will be used.
