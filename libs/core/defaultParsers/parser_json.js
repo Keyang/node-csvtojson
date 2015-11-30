@@ -6,7 +6,6 @@ module.exports = {
   "parserFunc": function parser_json (params) {
     var fieldStr = this.getHead().replace(this.regExp, '');
     var headArr = (params.config && params.config.noNesting === true) ? [fieldStr] : fieldStr.split('.');
-    // var headArr = fieldStr.split('.');
     var arrReg = /\[([0-9]*)\]/;
     var match, index, key, pointer;
     function parseParamType (type, item) {
