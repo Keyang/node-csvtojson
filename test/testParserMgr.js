@@ -153,6 +153,23 @@ describe("ParserMgr", function() {
       });
       r.pipe(converter);
     });
+    it("should parse as a flat one-dimensional json if header field nesting should be ignored", function() {
+      var parser1 = parserMgr.getParser("*json*myJSON.item1");
+      var parser2 = parserMgr.getParser("*json*myJSON.item2");
+      var resultRow = {};
+      parser1.parse({
+        "item": "item1",
+        "resultRow": resultRow,
+        config: { noNesting: true }
+      });
+      parser2.parse({
+        "item": "item2",
+        "resultRow": resultRow,
+        config: { noNesting: true }
+      });
+      assert(resultRow[ "myJSON.item1" ] === "item1");
+      assert(resultRow[ "myJSON.item2" ] === "item2");
+    });
   });
   describe("json array parser", function () {
     it("should return an json array parser with specific column title", function () {
