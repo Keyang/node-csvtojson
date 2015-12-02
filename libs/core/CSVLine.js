@@ -75,6 +75,9 @@ CSVLine.prototype._line = function(line, lastLine) {
     this._recordBuffer = '';
     this.push(data, "utf8");
     this.rowIndex++;
+    // if (this.rowIndex % 10000 ===0){
+    //   console.log("CSV Row populated: ",this.rowIndex);
+    // }
   } else { //if the record in buffer is not a complete record (quote does not match). wait next line
     this._recordBuffer += this.getEol();
     if (lastLine) {

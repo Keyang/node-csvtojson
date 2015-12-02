@@ -52,7 +52,6 @@
     "mocha": "^2.2.5"
   },
   "dependencies": {
-    "async": "^1.2.1",
-    "underscore": "^1.8.3"
+    "async": "^1.2.1"
   }
 }
