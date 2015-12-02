@@ -16,13 +16,14 @@ converter.on("end_parsed", function() {
   process.exit(0);
 });
 var count = 0;
-converter.on("data", function() {
-  var args = Array.prototype.slice.call(arguments, 0)
-  process.send({
-    action: "data",
-    arguments: args
-  });
-});
+converter.pipe(process.stdout);
+// converter.on("data", function() {
+//   // var args = Array.prototype.slice.call(arguments, 0)
+//   // process.send({
+//   //   action: "data",
+//   //   arguments: args
+//   // });
+// });
 converter.on("error",function(){
   var args = Array.prototype.slice.call(arguments, 0);
   process.send({

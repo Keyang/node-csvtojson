@@ -71,9 +71,11 @@ Converter.prototype.initFork = function() {
     silent: true
   });
   this.child.stdout.on("data", function(d, e) {
-    console.log(d.toString("utf8"));
+    this.push(d,e);
+      // this.emit("record_parsed");
   }.bind(this));
   this.child.on("message", function(msg) {
+    // console.log("aa",msg);
     if (msg.action === "record_parsed") {
       //var recs = msg.arguments;
       var args=msg.arguments;
@@ -141,6 +143,7 @@ Converter.prototype.initNoFork = function() {
   this.lineParser.pipe(this.processor);
   var syncLock = false;
   this.processor.on("record_parsed", function(resultRow, row, index) {
+    // this.emit("record_parsed", resultRow, row, index);
     this.sequenceBuffer[index] = {
       resultRow: resultRow,
       row: row,
