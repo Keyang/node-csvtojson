@@ -37,6 +37,10 @@
       "desc": "An array to specify the headers of CSV data. If --noheader is false, this value will override CSV header. Default: null. Example: [\"my field\",\"name\"]",
       "type": "object"
     },
+    "--flatKeys": {
+      "desc": "Don't interpret dots (.) and square brackets in header fields as nested object or array identifiers at all (treat them like regular characters for JSON field identifiers). Default: false.",
+      "type": "boolean"
+    },
     "--maxRowLength": {
       "desc": "the max character a csv row could have. 0 means infinite. If max number exceeded, parser will emit \"error\" of \"row_exceed\". if a possibly corrupted csv data provided, give it a number like 65535 so the parser wont consume memory. default: 0",
       "type": "number"
