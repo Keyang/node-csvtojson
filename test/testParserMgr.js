@@ -170,6 +170,21 @@ describe("ParserMgr", function() {
       assert(resultRow[ "myJSON.item[0].foo" ] === "item1");
       assert(resultRow[ "myJSON.item[1].foo" ] === "item2");
     });
+    it("should parse as flat json if a column is markd as 'flat'", function() {
+      var parser1 = parserMgr.getParser("*flat*myJSON1.item[0].foo");
+      var parser2 = parserMgr.getParser("myJSON.item[1].foo");
+      var resultRow = {};
+      parser1.parse({
+        "item": "item1",
+        "resultRow": resultRow
+      });
+      parser2.parse({
+        "item": "item2",
+        "resultRow": resultRow,
+      });
+      assert(resultRow[ "myJSON1.item[0].foo" ] === "item1");
+      assert(resultRow.myJSON.item[1].foo=== "item2");
+    });
   });
   describe("json array parser", function () {
     it("should return an json array parser with specific column title", function () {

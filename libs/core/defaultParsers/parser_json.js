@@ -1,12 +1,11 @@
-
+var arrReg = /\[([0-9]*)\]/;
 module.exports = {
   "name": "json",
   "processSafe":true,
   "regExp": /^\*json\*/,
   "parserFunc": function parser_json (params) {
-    var fieldStr = this.getHead().replace(this.regExp, '');
+    var fieldStr = this.getHeadStr();
     var headArr = (params.config && params.config.flatKeys) ? [fieldStr] : fieldStr.split('.');
-    var arrReg = /\[([0-9]*)\]/;
     var match, index, key, pointer;
     function parseParamType (type, item) {
       if (type === 'number') {

@@ -20,9 +20,14 @@ Parser.prototype.test = function(str) {
 Parser.prototype.parse = function(params) {
   params.resultRow[params.head] = params.item;
 };
+Parser.prototype.getHeadStr = function() {
+  var head= this.head;
+  return head.replace(this.regExp,'');
+};
 Parser.prototype.getHead = function() {
   return this.head;
 };
+Parser.prototype.get
 Parser.prototype.clone = function() {
   var obj=Object.create(this);
   var newParser=new Parser();

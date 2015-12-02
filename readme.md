@@ -233,6 +233,23 @@ There are default parsers in the library they are
 
 **Omitted column**: For columns head start with "\*omit\*" e.g. "\*omit\*id", the parser will omit the column's data.
 
+**Flat JSON**: Mark a head column as is the key of its JSON result. e.g.
+
+```csv
+*flat*user.name, user.age
+Joe , 40
+```
+
+It will be converted to:
+
+```js
+[{
+  "user.name":"Joe",
+  "user":{
+    "age":40
+  }
+}]
+```
 
 # Big CSV File
 csvtojson library was designed to accept big csv file converting. To avoid memory consumption, it is recommending to use read stream and write stream.
