@@ -1,10 +1,11 @@
+
 module.exports = {
   "name": "json",
   "processSafe":true,
   "regExp": /^\*json\*/,
   "parserFunc": function parser_json (params) {
     var fieldStr = this.getHead().replace(this.regExp, '');
-    var headArr = fieldStr.split('.');
+    var headArr = (params.config && params.config.flatKeys) ? [fieldStr] : fieldStr.split('.');
     var arrReg = /\[([0-9]*)\]/;
     var match, index, key, pointer;
     function parseParamType (type, item) {
@@ -24,11 +25,12 @@ module.exports = {
       }
       return item;
     }
-    function processHead (pointer, headArr, arrReg) {
+    function processHead (pointer, headArr, arrReg, flatKeys) {
       var headStr, match, index;
       while (headArr.length > 1) {
         headStr = headArr.shift();
-        match = headStr.match(arrReg);
+        // match = headStr.match(arrReg);
+        match = flatKeys ? false : headStr.match(arrReg);
         if (match) { //if its array, we need add an empty json object into specified index.
           if (pointer[headStr.replace(match[0], '')] === undefined) {
             pointer[headStr.replace(match[0], '')] = [];
@@ -52,9 +54,9 @@ module.exports = {
       return pointer;
     }
     //now the pointer is pointing the position to add a key/value pair.
-    pointer = processHead(params.resultRow, headArr, arrReg);
+    pointer = processHead(params.resultRow, headArr, arrReg, params.config && params.config.flatKeys);
     key = headArr.shift();
-    match = key.match(arrReg);
+    match = (params.config && params.config.flatKeys) ? false : key.match(arrReg);
     if (match) { // the last element is an array, we need check and treat it as an array.
       key = key.replace(match[0], '');
       if (!pointer[key] || !(pointer[key] instanceof Array)) {
