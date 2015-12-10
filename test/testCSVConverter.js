@@ -110,6 +110,15 @@ describe("CSV Converter", function () {
       done();
     });
   });
+  it("should be able to convert csv string with error", function (done) {
+    var testData = __dirname + "/data/dataWithUnclosedQuotes";
+    var data = fs.readFileSync(testData).toString();
+    var csvConverter = new Converter();
+    csvConverter.fromString(data, function (err, jsonObj) {
+      assert(err);
+      done();
+    });
+  });
   it("should be able to convert csv string without callback provided", function (done) {
     var testData = __dirname + "/data/testData";
     var data = fs.readFileSync(testData).toString();
@@ -266,10 +275,12 @@ describe("CSV Converter", function () {
     var st = rs.pipe(new Converter({ignoreEmpty:true}));
     st.on("end_parsed",function (res){
       var j = res[0];
+      assert(res.length  === 2);
       assert (j.col2.length === 1);
       assert(j.col2[0] === "d3");
       assert(j.col4.col3 === undefined);
       assert(j.col4.col5 === "world");
+      assert(res[1].col1==="d2");
       done();
     });
 

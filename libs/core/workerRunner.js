@@ -5,11 +5,11 @@ if (process.send) {
   process.on("message", function(m) {
     var action = getAction(m.action);
     inst[action](m, function(err, res) {
-      if (!res){
-        res={};
+      if (!res) {
+        res = {};
       }
       if (err) {
-        res.error=err;
+        res.error = err;
       }
       res.action = m.action;
       process.send(res);
@@ -24,22 +24,23 @@ function getAction(action) {
 function init() {
   var headRow, parseRules;
 
-  function genConstHeadRow(msg,cb){
-      var Parser=require("./parser");
-      var number=msg.number;
-      parseRules=[];
-      headRow=[];
-      while (number>0){
-        var p=new Parser("field"+number,/.*/,function(params){
-          var name=this.getName();
-          params.resultRow[name]=params.item;
-        },true);
-        parseRules.unshift(p);
-        headRow.unshift(p.getName());
-        number--;
-      }
-      cb();
+  function genConstHeadRow(msg, cb) {
+    var Parser = require("./parser");
+    var number = msg.number;
+    parseRules = [];
+    headRow = [];
+    while (number > 0) {
+      var p = new Parser("field" + number, /.*/, function(params) {
+        var name = this.getName();
+        params.resultRow[name] = params.item;
+      }, true);
+      parseRules.unshift(p);
+      headRow.unshift(p.getName());
+      number--;
+    }
+    cb();
   }
+
   function processHeadRow(msg, cb) {
     headRow = msg.row;
     var param = msg.param;
@@ -53,15 +54,17 @@ function init() {
       param = msg.param,
       index = msg.index;
     var row = utils.rowSplit(data, param.delimiter, param.quote, param.trim);
-    if (param.checkColumn && row.length !=parseRules.length ){
-      return cb("Error: column_mismatched. Data: "+data+". Row index: "+index);
+    if (param.checkColumn && row.length != parseRules.length) {
+      return cb("Error: column_mismatched. Data: " + data + ". Row index: " + index);
     }
     var resultRow = {};
+    var hasValue = false;
     for (i = 0; i < parseRules.length; i++) {
       item = row[i];
       if (param.ignoreEmpty && item === '') {
         continue;
       }
+      hasValue = true;
       parser = parseRules[i];
       head = headRow[i];
       parser.parse({
@@ -74,17 +77,21 @@ function init() {
         config: param || {}
       });
     }
-    cb(null, {
-      resultRow: resultRow,
-      row: row,
-      index: index
-    });
+    if (hasValue) {
+      cb(null, {
+        resultRow: resultRow,
+        row: row,
+        index: index
+      });
+    } else {
+      cb();
+    }
 
   }
   return {
     processHeadRow: processHeadRow,
     processRow: processRow,
-    genConstHeadRow:genConstHeadRow
+    genConstHeadRow: genConstHeadRow
   }
 }
-module.exports=init;
+module.exports = init;

@@ -73,7 +73,7 @@ CSVLine.prototype._line = function(line, lastLine) {
   if (!this._isToogleQuote(this._recordBuffer)) { //if a complete record is in buffer.push to downstream
     data = this._recordBuffer;
     this._recordBuffer = '';
-    this.push(data, "utf8");
+    this.push(data.trim(), "utf8");
     this.rowIndex++;
     // if (this.rowIndex % 10000 ===0){
     //   console.log("CSV Row populated: ",this.rowIndex);

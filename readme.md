@@ -45,7 +45,9 @@ GitHub: https://github.com/Keyang/node-csvtojson
 ```js
 //Converter Class
 var Converter = require("csvtojson").Converter;
-var converter = new Converter({});
+var converter = new Converter({
+  checkType:false //turn off auto type check to increase performance
+});
 
 //end_parsed will be emitted once parsing finished
 converter.on("end_parsed", function (jsonArray) {
@@ -609,6 +611,11 @@ Here are built-in error messages and corresponding error data:
 * row_process: Any error happened while parser processing a csv row will populate this error message. The error data is detailed error message (e.g. checkColumn is true and column size of a row does not match that of header).
 
 #Change Log
+
+## 0.4.7
+* ignoreEmpty now ignores empty rows as well
+* optimised performance
+* added fromFile method
 
 ## 0.4.4
 * Add error handling for corrupted CSV data

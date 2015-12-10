@@ -39,7 +39,11 @@ Worker.prototype.processRow = function(data, index, cb) {
     if (err){
       cb(err);
     }else{
-      cb(null, res.resultRow, res.row, res.index);
+      if (res){
+        cb(null, res.resultRow, res.row, res.index);
+      }else{
+        cb(null);
+      }
     }
   });
 }

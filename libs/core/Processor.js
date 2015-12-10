@@ -73,7 +73,11 @@ Processor.prototype._transform = function(data, encoding, cb) {
       if (err) {
         this.emit("error","row_process", err);
       } else {
-        this.emit("record_parsed", resultRow, row, index - 1);
+        if (resultRow){
+          this.emit("record_parsed", resultRow, row, index - 1);
+        }else{
+          //Empty row detedted. skip
+        }
         //this.push(JSON.stringify([resultRow,row,obj.rowIndex]),"utf8");
       }
       this.runningWorker--;

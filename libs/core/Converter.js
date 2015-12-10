@@ -20,11 +20,11 @@ function Converter(params) {
     ignoreEmpty: false, //Ignore empty value while parsing. if a value of the column is empty, it will be skipped parsing.
     workerNum: 1, //number of parallel workers. If multi-core CPU available, increase the number will get better performance for large csv data.
     fork: false, //use another CPU core to convert the csv stream
-    noheader:false, //indicate if first line of CSV file is header or not.
-    headers:null, //an array of header strings. If noheader is false and headers is array, csv header will be ignored.
+    noheader: false, //indicate if first line of CSV file is header or not.
+    headers: null, //an array of header strings. If noheader is false and headers is array, csv header will be ignored.
     flatKeys: false, // Don't interpret dots and square brackets in header fields as nested object or array identifiers at all.
-    maxRowLength:0, //the max character a csv row could have. 0 means infinite. If max number exceeded, parser will emit "error" of "row_exceed". if a possibly corrupted csv data provided, give it a number like 65535 so the parser wont consume memory. default: 0
-    checkColumn:false //whether check column number of a row is the same as headers. If column number mismatched headers number, an error of "mismatched_column" will be emitted.. default: false
+    maxRowLength: 0, //the max character a csv row could have. 0 means infinite. If max number exceeded, parser will emit "error" of "row_exceed". if a possibly corrupted csv data provided, give it a number like 65535 so the parser wont consume memory. default: 0
+    checkColumn: false //whether check column number of a row is the same as headers. If column number mismatched headers number, an error of "mismatched_column" will be emitted.. default: false
   };
   if (params && typeof params === "object") {
     for (var key in params) {
@@ -40,7 +40,6 @@ function Converter(params) {
   this.resultObject = new Result(this);
   this.pipe(this.resultObject); // it is important to have downstream for a transform otherwise it will stuck
   this.started = false;
-  this._callback = null;
   this.recordNum = 0;
   //this._pipe(this.lineParser).pipe(this.processor);
   if (this.param.fork) {
@@ -54,13 +53,8 @@ function Converter(params) {
   this.on("end", function() {
     var finalResult = this.param.constructResult ? this.resultObject.getBuffer() : {};
     this.emit("end_parsed", finalResult);
-    if (typeof this._callback === "function") {
-      var func = this._callback;
-      this._callback = null;
-      func(null, finalResult);
-    }
   }.bind(this));
-  this.on("error",function(){});
+  this.on("error", function() {});
   return this;
 }
 util.inherits(Converter, Transform);
@@ -72,27 +66,27 @@ Converter.prototype.initFork = function() {
     silent: true
   });
   this.child.stdout.on("data", function(d, e) {
-    this.push(d,e);
-      // this.emit("record_parsed");
+    this.push(d, e);
+    // this.emit("record_parsed");
   }.bind(this));
   this.child.on("message", function(msg) {
     // console.log("aa",msg);
     if (msg.action === "record_parsed") {
       //var recs = msg.arguments;
-      var args=msg.arguments;
+      var args = msg.arguments;
       //console.log(recs);
       //var recs=args[0];
       //for (var i=0;i<recs.length;i++){
-        //this.emit("record_parsed", recs[i][0], recs[i][1], recs[i][2]);
+      //this.emit("record_parsed", recs[i][0], recs[i][1], recs[i][2]);
       //}
       this.emit("record_parsed", args[0], args[1], args[2]);
     } else if (msg.action === "data") {
       var args = msg.arguments;
       this.push(new Buffer(args[0]), args[1]);
-    }else if (msg.action==="error"){
-      var args=msg.arguments;
+    } else if (msg.action === "error") {
+      var args = msg.arguments;
       args.unshift("error");
-      this.emit.apply(this,args);
+      this.emit.apply(this, args);
     }
   }.bind(this));
   this._transform = this._transformFork;
@@ -111,27 +105,22 @@ Converter.prototype.initFork = function() {
   //}.bind(this));
 }
 Converter.prototype.initNoFork = function() {
-  function onError(){
-      var args=Array.prototype.slice.call(arguments,0);
-      args.unshift("error");
-      this.hasError=true;
-      this.emit.apply(this,args);
-      if (typeof this._callback === "function") {
-        var func = this._callback;
-        this._callback = null;
-        func(args, []);
-      }
+  function onError() {
+    var args = Array.prototype.slice.call(arguments, 0);
+    args.unshift("error");
+    this.hasError = true;
+    this.emit.apply(this, args);
   };
   this.lineParser = new CSVLine(this.param);
-  this.lineParser.on("error",onError.bind(this));
+  this.lineParser.on("error", onError.bind(this));
   this.processor = new Processor(this.param);
-  this.processor.on("error",onError.bind(this));
+  this.processor.on("error", onError.bind(this));
   var syncWorker = new Worker(this.param, true);
   // syncWorker.on("error",onError);
   this.processor.addWorker(syncWorker);
   if (this.param.workerNum > 1) {
     for (var i = 1; i < this.param.workerNum; i++) {
-      var worker=new Worker(this.param, false);
+      var worker = new Worker(this.param, false);
       // worker.on("error",onError);
       this.processor.addWorker(worker);
     }
@@ -186,7 +175,7 @@ Converter.prototype._transformNoFork = function(data, encoding, cb) {
     this.started = true;
     this.push("[" + this.getEol(), "utf8");
   }
-  this.lineParser.write(data, encoding,cb);
+  this.lineParser.write(data, encoding, cb);
   //this.push(data,encoding);
   // cb();
 };
@@ -197,7 +186,7 @@ Converter.prototype._flushNoFork = function(cb) {
   //cb();
 };
 Converter.prototype._transformFork = function(data, encoding, cb) {
-  this.child.stdin.write(data, encoding,cb);
+  this.child.stdin.write(data, encoding, cb);
 }
 Converter.prototype._flushFork = function(cb) {
   this.child.stdin.end();
@@ -214,26 +203,54 @@ Converter.prototype.checkAndFlush = function() {
 Converter.prototype.getEol = function() {
   return this.eol ? this.eol : eol;
 };
+Converter.prototype.fromFile = function(filePath, cb) {
+  var fs = require('fs');
+  fs.exists(filePath, function(exist) {
+    if (exist) {
+      var rs = fs.createReadStream(filePath);
+      rs.pipe(this);
+      this.wrapCallback(cb,function(){
+        fs.destroy();
+      });
+    } else {
+      cb(new Error(filePath + " cannot be found."));
+    }
+  }.bind(this));
+  return this;
+}
 Converter.prototype.fromString = function(csvString, cb) {
   var rs = new Readable();
-  var offset=0;
-  if (typeof csvString !="string"){
+  var offset = 0;
+  if (typeof csvString != "string") {
     return cb(new Error("Passed CSV Data is not a string."));
   }
   rs._read = function(len) {
     // console.log(offset,len,csvString.length);
-    var sub=csvString.substr(offset,len);
+    var sub = csvString.substr(offset, len);
     this.push(sub);
-    offset+=len;
-    if (offset>=csvString.length){
+    offset += len;
+    if (offset >= csvString.length) {
       this.push(null);
     }
   };
   rs.pipe(this);
   if (cb && typeof cb === "function") {
-    this._callback = cb;
+    this.wrapCallback(cb,function(){
+      rs.pause();
+    });
   }
-
+  return this;
 };
+Converter.prototype.wrapCallback = function(cb,clean) {
+  this.once("end_parsed", function(res) {
+    if (!this.hasError) {
+      cb(null, res);
+    }
+  }.bind(this));
+  this.once("error", function(err) {
+    cb(Array.prototype.join.call(arguments, ", "));
+    clean();
+  });
+}
 
 module.exports = Converter;

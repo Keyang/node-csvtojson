@@ -58,6 +58,17 @@ describe("CSV Converter", function() {
       done();
     });
   });
+  it ("should parse fromFile",function(done){
+    var csvFile = __dirname + "/data/large-csv-sample.csv";
+    var conv = new Converter({
+      workerNum: 3
+    });
+    conv.fromFile(csvFile, function(err, res) {
+      assert(!err);
+      assert(res.length === 5290);
+      done();
+    });
+  });
   // it ("should convert big csv",function(done){
   //   // var rs=fs.createReadStream(__dirname+"/data/large-csv-sample.csv");
   //   var rs=fs.createReadStream("/Users/kxiang/tmp/csvdata");
