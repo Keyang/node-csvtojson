@@ -33,6 +33,7 @@ Result.prototype._write = function(data, encoding, cb) {
 };
 
 Result.prototype.getBuffer = function() {
+  // console.log(this.buffer);
   return JSON.parse(this.buffer);
 };
 

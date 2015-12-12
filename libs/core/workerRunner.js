@@ -84,7 +84,10 @@ function init() {
         index: index
       });
     } else {
-      cb();
+      cb(null,{
+        row:row,
+        index:index
+      });
     }
 
   }

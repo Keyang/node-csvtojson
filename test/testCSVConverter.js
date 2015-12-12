@@ -275,12 +275,13 @@ describe("CSV Converter", function () {
     var st = rs.pipe(new Converter({ignoreEmpty:true}));
     st.on("end_parsed",function (res){
       var j = res[0];
-      assert(res.length  === 2);
+      assert(res.length  === 3);
       assert (j.col2.length === 1);
       assert(j.col2[0] === "d3");
       assert(j.col4.col3 === undefined);
       assert(j.col4.col5 === "world");
       assert(res[1].col1==="d2");
+      assert(res[2].col1==="d4");
       done();
     });
 

@@ -76,6 +76,7 @@ Processor.prototype._transform = function(data, encoding, cb) {
         if (resultRow){
           this.emit("record_parsed", resultRow, row, index - 1);
         }else{
+          this.emit("record_parsed",null,row,index -1);
           //Empty row detedted. skip
         }
         //this.push(JSON.stringify([resultRow,row,obj.rowIndex]),"utf8");

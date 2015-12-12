@@ -17,13 +17,14 @@ converter.on("end_parsed", function() {
 });
 var count = 0;
 converter.pipe(process.stdout);
-// converter.on("data", function() {
-//   // var args = Array.prototype.slice.call(arguments, 0)
-//   // process.send({
-//   //   action: "data",
-//   //   arguments: args
-//   // });
-// });
+converter.on("data", function(d) {
+  process.send(d.toString("utf8"));
+  // var args = Array.prototype.slice.call(arguments, 0)
+  // process.send({
+  //   action: "data",
+  //   arguments: args
+  // });
+});
 converter.on("error",function(){
   var args = Array.prototype.slice.call(arguments, 0);
   process.send({

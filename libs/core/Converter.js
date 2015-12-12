@@ -66,7 +66,7 @@ Converter.prototype.initFork = function() {
     silent: true
   });
   this.child.stdout.on("data", function(d, e) {
-    this.push(d, e);
+    // this.push(d, e);
     // this.emit("record_parsed");
   }.bind(this));
   this.child.on("message", function(msg) {
@@ -86,7 +86,10 @@ Converter.prototype.initFork = function() {
     } else if (msg.action === "error") {
       var args = msg.arguments;
       args.unshift("error");
+      this.hasError=true;
       this.emit.apply(this, args);
+    }else{
+      this.push(msg);
     }
   }.bind(this));
   this._transform = this._transformFork;
@@ -159,6 +162,10 @@ Converter.prototype.flushBuffer = function() {
     var index = this.recordNum;
     var obj = this.sequenceBuffer[index];
     this.sequenceBuffer[index] = undefined;
+    if (obj.resultRow === null){ // empty. skip
+        this.recordNum++;
+        continue;
+    }
     var resultRow = obj.resultRow;
     var row = obj.row;
     this.emit("record_parsed", resultRow, row, index);

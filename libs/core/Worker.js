@@ -42,7 +42,7 @@ Worker.prototype.processRow = function(data, index, cb) {
       if (res){
         cb(null, res.resultRow, res.row, res.index);
       }else{
-        cb(null);
+        cb(null,null,res.row,res.index);
       }
     }
   });
