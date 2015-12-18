@@ -6,6 +6,7 @@ function csvtojson() {
   var cmds = options.commands;
   var opts = options.options;
   var exps = options.examples;
+  var pkg=require("../package.json");
   /**
    *{
     "cmd": "parse", command to run
@@ -19,6 +20,8 @@ function csvtojson() {
   function _showHelp(errno) {
     var key;
     errno = typeof errno === "number" ? errno : 0;
+    console.log("csvtojson: Convert csv to JSON format");
+    console.log("version:",pkg.version);
     console.log("Usage: csvtojson [<command>] [<options>] filepath\n");
     console.log("Commands: ");
     for (key in cmds) {
@@ -55,7 +58,9 @@ function csvtojson() {
       parse();
     } else if (cmd === "startserver") {
       web.startWebServer(options);
-    } else {
+    } else if (cmd ==="version"){
+      console.log(pkg.version);
+    }else {
       console.log("unknown command %s.", cmd);
       _showHelp(1);
     }

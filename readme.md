@@ -9,10 +9,17 @@ All you need nodejs csv to json converter.
 * Easy Usage
 * more!
 
+# Version 0.5
+
+Version 0.5 contains big refactor expecially for performance. The parser is like **7 times** faster than version 0.4.
 
 ## Menu
 * [Installation](#installation)
 * [Usage](#usage)
+  * [Library](#library)
+    * [Convert from a file](#from-file)
+    * [Convert from a web resource / Readable stream](#from-web)
+    * [Convert from CSV string](#from-string)
 * [Parameters](#params)
 * [Customised Parser](#parser)
 * [Webserver](#webserver)
@@ -41,13 +48,14 @@ GitHub: https://github.com/Keyang/node-csvtojson
 
 ### library
 
-**From File**
+#### From File
+
+You can use File stream
+
 ```js
 //Converter Class
 var Converter = require("csvtojson").Converter;
-var converter = new Converter({
-  checkType:false //turn off auto type check to increase performance
-});
+var converter = new Converter({});
 
 //end_parsed will be emitted once parsing finished
 converter.on("end_parsed", function (jsonArray) {
@@ -58,7 +66,20 @@ converter.on("end_parsed", function (jsonArray) {
 require("fs").createReadStream("./file.csv").pipe(converter);
 ```
 
-**From Web Server**
+Or use fromFile convenient function
+
+```js
+//Converter Class
+var Converter = require("csvtojson").Converter;
+var converter = new Converter({});
+converter.fromFile("./file.csv",function(err,result){
+
+});
+```
+
+#### From Web
+
+To convert any CSV data from readable stream just simply pipe in the data.
 
 ```js
 //Converter Class
@@ -74,7 +95,7 @@ require("request").get("http://csvwebserver").pipe(converter);
 
 ```
 
-**From String**
+#### From String
 
 ```js
 var Converter = require("csvtojson").Converter;
@@ -90,15 +111,15 @@ converter.fromString(csvString, function(err,result){
 
 Example
 
->csvtojson ./myCSVFile
+>csvtojson ./myCSVFile <option1=value>
 
 Or use pipe:
 
 >cat myCSVFile | csvtojson
 
-To start a webserver
+Check current version:
 
->csvtojson startserver [options]
+>csvtojson version
 
 Advanced usage with parameters support, check help:
 
@@ -122,11 +143,11 @@ Following parameters are supported:
 * **delimiter**: delimiter used for seperating columns. default: ","
 * **quote**: If a column contains delimiter, it is able to use quote character to surround the column content. e.g. "hello, world" wont be split into two columns while parsing. default: " (double quote)
 * **trim**: Indicate if parser trim off spaces surrounding column content. e.g. "  content  " will be trimmed to "content". Default: true
-* **checkType**: This parameter turns on and off weather check field type. default is true. Change to false to increase performance. See [Field type](#field-type)
+* **checkType**: This parameter turns on and off weather check field type. default is true. See [Field type](#field-type)
 * **toArrayString**: Stringify the stream output to JSON array. This is useful when pipe output to a file which expects stringified JSON array. default is false and only stringified JSON (without []) will be pushed to downstream.
 * **ignoreEmpty**: Ignore the empty value in CSV columns. If a column value is not giving, set this to true to skip them. Defalut: false.
 * **workerNum**: Number of worker processes. The worker process will use multi-cores to help process CSV data. Set to number of Core to improve the performance of processing large csv file. Keep 1 for small csv files. Default 1.
-* **fork**: Use another CPU core to process the CSV stream.
+* **fork(Deprecated, same as workerNum=2)**: Use another CPU core to process the CSV stream.
 * **noheader**:Indicating csv data has no header row and first row is data row. Default is false. See [header configuration](#header-configuration)
 * **headers**: An array to specify the headers of CSV data. If --noheader is false, this value will override CSV header row. Default: null. Example: ["my field","name"]. See [header configuration](#header-configuration)
 * **flatKeys**: Don't interpret dots (.) and square brackets in header fields as nested object or array identifiers at all (treat them like regular characters for JSON field identifiers). Default: false.
@@ -476,7 +497,6 @@ If checkType is turned **OFF**, it will be converted to:
 }
 ```
 
-Implict type check will consume a significant amount of CPU power which will lead the CSV conversion like 2-3 times slower than turning it off. If this is not needed, simply set "checkType:false".
 
 ## Explicit Type
 CSV header column can explicitly define the type of the field.
@@ -491,8 +511,8 @@ Simply add type before column name with a hash symbol (#).
 To define the field type, see following example
 
 ```csv
-string#appNumber, string#finished, startDate
-201401010002, true, 2014-01-01
+string#appNumber, string#finished, string#msg
+201401010002, true, {"hello":"world","total":23}
 ```
 The data will be converted to:
 
@@ -500,7 +520,7 @@ The data will be converted to:
 {
   "appNumber":"201401010002",
   "finished":"true",
-  "startDate":"2014-01-01"
+  "msg":"{\"hello\":\"world\",\"total\":23}"
 }
 ```
 
@@ -521,12 +541,13 @@ The minimum worker number is 1. When worker number is larger than 1, the parser 
 For command line, to use worker just use ```--workerNum``` argument:
 
 ```
-csvtojson --workerNum=4 ./myfile.csv
+csvtojson --workerNum=3 ./myfile.csv
 ```
+
 It is worth to mention that for small size of CSV file it actually costs more time to create processes and keep the communication between them. Therefore, use less workers for small CSV files.
 
-### Fork Process
-Node.JS is running on single thread. You will not want to convert a large csv file on the same process where your node.js webserver is running. csvtojson gives an option to fork the whole conversion process to a new system process while the origin process will only pipe the input and result in and out. It very simple to enable this feature:
+### Fork Process (Deprecated since 0.5.0)
+*Node.JS is running on single thread. You will not want to convert a large csv file on the same process where your node.js webserver is running. csvtojson gives an option to fork the whole conversion process to a new system process while the origin process will only pipe the input and result in and out. It very simple to enable this feature:
 
 ```js
 var Converter=require("csvtojson").Converter;
@@ -534,7 +555,9 @@ var Converter=require("csvtojson").Converter;
       fork:true //use child process to convert
   });
 ```
-Same as multi-workers, fork a new process will cause extra cost on process communication and life cycle management. Use it wisely.
+Same as multi-workers, fork a new process will cause extra cost on process communication and life cycle management. Use it wisely.*
+
+Since 0.5.0, fork=true is the same as workerNum=2.
 
 ### Header configuration
 
@@ -544,7 +567,7 @@ the *noheader* parameter indicate if first row of csv is header row or not. e.g.
 
 ```
 CC102-PDMI-001,eClass_5.1.3,10/3/2014,12,40,green,40
-CC200-009-001,eClass_5.1.3,11/3/2014,5,3,blue,38
+CC200-009-001,eClass_5.1.3,11/3/2014,5,3,blue,38,extra field!
 ```
 
 With noheader=true
@@ -558,7 +581,7 @@ we can get following result:
 ```json
 [
 {"field1":"CC102-PDMI-001","field2":"eClass_5.1.3","field3":"10/3/2014","field4":"12","field5":"40","field6":"green","field7":"40"},
-{"field1":"CC200-009-001","field2":"eClass_5.1.3","field3":"11/3/2014","field4":"5","field5":"3","field6":"blue","field7":"38"}
+{"field1":"CC200-009-001","field2":"eClass_5.1.3","field3":"11/3/2014","field4":"5","field5":"3","field6":"blue","field7":"38","field8":"extra field!"}
 ]
 ```
 
@@ -578,12 +601,12 @@ we get following results:
 
 ```json
 [
-{"hello":"CC102-PDMI-001","csv":"eClass_5.1.3","field1":"10/3/2014","field2":12,"field3":40,"field4":"green","field5":40},
-{"hello":"CC200-009-001","csv":"eClass_5.1.3","field1":"11/3/2014","field2":5,"field3":3,"field4":"blue","field5":38}
+  {"hell":"CC102-PDMI-001","csv":"eClass_5.1.3","field3":"10/3/2014","field4":"12","field5":"40","field6":"green","field7":"40"},
+  {"hell":"CC200-009-001","csv":"eClass_5.1.3","field3":"11/3/2014","field4":"5","field5":"3","field6":"blue","field7":"38","field8":"extra field!"}
 ]
 ```
 
-If length of headers array is smaller than the column of csv, converter will automatically fill the column with "field*".
+If length of headers array is smaller than the column of csv, converter will automatically fill the column with "field*". where * is current column index starting from 1.
 
 Also we can use it in code:
 
@@ -611,6 +634,13 @@ Here are built-in error messages and corresponding error data:
 * row_process: Any error happened while parser processing a csv row will populate this error message. The error data is detailed error message (e.g. checkColumn is true and column size of a row does not match that of header).
 
 #Change Log
+
+## 0.5.0
+
+* Fixed some bugs
+* Performance improvement
+* **Implicity type for numbers now use RegExp:/^[-+]?[0-9]*\.?[0-9]+$/. Previously 00131 is a string now will be recognised as number type**
+* **If a column has no head, now it will use current column index as column name: 'field*'. previously parser uses a fixed index starting from 1. e.g. csv data: 'aa,bb,cc' with head 'a,b'. previously it will convert to {'a':'aa','b':'bb','field1':'cc'} and now it is {'a':'aa','b':'bb','field3':'cc'}**
 
 ## 0.4.7
 * ignoreEmpty now ignores empty rows as well

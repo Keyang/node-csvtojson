@@ -1,7 +1,8 @@
 {
   "commands": {
     "parse": "(Default)Parse a csv file to json",
-    "startserver": "(Deprecated)Start a web server"
+    "startserver": "(Deprecated)Start a web server",
+    "version": "Show version of current csvtojson"
   },
   "options": {
     "--delimiter": {

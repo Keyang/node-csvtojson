@@ -21,18 +21,22 @@ Parser.prototype.parse = function(params) {
   params.resultRow[params.head] = params.item;
 };
 Parser.prototype.getHeadStr = function() {
-  var head= this.head;
-  return head.replace(this.regExp,'');
+  if (this.headStr) {
+    return this.headStr;
+  } else {
+    var head = this.head;
+    this.headStr = head.replace(this.regExp, '');
+    return this.getHeadStr();
+  }
 };
 Parser.prototype.getHead = function() {
   return this.head;
 };
-Parser.prototype.get
 Parser.prototype.clone = function() {
-  var obj=Object.create(this);
-  var newParser=new Parser();
-  for (var key in obj){
-    newParser[key]=obj[key];
+  var obj = Object.create(this);
+  var newParser = new Parser();
+  for (var key in obj) {
+    newParser[key] = obj[key];
   }
   return newParser;
   //return new Parser(this.name, this.regExp, this.parse, this.processSafe);

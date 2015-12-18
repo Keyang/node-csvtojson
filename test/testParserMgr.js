@@ -141,7 +141,7 @@ describe("ParserMgr", function() {
         assert(res[0].fieldA.title === "Food Factory");
         assert(res[0].fieldA.children.length === 2);
         assert(res[0].fieldA.children[0].name === "Oscar");
-        assert(res[0].fieldA.children[0].id === "0023");
+        assert(res[0].fieldA.children[0].id === 23);
         assert(res[0].fieldA.children[1].name === "Tikka");
         assert(res[0].fieldA.children[1].employee.length === 2);
         assert(res[0].fieldA.children[1].employee[0].name === "Tim", JSON.stringify(res[0].fieldA.children[1].employee[0]));

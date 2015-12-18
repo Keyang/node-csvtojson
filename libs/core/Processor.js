@@ -4,21 +4,21 @@
  * Downstream: any
  */
 module.exports = Processor;
-var Transform = require("stream").Transform;
 var util = require("util");
 var utils = require("./utils.js");
 
 var parserMgr = require("./parserMgr.js");
+var Worker = require('./Worker');
 var async = require("async");
 
 function Processor(params) {
-  Transform.call(this);
   var _param = {
     delimiter: ",",
     quote: '"',
     trim: true,
     checkType: true,
-    ignoreEmpty: false
+    ignoreEmpty: false,
+    workerNum: 1
   }
   for (var key in params) {
     if (params.hasOwnProperty(key)) {
@@ -31,65 +31,65 @@ function Processor(params) {
   this.valveCb = [];
   this.runningWorker = 0;
   this.flushCb = null;
+  if (this.param.workerNum > 1) {
+    for (var i = 0; i < this.param.workerNum; i++) {
+      var worker = new Worker(this.param, false);
+      // worker.on("error",onError);
+      this.addWorker(worker);
+    }
+  } else{
+    this.param.workerNum = 1;
+    this.addWorker(new Worker(this.param,true));
+  }
+
 }
-util.inherits(Processor, Transform);
-Processor.prototype._transform = function(data, encoding, cb) {
-  // console.log("pro",data.length);
-  this.recordNumber++;
-  if (this.recordNumber === 0) { //router handle header processing
-    var csvRow = data.toString("utf8");
-    var row = utils.rowSplit(csvRow, this.param.delimiter, this.param.quote, this.param.trim);
-    async.each(this.workers, function(worker, scb) {
-      if (this.param.headers && this.param.headers instanceof Array){
-        var counter=1;
-        while (this.param.headers.length<row.length){
-          this.param.headers.push("field"+counter++);
-        }
-        while (this.param.headers.length>row.length){
-          this.param.headers.pop();
-        }
-        row=this.param.headers;
-      }
-      if (this.param.noheader && !this.param.headers) {
-        worker.genConstHeadRow(row.length,scb);
-      } else {
-        worker.processHeadRow(row, scb);
-      }
-    }.bind(this), function() {
-      //console.log(arguments);
-      if (this.param.noheader){
-        this.recordNumber++;
-        rowProcess.call(this);
-      }else{
-        cb();
-      }
+Processor.prototype.rows = function(csvRows, cb,valvCb) {
+  if (csvRows.length === 0) {
+    cb(null, []);
+    valvCb();
+    return;
+  }
+  var count = csvRows.length;
+  var rtn = [];
+  var _err = null;
+  if (this.recordNumber === -1) {
+    var headRow="";
+    if (!this.param.noheader){
+      headRow = csvRows.shift();
+    }
+    this.processHead(headRow, function() {
+      this.recordNumber++;
+      this.rows(csvRows, cb,valvCb);
     }.bind(this));
-  } else { //pass the data to worker
-    rowProcess.call(this);
+  } else {
+    var worker=this.getFreeWorker();
+    worker.processRows(csvRows,this.recordNumber,function(err,res){
+        this.addWorker(worker);
+        this.releaseValve();
+        cb(err,res);
+    }.bind(this));
+    this.recordNumber+=csvRows.length;
+    this.valve(valvCb);
   }
-  function rowProcess(){
-    this.runningWorker++;
-    this.rowProcess(data.toString("utf8"), function(err, resultRow, row, index) {
-      if (err) {
-        this.emit("error","row_process", err);
-      } else {
-        if (resultRow){
-          this.emit("record_parsed", resultRow, row, index - 1);
-        }else{
-          this.emit("record_parsed",null,row,index -1);
-          //Empty row detedted. skip
-        }
-        //this.push(JSON.stringify([resultRow,row,obj.rowIndex]),"utf8");
-      }
-      this.runningWorker--;
-      this.releaseValve();
-      this.checkAndFlush();
-    }.bind(this)); //wait until one row processing finished
-    this.valve(cb);
-  }
+  // console.log(csvRows, csvRows.length);
 }
+Processor.prototype.processHead = function(row, cb) {
+  async.each(this.workers, function(worker, scb) {
+      worker.processHeadRow(row, scb);
+  }.bind(this), function() {
+    //console.log(arguments);
+    if (this.param.noheader) {
+      this.rowProcess(row, 0, cb); //wait until one row processing finished
+    } else {
+      cb();
+    }
+  }.bind(this));
+}
+  //   this.recordNumber++;
+  // }
 Processor.prototype.valve = function(cb) {
-  if (this.runningWorker < this.workers.length) {
+  // console.log(this.workers.length);
+  if (this.workers.length>0) {
     cb();
   } else {
     this.valveCb.push(cb);
@@ -102,12 +102,20 @@ Processor.prototype.releaseValve = function() {
   }
 }
 Processor.prototype.releaseWorker = function() {
+  this.released=true;
   this.workers.forEach(function(worker) {
     worker.release();
   });
 }
 Processor.prototype.addWorker = function(worker) {
-  this.workers.push(worker);
+  // if (this.released){
+  //   worker.release();
+  // }else{
+    this.workers.push(worker);
+  // }
+}
+Processor.prototype.getFreeWorker=function(){
+  return this.workers.shift();
 }
 Processor.prototype.processHeadRow = function(headRow, cb) {
   this.parseRules = parserMgr.initParsers(headRow, this.param.checkType);
@@ -130,13 +138,14 @@ Processor.prototype.processHeadRow = function(headRow, cb) {
     cb();
   });
 }
-Processor.prototype.rowProcess = function(data, cb) {
+Processor.prototype.rowProcess = function(data, curIndex, cb) {
   var worker;
   if (this.workers.length > 1) { // if multi-worker enabled
+    // console.log(curIndex,data);
     if (this.workers.length > 2) { // for 2+ workers, host process will concentrate on csv parsing while workers will convert csv lines to JSON.
-      worker = this.workers[(this.recordNumber % (this.workers.length - 1)) + 1];
+      worker = this.workers[(curIndex % (this.workers.length - 1)) + 1];
     } else { //for 2 workers, leverage it as first worker has like 50% cpu used for csv parsing. the weight would be like 0,1,1,0,1,1,0
-      var index = this.recordNumber % 3;
+      var index = curIndex % 3;
       if (index > 1) {
         index = 1;
       }
@@ -145,7 +154,7 @@ Processor.prototype.rowProcess = function(data, cb) {
   } else { //if only 1 worker
     worker = this.workers[0];
   }
-  worker.processRow(data, this.recordNumber, cb);
+  worker.processRow(data, curIndex, cb);
 }
 Processor.prototype.checkAndFlush = function() {
   if (this.runningWorker === 0 && this.flushCb) {

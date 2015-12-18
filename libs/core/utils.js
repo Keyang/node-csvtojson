@@ -13,12 +13,13 @@ function rowSplit(rowStr, delimiter, quote, trim) {
   var row = [];
   var inquote = false;
   var quoteBuff = '';
-  rowArr.forEach(function(e) {
+  for (var i=0;i<rowArr.length;i++){
+    var e=rowArr[i];
     if (isToogleQuote(e, quote)) { //if current col has odd quotes, switch quote status
       if (inquote) { //if currently in open quote status, close it and output data
         quoteBuff += delimiter;
         quoteBuff += twoDoubleQuote(e.substr(0, e.length - 1), quote);
-        row.push(trim ? quoteBuff.toString().trim() : quoteBuff);
+        row.push(trim ? quoteBuff.trim() : quoteBuff);
         quoteBuff = '';
       } else { // currently not in open quote status, open it
         quoteBuff += twoDoubleQuote(e.substring(1), quote);
@@ -32,11 +33,11 @@ function rowSplit(rowStr, delimiter, quote, trim) {
         e = e.substring(1, e.length - 1);
       }
       if (trim) {
-        e = e.toString().trim();
+        e = e.trim();
       }
       row.push(twoDoubleQuote(e, quote));
     }
-  });
+  }
   return row;
 }
 
@@ -54,11 +55,11 @@ function _getRegExpObj(quote) {
 
 function isToogleQuote(segment, quote) {
   var reg = _getRegExpObj(quote).single;
-  var match = segment.toString().match(reg);
+  var match = segment.match(reg);
   return match && match.length % 2 !== 0;
 }
 
 function twoDoubleQuote(segment, quote) {
   var regExp = _getRegExpObj(quote).double;
-  return segment.toString().replace(regExp, quote);
+  return segment.replace(regExp, quote);
 }

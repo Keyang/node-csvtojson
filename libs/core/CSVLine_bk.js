@@ -5,14 +5,15 @@
  * Downstream will receive a line of CSV record
  */
 module.exports = CSVLine;
-var Transform = require("stream").Transform;
+var EventEmitter=require("events").EventEmitter;
 var util = require("util");
 var os = require("os");
 var eol = os.EOL;
 var utils = require("./utils.js");
-
+var Processor=require("./Processor");
+var async=require("async");
 function CSVLine(params) {
-  Transform.call(this);
+  EventEmitter.call(this);
   var _param = {
     quote: "\""
   };
@@ -25,10 +26,12 @@ function CSVLine(params) {
   this._buffer = ""; //line buffer; buffer for a complete line which ends with a line break
   this._recordBuffer = ""; //csv line record buffer ; buffer for a complete csv line which could contain multiple line breaks
   this.rowIndex = 0; //indicating current row number of csv file;
+  this.processor=new Processor(this.param);
+  this.q=async.queue(this.processLine.bind(this),1);
 }
-util.inherits(CSVLine, Transform);
+util.inherits(CSVLine,EventEmitter);
 
-CSVLine.prototype._transform = function(data, encoding, cb) {
+CSVLine.prototype.parse = function(data, encoding, cb) {
   var arr;
   // console.log("line",data.length);
   function contains(str, subString) {
@@ -53,6 +56,7 @@ CSVLine.prototype._transform = function(data, encoding, cb) {
   if (this.param.maxRowLength && this._buffer.length>this.param.maxRowLength){
     this.emit("error","row_exceed",this._buffer);
   }
+  // this.q.drain=cb;
   cb();
 };
 CSVLine.prototype._flush = function(cb) {
@@ -67,13 +71,10 @@ CSVLine.prototype._flush = function(cb) {
 CSVLine.prototype._line = function(line, lastLine) {
   var data;
   this._recordBuffer += line;
-  if (this.param.maxRowLength && this._recordBuffer.length>this.param.maxRowLength){
-    this.emit("error","row_exceed",this._recordBuffer);
-  }
   if (!this._isToogleQuote(this._recordBuffer)) { //if a complete record is in buffer.push to downstream
     data = this._recordBuffer;
     this._recordBuffer = '';
-    this.push(data.trim(), "utf8");
+    this.processLine(data,this.rowIndex);
     this.rowIndex++;
     // if (this.rowIndex % 10000 ===0){
     //   console.log("CSV Row populated: ",this.rowIndex);
@@ -91,3 +92,9 @@ CSVLine.prototype.getEol = function() {
 CSVLine.prototype._isToogleQuote = function(segment) {
   return utils.isToogleQuote(segment, this.param.quote);
 };
+
+CSVLine.prototype.processLine=function(csvLine,rowIndex){
+    if (rowIndex === 0){
+      this.initHead()
+    }
+}

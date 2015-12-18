@@ -5,6 +5,7 @@
 module.exports = Worker;
 var parserMgr = require("./parserMgr.js");
 var utils = require("./utils.js");
+
 function Worker(params, sync) {
   var _param = {
     checkType: true,
@@ -17,10 +18,17 @@ function Worker(params, sync) {
   }
   this.param = _param;
   this.sync = sync ? true : false;
-  this.funcs = require("./workerRunner")();
+  this.cmdCounter = 0;
   if (!this.sync) {
-    this.child = require("child_process").fork(__dirname + "/workerRunner.js");
+    this.child = require("child_process").fork(__dirname + "/workerRunner.js",[JSON.stringify(this.param)], {
+      silent: true,
+      env:{
+        child:true
+      }
+    });
     this.child.on("message", this.onChildMsg.bind(this));
+  } else {
+    this.funcs = require("./workerRunner")(this.param);
   }
   this.childCallbacks = {};
 
@@ -30,22 +38,25 @@ Worker.prototype.release = function() {
     this.child.kill();
   }
 }
+Worker.prototype.processRows = function(csvRows, startIndex, cb) {
+  this.send({
+    action: "processRows",
+    csvRows: csvRows,
+    startIndex: startIndex
+  }, function(err, res) {
+    if (err) {
+      cb(err);
+    } else {
+      cb(null, res.data);
+    }
+  });
+}
 Worker.prototype.processRow = function(data, index, cb) {
   this.send({
     action: "processRow",
     data: data,
     index: index
-  }, function(err, res) {
-    if (err){
-      cb(err);
-    }else{
-      if (res){
-        cb(null, res.resultRow, res.row, res.index);
-      }else{
-        cb(null,null,res.row,res.index);
-      }
-    }
-  });
+  }, cb);
 }
 Worker.prototype.onChildMsg = function(m) {
   var action = m.action;
@@ -59,21 +70,14 @@ Worker.prototype.onChildMsg = function(m) {
   }
 }
 Worker.prototype.send = function(msg, cb) {
-  msg.param=this.param;
   if (this.sync) {
     this.funcs[msg.action](msg, cb);
   } else {
     var action = this.genAction(msg.action);
-    msg.action=action;
+    msg.action = action;
     this.childCallbacks[action] = cb;
     this.child.send(msg);
   }
-}
-Worker.prototype.genConstHeadRow = function(number, cb) {
-  this.send({
-    action: "genConstHeadRow",
-    number: number
-  }, cb);
 }
 Worker.prototype.processHeadRow = function(headRow, cb) {
   this.send({
@@ -82,6 +86,6 @@ Worker.prototype.processHeadRow = function(headRow, cb) {
   }, cb);
 }
 Worker.prototype.genAction = function(action) {
-  var d = "" + new Date().getTime() + Math.round(Math.random() * 1000000);
+  var d = this.cmdCounter++;
   return action + "_" + d;
 }

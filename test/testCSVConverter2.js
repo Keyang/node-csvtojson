@@ -14,7 +14,6 @@ describe("CSV Converter", function() {
     });
   });
 
-
   it("should set eol ", function(done) {
 
     var rs = fs.createReadStream(__dirname + "/data/large-csv-sample.csv");
@@ -53,7 +52,7 @@ describe("CSV Converter", function() {
       headers:["a","b","c","e","f","g"]
     });
     conv.fromString(rs,function(err,json){
-      assert.equal(json[0].field1,40);
+      assert.equal(json[0].field7,40);
       assert.equal(json[0].a,"CC102-PDMI-001");
       done();
     });
@@ -66,6 +65,29 @@ describe("CSV Converter", function() {
     conv.fromFile(csvFile, function(err, res) {
       assert(!err);
       assert(res.length === 5290);
+      done();
+    });
+  });
+  it ("should parse no header with dynamic column number",function(done){
+    var testData = __dirname + "/data/noheaderWithVaryColumnNum";
+    var rs = fs.readFileSync(testData,"utf8");
+    var conv=new Converter({
+      noheader:true
+    });
+    conv.fromString(rs,function(err,json){
+      assert.equal(json.length,2);
+      assert.equal(json[1].field4,7);
+      done();
+    });
+  });
+  it ("should parse tabsv data with dynamic columns",function(done){
+    var testData = __dirname + "/data/tabsv";
+    var rs = fs.readFileSync(testData,"utf8");
+    var conv=new Converter({
+      delimiter:"\t"
+    });
+    conv.fromString(rs,function(err,json){
+      assert.equal(json[0].Idevise,"");
       done();
     });
   });

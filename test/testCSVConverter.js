@@ -310,7 +310,7 @@ describe("CSV Converter", function () {
       assert(res.length===5);
       assert(j.a==="CC102-PDMI-001");
       assert(j.b==="eClass_5.1.3");
-      assert(j.field1==="10/3/2014");
+      assert(j.field3==="10/3/2014");
       done();
     });
   })
