@@ -91,6 +91,17 @@ describe("CSV Converter", function() {
       done();
     });
   });
+  it ("should use first line break as eol",function(done){
+    var testData = __dirname + "/data/testEol";
+    var conv=new Converter({
+      noheader:true
+    });
+    conv.fromFile(testData,function(err,json){
+      assert(!err);
+      console.log(json);
+      done();
+    });
+  })
   // it ("should convert big csv",function(done){
   //   // var rs=fs.createReadStream(__dirname+"/data/large-csv-sample.csv");
   //   var rs=fs.createReadStream("/Users/kxiang/tmp/csvdata");

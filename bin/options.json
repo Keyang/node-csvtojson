@@ -49,6 +49,10 @@
     "--checkColumn": {
       "desc": "whether check column number of a row is the same as headers. If column number mismatched headers number, an error of \"mismatched_column\" will be emitted.. default: false",
       "type": "boolean"
+    },
+    "--eol": {
+      "desc": "Explicitly specify the end of line character to use.",
+      "type": "string"
     }
   },
   "examples": [

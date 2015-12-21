@@ -292,14 +292,21 @@ Converter.prototype.checkAndFlush = function() {
   }
 }
 Converter.prototype.getEol = function(data) {
-  function contains(str, subString) {
-    return str.lastIndexOf(subString) > -1;
-  }
   if (!this.param.eol && data) {
-    this.param.eol = contains(data, '\r\n') ? '\r\n' :
-      contains(data, '\n') ? '\n' :
-      contains(data, '\r') ? '\r' :
-      eol;
+    for (var i=0;i<data.length;i++){
+      if (data[i]==="\r"){
+        if (data[i+1] === "\n"){
+          this.param.eol="\r\n";
+        }else{
+          this.param.eol="\r";
+        }
+        return this.param.eol;
+      }else if (data[i]==="\n"){
+        this.param.eol="\n";
+        return this.param.eol;
+      }
+    }
+    this.param.eol=eol;
   }
 
   return this.param.eol;

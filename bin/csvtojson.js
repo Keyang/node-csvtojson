@@ -16,7 +16,6 @@ function csvtojson() {
    *
    */
   var parsedCmd;
-
   function _showHelp(errno) {
     var key;
     errno = typeof errno === "number" ? errno : 0;
