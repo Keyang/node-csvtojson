@@ -170,6 +170,10 @@ Converter.prototype.flushBuffer = function() {
     var resultJSONStr = obj.resultJSONStr;
     var resultRow = JSON.parse(resultJSONStr)
     var row = obj.row;
+    if (this.transform && typeof this.transform==="function"){
+      this.transform(resultRow,row,index);
+      resultJSONStr=JSON.stringify(resultRow);
+    }
     this.emit("record_parsed", resultRow, row, index);
     if (this.param.toArrayString && this.recordNum > 0) {
       this.push("," + eol);

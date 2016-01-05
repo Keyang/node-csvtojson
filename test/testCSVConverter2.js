@@ -98,10 +98,26 @@ describe("CSV Converter", function() {
     });
     conv.fromFile(testData,function(err,json){
       assert(!err);
-      console.log(json);
       done();
     });
   })
+  it ("should use sync transform",function(done){
+    var testData = __dirname + "/data/complexJSONCSV";
+    var rs = fs.createReadStream(testData);
+    var conv=new Converter({});
+    conv.transform=function(json,row,index){
+      json.rowNum=index;
+    }
+    conv.on("record_parsed",function(j){
+      assert(j.rowNum>=0);
+    });
+    conv.on("end_parsed",function(res){
+      assert(res[0].rowNum===0);
+      assert(res[1].rowNum===1);
+      done();
+    });
+    rs.pipe(conv);
+  });
   // it ("should convert big csv",function(done){
   //   // var rs=fs.createReadStream(__dirname+"/data/large-csv-sample.csv");
   //   var rs=fs.createReadStream("/Users/kxiang/tmp/csvdata");

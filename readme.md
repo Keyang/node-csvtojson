@@ -11,7 +11,7 @@ All you need nodejs csv to json converter.
 
 # Version 0.5
 
-Version 0.5 contains big refactor expecially for performance. The parser is like **7 times** faster than version 0.4.
+Version 0.5 contains big refactor especially for performance. The parser is like **7 times** faster than version 0.4.
 
 ## Menu
 * [Installation](#installation)
@@ -21,19 +21,21 @@ Version 0.5 contains big refactor expecially for performance. The parser is like
     * [Convert from a web resource / Readable stream](#from-web)
     * [Convert from CSV string](#from-string)
 * [Parameters](#params)
-* [Customised Parser](#parser)
-* [Webserver](#webserver)
+* [Result Transform](#result-transform)
+  * [Synchronouse Transformer](#synchronouse-transformer)
+  * [Asynchronouse Transformer](#asynchronouse-transformer)
+  * [Convert to other data type](#convert-to-other-data-type)
 * [Events](#events)
-* [Built-in Parsers](#default-parsers)
+* [Flags](#flags)
 * [Big CSV File Streaming](#big-csv-file)
 * [Process Big CSV File in CLI](#convert-big-csv-file-with-command-line-tool)
-* [Column Array](#column-array)
 * [Parse String](#parse-string)
 * [Empowered JSON Parser](#empowered-json-parser)
 * [Field Type](#field-type)
 * [Multi-Core / Fork Process](#multi-cpu-core)
 * [Header Configuration](#header-configuration)
 * [Error Handling](#error-handling)
+* [Customised Parser](#parser)
 * [Change Log](#change-log)
 
 GitHub: https://github.com/Keyang/node-csvtojson
@@ -155,75 +157,147 @@ Following parameters are supported:
 * **checkColumn**: whether check column number of a row is the same as headers. If column number mismatched headers number, an error of "mismatched_column" will be emitted.. default: false
 * **eol**: End of line character. If omitted, parser will attempt retrieve it from first chunk of CSV data. If no valid eol found, then operation system eol will be used.
 
-# Parser
-CSVTOJSON allows adding customised parsers which concentrating on what to parse and how to parse.
-It is the main power of the tool that developer only needs to concentrate on how to deal with the data and other concerns like streaming, memory, web, cli etc are done automatically.
+All parameters can be used in Command Line tool. see
 
-How to add a customised parser:
+```
+csvtojson --help
+```
+
+# Result Transform
+
+To transform JSON result, (e.g. change value of one column), just simply add 'transform handler'.
+
+## Synchronouse transformer
 
 ```js
-//Parser Manager
-var parserMgr=require("csvtojson").parserMgr;
-
-parserMgr.addParser("myParserName",/^\*parserRegExp\*/,function (params){
-   var columnTitle=params.head; //params.head be like: *parserRegExp*ColumnName;
-   var fieldName=columnTitle.replace(this.regExp, ""); //this.regExp is the regular expression above.
-   params.resultRow[fieldName]="Hello my parser"+params.item;
+var Converter=require("csvtojson").Converter;
+var csvConverter=new Converter({});
+csvConverter.transform=function(json,row,index){
+    json["rowIndex"]=index;
+    /* some other examples:
+    delete json["myfield"]; //remove a field
+    json["dateOfBirth"]=new Date(json["dateOfBirth"]); // convert a field type
+    */
+};
+csvConverter.fromString(csvString,function(err,result){
+  //all result rows will add a field 'rowIndex' indicating the row number of the csv data:
+  /*
+  [{
+    field1:value1,
+    rowIndex: 0
+ }]
+  */
 });
 ```
 
-parserMgr's addParser function take three parameters:
+As shown in example above, it is able to apply any changes to the result json which will be pushed to down stream and "record_parsed" event.
 
-1. parser name: the name of your parser. It should be unique.
+## Asynchronouse Transformer
 
-2. Regular Expression: It is used to test if a column of CSV data is using this parser. In the example above any column's first row starting with *parserRegExp* will be using it.
+Asynchronouse transformation can be achieve either through "record_parsed" event or creating a Writable stream.
 
-3. Parse function call back: It is where the parse happens. The converter works row by row and therefore the function will be called each time needs to parse a cell in CSV data.
+### Use record_parsed
 
-The parameter of Parse function is a JSON object. It contains following fields:
+To transform data asynchronously, it is suggested to use csvtojson with [Async Queue](https://github.com/caolan/async#queue).
 
-**head**: The column's first row's data. It generally contains field information. e.g. *array*items
+This mainly is used when transformation of each csv row needs be mashed with data retrieved from external such as database / server / file system.
 
-**item**: The data inside current cell.  e.g. item1
+However this approach will **not** change the json result pushed to downstream.
 
-**itemIndex**: the index of current cell of a row. e.g. 0
+Here is an example:
 
-**rawRow**: the reference of current row in array format. e.g. ["item1", 23 ,"hello"]
+```js
+var Conv=require("csvtojson").Converter;
+var async=require("async");
+var rs=require("fs").createReadStream("path/to/csv"); // or any readable stream to csv data.
+var q=async.queue(function(json,callback){
+  //process the json asynchronously.
+  require("request").get("http://myserver/user/"+json.userId,function(err,user){
+    //do the data mash here
+    json.user=user;
+    callback();
+  });
+},10);//10 concurrent worker same time
+q.saturated=function(){
+  rs.pause(); //if queue is full, it is suggested to pause the readstream so csvtojson will suspend populating json data. It is ok to not to do so if CSV data is not very large.
+}
+q.empty=function(){
+  rs.resume();//Resume the paused readable stream. you may need check if the readable stream isPaused() (this is since node 0.12) or finished.
+}
+var conv=new Conv({construct:false});
+conv.transform=function(json){
+  q.push(json);
+};
+conv.on("end_parsed",function(){
+  q.drain=function(){
+    //code when Queue process finished.
+  }
+})
+rs.pipe(conv);
+```
 
-**resultRow**: the reference of result row in JSON format. e.g. {"name":"Joe"}
+In example above, the transformation will happen if one csv rown being processed. The related user info will be pulled from a web server and mashed into json result.
 
-**rowIndex**: the index of current row in CSV data. start from 1 since 0 is the head. e.g. 1
+There will be at most 10 data transformation woker working concurrently with the help of Async Queue.
 
-**resultObject**: the reference of result object in JSON format. It always has a field called csvRows which is in Array format. It changes as parsing going on. e.g.
+### Use Stream
+
+It is able to create a Writable stream (or Transform) which process data asynchronously. See [Here](https://nodejs.org/dist/latest-v4.x/docs/api/stream.html#stream_class_stream_transform) for more details.
+
+## Convert to other data type
+
+Below is an example of result tranformation which converts csv data to a column array rather than a JSON.
+
+```js
+var Converter=require("csvtojson").Converter;
+var columArrData=__dirname+"/data/columnArray";
+var rs=fs.createReadStream(columArrData);
+var result = {}
+var csvConverter=new Converter();
+//end_parsed will be emitted once parsing finished
+csvConverter.on("end_parsed", function(jsonObj) {
+    console.log(result);
+    console.log("Finished parsing");
+    done();
+});
+
+//record_parsed will be emitted each time a row has been parsed.
+csvConverter.on("record_parsed", function(resultRow, rawRow, rowIndex) {
+
+    for (var key in resultRow) {
+        if (!result[key] || !result[key] instanceof Array) {
+            result[key] = [];
+        }
+        result[key][rowIndex] = resultRow[key];
+    }
+
+});
+rs.pipe(csvConverter);
+```
+
+Here is an example:
+
+```csv
+    TIMESTAMP,UPDATE,UID,BYTES SENT,BYTES RCVED
+    1395426422,n,10028,1213,5461
+    1395426422,n,10013,9954,13560
+    1395426422,n,10109,221391500,141836
+    1395426422,n,10007,53448,308549
+    1395426422,n,10022,15506,72125
+```
+
+It will be converted to:
 
 ```json
 {
-   "csvRows":[
-      {
-          "itemName":"item1",
-          "number":10
-      },
-      {
-         "itemName":"item2",
-         "number":4
-      }
-   ]
+  "TIMESTAMP": ["1395426422", "1395426422", "1395426422", "1395426422", "1395426422"],
+  "UPDATE": ["n", "n", "n", "n", "n"],
+  "UID": ["10028", "10013", "10109", "10007", "10022"],
+  "BYTES SENT": ["1213", "9954", "221391500", "53448", "15506"],
+  "BYTES RCVED": ["5461", "13560", "141836", "308549", "72125"]
 }
 ```
 
-# WebServer
-It is able to start the web server through code.
-
-```js
-var webServer=require("csvtojson").interfaces.web;
-
-var server=webServer.startWebServer({
-   "port":"8801",
-   "urlpath":"/parseCSV"
-});
-```
-
-~~It will return an [expressjs](http://expressjs.com/) Application. You can add your own  web app content there.~~ It will return http.Server object.
 
 # Events
 
@@ -249,18 +323,19 @@ csvConverter.on("record_parsed",function(resultRow,rawRow,rowIndex){
 });
 ```
 
-# Default Parsers
-There are default parsers in the library they are
+# Flags
 
-**JSON**: Any valid JSON structure (array, nested json) are supported. see [Empowered JSON Parser](#empowered-json-parser)
+There are flags in the library:
 
-**Omitted column**: For columns head start with "\*omit\*" e.g. "\*omit\*id", the parser will omit the column's data.
+\*omit\*: Omit a column. The values in the column will not be built into JSON result.
 
-**Flat JSON**: Mark a head column as is the key of its JSON result. e.g.
+\*flat\*: Mark a head column as is the key of its JSON result.
+
+Example:
 
 ```csv
-*flat*user.name, user.age
-Joe , 40
+*flat*user.name, user.age, *omit*user.gender
+Joe , 40, Male
 ```
 
 It will be converted to:
@@ -309,57 +384,7 @@ cat [path to bigcsvdata] | csvtojson > converted.json
 
 They will do the same job.
 
-# Column Array
-To convert a csv data to column array,  you have to construct the result in memory. See example below
 
-```js
-var columArrData=__dirname+"/data/columnArray";
-var rs=fs.createReadStream(columArrData);
-var result = {}
-var csvConverter=new CSVAdv();
-//end_parsed will be emitted once parsing finished
-csvConverter.on("end_parsed", function(jsonObj) {
-    console.log(result);
-    console.log("Finished parsing");
-    done();
-});
-
-//record_parsed will be emitted each time a row has been parsed.
-csvConverter.on("record_parsed", function(resultRow, rawRow, rowIndex) {
-
-    for (var key in resultRow) {
-        if (!result[key] || !result[key] instanceof Array) {
-            result[key] = [];
-        }
-        result[key][rowIndex] = resultRow[key];
-    }
-
-});
-rs.pipe(csvConverter);
-```
-
-Here is an example:
-
-```csv
-    TIMESTAMP,UPDATE,UID,BYTES SENT,BYTES RCVED
-    1395426422,n,10028,1213,5461
-    1395426422,n,10013,9954,13560
-    1395426422,n,10109,221391500,141836
-    1395426422,n,10007,53448,308549
-    1395426422,n,10022,15506,72125
-```
-
-It will be converted to:
-
-```json
-{
-  "TIMESTAMP": ["1395426422", "1395426422", "1395426422", "1395426422", "1395426422"],
-  "UPDATE": ["n", "n", "n", "n", "n"],
-  "UID": ["10028", "10013", "10109", "10007", "10022"],
-  "BYTES SENT": ["1213", "9954", "221391500", "53448", "15506"],
-  "BYTES RCVED": ["5461", "13560", "141836", "308549", "72125"]
-}
-```
 
 # Parse String
 To parse a string, simply call fromString(csvString,callback) method. The callback parameter is optional.
@@ -632,6 +657,70 @@ Here are built-in error messages and corresponding error data:
 * unclosed_quote: If quote in csv is not closed, this error will be populated. The error data is a string which contains un-closed csv row.
 * row_exceed: If maxRowLength is given a number larger than 0 and a row is longer than the value, this error will be populated. The error data is a string which contains the csv row exceeding the length.
 * row_process: Any error happened while parser processing a csv row will populate this error message. The error data is detailed error message (e.g. checkColumn is true and column size of a row does not match that of header).
+
+
+# Parser
+
+** Parser will be replaced by [Result Transform](#result-transform) and [Flags](#flags) **
+
+This feature will be disabled in future.
+
+CSVTOJSON allows adding customised parsers which concentrating on what to parse and how to parse.
+It is the main power of the tool that developer only needs to concentrate on how to deal with the data and other concerns like streaming, memory, web, cli etc are done automatically.
+
+How to add a customised parser:
+
+```js
+//Parser Manager
+var parserMgr=require("csvtojson").parserMgr;
+
+parserMgr.addParser("myParserName",/^\*parserRegExp\*/,function (params){
+   var columnTitle=params.head; //params.head be like: *parserRegExp*ColumnName;
+   var fieldName=columnTitle.replace(this.regExp, ""); //this.regExp is the regular expression above.
+   params.resultRow[fieldName]="Hello my parser"+params.item;
+});
+```
+
+parserMgr's addParser function take three parameters:
+
+1. parser name: the name of your parser. It should be unique.
+
+2. Regular Expression: It is used to test if a column of CSV data is using this parser. In the example above any column's first row starting with *parserRegExp* will be using it.
+
+3. Parse function call back: It is where the parse happens. The converter works row by row and therefore the function will be called each time needs to parse a cell in CSV data.
+
+The parameter of Parse function is a JSON object. It contains following fields:
+
+**head**: The column's first row's data. It generally contains field information. e.g. *array*items
+
+**item**: The data inside current cell.  e.g. item1
+
+**itemIndex**: the index of current cell of a row. e.g. 0
+
+**rawRow**: the reference of current row in array format. e.g. ["item1", 23 ,"hello"]
+
+**resultRow**: the reference of result row in JSON format. e.g. {"name":"Joe"}
+
+**rowIndex**: the index of current row in CSV data. start from 1 since 0 is the head. e.g. 1
+
+**resultObject**: the reference of result object in JSON format. It always has a field called csvRows which is in Array format. It changes as parsing going on. e.g.
+
+```json
+{
+   "csvRows":[
+      {
+          "itemName":"item1",
+          "number":10
+      },
+      {
+         "itemName":"item2",
+         "number":4
+      }
+   ]
+}
+```
+
+
 
 #Change Log
 

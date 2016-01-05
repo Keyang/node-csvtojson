@@ -1,35 +1,5 @@
 var arrReg = /\[([0-9]*)\]/;
-var numReg=/^[-+]?[0-9]*\.?[0-9]+$/;
 
-function parseParamType(type, item) {
-  if (type === 'number') {
-    var rtn = parseFloat(item);
-    if (isNaN(rtn)) {
-      return 0;
-    } else {
-      return rtn;
-    }
-  }
-  else if (type === '') {
-    var trimed=item.trim();
-    if (numReg.test(trimed)){
-        return parseFloat(trimed);
-    }else if(trimed.length === 5 && trimed.toLowerCase() ==="false"){
-      return false;
-    }else if (trimed.length === 4 && trimed.toLowerCase() === "true"){
-      return true;
-    }else if (trimed[0]==="{" && trimed[trimed.length-1]==="}"){
-      try{
-        return JSON.parse(trimed);
-      }catch(e){
-        return item;
-      }
-    }else{
-      return item;
-    }
-  }
-  return item;
-}
 
 function processHead(pointer, headArr, arrReg, flatKeys) {
   var headStr, match, index;
@@ -82,7 +52,7 @@ module.exports = {
       }
       pointer[key][index] = params.item;
     } else {
-      pointer[key] = params.config && params.config.checkType ? parseParamType(this.type, params.item) : params.item;
+      pointer[key] =  params.item;
     }
   }
 };

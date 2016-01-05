@@ -1,6 +1,6 @@
 var parserMgr = require("./parserMgr.js");
 var utils = require("./utils.js");
-var async=require("async");
+var async = require("async");
 var Parser = require("./parser");
 if (process.env.child) {
   var inst = init(JSON.parse(process.argv[2]));
@@ -23,22 +23,24 @@ if (process.env.child) {
 function getAction(action) {
   return action.split("_")[0];
 }
-function getConstParser(number){
-    return new Parser("field" + number, /.*/, function(params) {
-        var name = this.getName();
-        params.resultRow[name] = params.item;
-      }, true);
+
+function getConstParser(number) {
+  return new Parser("field" + number, /.*/, function(params) {
+    var name = this.getName();
+    params.resultRow[name] = params.item;
+  }, true);
 }
+
 function init(param) {
   var headRow;
-  var parseRules=[];
+  var parseRules = [];
 
   function genConstHeadRow(msg, cb) {
     var number = msg.number;
     parseRules = [];
     headRow = [];
     while (number > 0) {
-      var p =getConstParser(number);
+      var p = getConstParser(number);
       parseRules.unshift(p);
       headRow.unshift(p.getName());
       number--;
@@ -48,44 +50,48 @@ function init(param) {
 
   function processHeadRow(msg, cb) {
     // headRow = msg.row;
-    var row=[];
-    if (param.headers){
-      row=param.headers;
-    }else if(msg.row.length>0){
-      row=utils.rowSplit(msg.row, param.delimiter, param.quote, param.trim);
+    var row = [];
+    if (param.headers) {
+      row = param.headers;
+    } else if (msg.row.length > 0) {
+      row = utils.rowSplit(msg.row, param.delimiter, param.quote, param.trim);
     }
-    headRow=row;
-    if (row.length>0){
+    headRow = row;
+    if (row.length > 0) {
       parseRules = parserMgr.initParsers(row, param.checkType);
     }
     cb(null, {});
   }
-  function processRows(msg,cb){
-    var csvRows=msg.csvRows;
-    var startIndex=msg.startIndex;
-    var res={data:[]};
-    var count=csvRows.length;
-    var _err=null;
-    for (var i=0;i<csvRows.length;i++){
-        msg.data=csvRows[i];
-        msg.index=startIndex++;
-        processRow(msg,function(err,r){
-          if (err){
-              _err=err;
-          }else{
-            if (r){
-              res.data.push(r);
-            }else{
-              startIndex--;
-            }
+
+  function processRows(msg, cb) {
+    var csvRows = msg.csvRows;
+    var startIndex = msg.startIndex;
+    var res = {
+      data: []
+    };
+    var count = csvRows.length;
+    var _err = null;
+    for (var i = 0; i < csvRows.length; i++) {
+      msg.data = csvRows[i];
+      msg.index = startIndex++;
+      processRow(msg, function(err, r) {
+        if (err) {
+          _err = err;
+        } else {
+          if (r) {
+            res.data.push(r);
+          } else {
+            startIndex--;
           }
-        })
-        if (_err){
-          return cb(_err);
         }
+      })
+      if (_err) {
+        return cb(_err);
+      }
     }
-    cb(null,res);
+    cb(null, res);
   }
+
   function processRow(msg, cb) {
     var i, item, parser, head,
       data = msg.data,
@@ -103,13 +109,16 @@ function init(param) {
       }
       hasValue = true;
       parser = parseRules[i];
-      if (!parser){
-        parser=parseRules[i]=getConstParser(i+1);
+      if (!parser) {
+        parser = parseRules[i] = getConstParser(i + 1);
       }
       head = headRow[i];
-      if (!head || head===""){
-        head=headRow[i]="field"+(i+1);
-        parser.head=head;
+      if (!head || head === "") {
+        head = headRow[i] = "field" + (i + 1);
+        parser.head = head;
+      }
+      if (param.checkType){
+        item=parseParamType(parser.type,item,param);
       }
       parser.parse({
         head: head,
@@ -128,15 +137,45 @@ function init(param) {
         index: index
       });
     } else {
-      cb(null,null);
+      cb(null, null);
     }
 
+  }
+
+  var numReg=/^[-+]?[0-9]*\.?[0-9]+$/;
+  function parseParamType(type, item) {
+    if (type === 'number') {
+      var rtn = parseFloat(item);
+      if (isNaN(rtn)) {
+        return 0;
+      } else {
+        return rtn;
+      }
+    } else if (type === '') {
+      var trimed = item.trim();
+      if (numReg.test(trimed)) {
+        return parseFloat(trimed);
+      } else if (trimed.length === 5 && trimed.toLowerCase() === "false") {
+        return false;
+      } else if (trimed.length === 4 && trimed.toLowerCase() === "true") {
+        return true;
+      } else if (trimed[0] === "{" && trimed[trimed.length - 1] === "}") {
+        try {
+          return JSON.parse(trimed);
+        } catch (e) {
+          return item;
+        }
+      } else {
+        return item;
+      }
+    }
+    return item;
   }
   return {
     processHeadRow: processHeadRow,
     processRow: processRow,
     genConstHeadRow: genConstHeadRow,
-    processRows:processRows
+    processRows: processRows
   }
 }
 module.exports = init;

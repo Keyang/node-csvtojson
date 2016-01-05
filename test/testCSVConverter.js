@@ -195,6 +195,8 @@ describe("CSV Converter", function () {
       assert(d.column7 === "1234");
       assert(d.column8 === 0);
       assert(d.column9 === true);
+      assert(d.column10[0]===23);
+      assert(d.column10[1]===31);
     });
     csvConverter.on("end_parsed",function (){
       done();
@@ -217,6 +219,8 @@ describe("CSV Converter", function () {
       assert(d["string#column7"] === "1234");
       assert(d["number#column8"] === "abcd");
       assert(d.column9 === "true");
+      assert(d.column10[0]==="23");
+      assert(d.column10[1]==="31");
     });
     csvConverter.on("end_parsed",function (){
       done();
