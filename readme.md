@@ -9,9 +9,16 @@ All you need nodejs csv to json converter.
 * Easy Usage
 * more!
 
-# Version 0.5
+# Demo & Donation
 
-Version 0.5 contains big refactor especially for performance. The parser is like **7 times** faster than version 0.4.
+[Here](http://keyangxiang.com/csvtojson/) is a free online csv to json service ultilising latest csvtojson module.
+
+To donate, use either of following methods:
+
+* [Paypal](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=DUBQLRPJADJFQ)
+* Bitcoin: 1GmJmoaWYQSDbQeXTF5jjuVsnVNbbudG2W
+
+Thank you for your support.
 
 ## Menu
 * [Installation](#installation)
