@@ -9,16 +9,9 @@ All you need nodejs csv to json converter.
 * Easy Usage
 * more!
 
-# Demo & Donation
+# Demo
 
 [Here](http://keyangxiang.com/csvtojson/) is a free online csv to json service ultilising latest csvtojson module.
-
-To donate, use either of following methods:
-
-* [Paypal](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=DUBQLRPJADJFQ)
-* Bitcoin: 1GmJmoaWYQSDbQeXTF5jjuVsnVNbbudG2W
-
-Thank you for your support.
 
 ## Menu
 * [Installation](#installation)
@@ -532,19 +525,18 @@ If checkType is turned **OFF**, it will be converted to:
 
 ## Explicit Type
 CSV header column can explicitly define the type of the field.
-Simply add type before column name with a hash symbol (#).
+Simply add type before column name with a hash and exclaimation (#!).
 
 ### Supported types:
 * string
 * number
-* date (Not supported since 0.3.21)
 
 ### Define Type
 To define the field type, see following example
 
 ```csv
-string#appNumber, string#finished, string#msg
-201401010002, true, {"hello":"world","total":23}
+string#!appNumber, string#!finished, *flat*string#!user.msg, unknown#!msg
+201401010002, true, {"hello":"world","total":23},a message 
 ```
 The data will be converted to:
 
@@ -552,7 +544,7 @@ The data will be converted to:
 {
   "appNumber":"201401010002",
   "finished":"true",
-  "msg":"{\"hello\":\"world\",\"total\":23}"
+  "user.msg":"{\"hello\":\"world\",\"total\":23}"
 }
 ```
 
@@ -730,6 +722,11 @@ The parameter of Parse function is a JSON object. It contains following fields:
 
 
 #Change Log
+
+## 0.5.2
+
+* Changed type separator from # to #!
+* Fixed bugs
 
 ## 0.5.0
 

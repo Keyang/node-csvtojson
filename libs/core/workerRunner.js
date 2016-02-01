@@ -24,11 +24,13 @@ function getAction(action) {
   return action.split("_")[0];
 }
 
-function getConstParser(number) {
-  return new Parser("field" + number, /.*/, function(params) {
+function getConstParser(number,param) {
+  var inst= new Parser("field" + number, /.*/, function(params) {
     var name = this.getName();
     params.resultRow[name] = params.item;
   }, true);
+  inst.setParam(param);
+  return inst;
 }
 
 function init(param) {
@@ -40,7 +42,7 @@ function init(param) {
     parseRules = [];
     headRow = [];
     while (number > 0) {
-      var p = getConstParser(number);
+      var p = getConstParser(number,param);
       parseRules.unshift(p);
       headRow.unshift(p.getName());
       number--;
@@ -58,7 +60,7 @@ function init(param) {
     }
     headRow = row;
     if (row.length > 0) {
-      parseRules = parserMgr.initParsers(row, param.checkType);
+      parseRules = parserMgr.initParsers(row, param);
     }
     cb(null, {});
   }
@@ -110,15 +112,15 @@ function init(param) {
       hasValue = true;
       parser = parseRules[i];
       if (!parser) {
-        parser = parseRules[i] = getConstParser(i + 1);
+        parser = parseRules[i] = getConstParser(i + 1,param);
       }
       head = headRow[i];
       if (!head || head === "") {
         head = headRow[i] = "field" + (i + 1);
-        parser.head = head;
+        parser.initHead(head);
       }
       if (param.checkType){
-        item=parseParamType(parser.type,item,param);
+        item=parser.convertType(item);
       }
       parser.parse({
         head: head,
@@ -142,35 +144,6 @@ function init(param) {
 
   }
 
-  var numReg=/^[-+]?[0-9]*\.?[0-9]+$/;
-  function parseParamType(type, item) {
-    if (type === 'number') {
-      var rtn = parseFloat(item);
-      if (isNaN(rtn)) {
-        return 0;
-      } else {
-        return rtn;
-      }
-    } else if (type === '') {
-      var trimed = item.trim();
-      if (numReg.test(trimed)) {
-        return parseFloat(trimed);
-      } else if (trimed.length === 5 && trimed.toLowerCase() === "false") {
-        return false;
-      } else if (trimed.length === 4 && trimed.toLowerCase() === "true") {
-        return true;
-      } else if (trimed[0] === "{" && trimed[trimed.length - 1] === "}") {
-        try {
-          return JSON.parse(trimed);
-        } catch (e) {
-          return item;
-        }
-      } else {
-        return item;
-      }
-    }
-    return item;
-  }
   return {
     processHeadRow: processHeadRow,
     processRow: processRow,

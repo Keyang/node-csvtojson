@@ -189,7 +189,7 @@ describe("CSV Converter", function () {
     csvConverter.on("record_parsed",function (d){
       assert(typeof d.column1 === "number");
       assert(typeof d.column2 === "string");
-      assert(d.colume4 === "someinvaliddate");
+      assert(d["date#!colume4"] === "someinvaliddate");
       assert(d.column5.hello === "world");
       assert(d.column6 === '{"hello":"world"}');
       assert(d.column7 === "1234");
@@ -197,6 +197,7 @@ describe("CSV Converter", function () {
       assert(d.column9 === true);
       assert(d.column10[0]===23);
       assert(d.column10[1]===31);
+      assert(d["name#!"]==="sss");
     });
     csvConverter.on("end_parsed",function (){
       done();
@@ -212,15 +213,16 @@ describe("CSV Converter", function () {
     csvConverter.on("record_parsed",function (d){
       assert(typeof d.column1 === "string");
       assert(typeof d.column2 === "string");
-      assert( d["date#column3"] === "2012-01-01");
-      assert(d["date#colume4"] === "someinvaliddate");
+      assert( d["date#!column3"] === "2012-01-01");
+      assert(d["date#!colume4"] === "someinvaliddate");
       assert(d.column5 === '{"hello":"world"}');
-      assert(d["string#column6"] === '{"hello":"world"}');
-      assert(d["string#column7"] === "1234");
-      assert(d["number#column8"] === "abcd");
+      assert(d["column6"] === '{"hello":"world"}');
+      assert(d["column7"] === "1234");
+      assert(d["column8"] === "abcd");
       assert(d.column9 === "true");
       assert(d.column10[0]==="23");
       assert(d.column10[1]==="31");
+      assert(d["name#!"]==="sss");
     });
     csvConverter.on("end_parsed",function (){
       done();

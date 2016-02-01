@@ -14,15 +14,28 @@
 */
 
 module.exports = function(grunt) {
-  grunt.loadNpmTasks('grunt-contrib-jshint');
-  grunt.loadNpmTasks('grunt-mocha-test');
-  grunt.loadNpmTasks('grunt-contrib-watch');
-  grunt.loadNpmTasks('grunt-newer');
+  require('load-grunt-tasks')(grunt);
   grunt.loadTasks('./devops/grunt-wiki');
   var files = ['Gruntfile.js', 'libs/**/*.js', 'libs/**/**/*.js', 'test/*.js', 'bin/csvtojson',
     'bin/csvtojson.js', 'devops/*.js'
   ];
   grunt.initConfig({
+    uglify: {
+      client: {
+        options: {
+          mangle: true,
+          banner:"/*Automatically Generated. Do not modify.*/\n"
+        },
+        src: "./dist/csvtojson.js",
+        dest: "./dist/csvtojson.min.js",
+      }
+    },
+    browserify: {
+      dist: {
+        src: "./browser_index.js",
+        dest: "./dist/csvtojson.js"
+      }
+    },
     jshint: {
       all: {
         src: files,

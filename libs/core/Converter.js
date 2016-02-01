@@ -322,7 +322,7 @@ Converter.prototype.fromFile = function(filePath, cb) {
       var rs = fs.createReadStream(filePath);
       rs.pipe(this);
       this.wrapCallback(cb, function() {
-        fs.destroy();
+        rs.destroy();
       });
     } else {
       cb(new Error(filePath + " cannot be found."));

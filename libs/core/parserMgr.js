@@ -8,24 +8,9 @@ function registerParser (parser) {
     registeredParsers.push(parser); // TODO indexOf doesn't work with object references
   }
 }
-function splitTitle (columnTitle){
-  var splitArr = columnTitle.split("#");
-  var rtn;
-  if (splitArr.length === 1){
-    splitArr.unshift("");
-    return splitArr;
-  } else if (splitArr.length > 2) {
-    rtn = [];
-    rtn.push(splitArr.shift());
-    rtn.push(splitArr.join("#"));
-    return rtn;
-  }
-  return splitArr;
-}
-function getParser (columnTitle, checkType) {
+function getParser (columnTitle, param) {
   var inst, parser;
-  var type = "";
-  function getParserByName (parserName, columnTitle) {
+  function getParserByName (parserName) {
     var parser;
     registeredParsers.forEach(function(p){
       if (p.getName() === parserName){
@@ -34,17 +19,11 @@ function getParser (columnTitle, checkType) {
     });
     if (parser) {
       var inst = parser.clone();
-      inst.head = columnTitle;
       return inst;
     }
     return new Parser(); //TODO remove new
   }
   columnTitle = columnTitle ? columnTitle : '';
-  if (checkType){
-    var split = splitTitle(columnTitle);
-    type = split[0];
-    columnTitle = split[1];
-  }
   registeredParsers.forEach(function(p){
     if (p.test(columnTitle)){
       parser=p;
@@ -56,7 +35,8 @@ function getParser (columnTitle, checkType) {
   } else {
     inst = getParserByName("json", columnTitle);
   }
-  inst.type = type;
+  inst.setParam(param);
+  inst.initHead(columnTitle);
   return inst;
 }
 function addParser (name, regExp, parseFunc) {
@@ -67,10 +47,10 @@ function addSafeParser(parserPath){
   //TODO impl
 }
 
-function initParsers (row, checkType) {
+function initParsers (row, param) {
   var parsers = [];
   row.forEach(function (columnTitle) {
-    parsers.push(getParser(columnTitle, checkType));
+    parsers.push(getParser(columnTitle, param));
   });
   return parsers;
 }

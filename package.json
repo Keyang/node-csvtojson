@@ -18,7 +18,7 @@
       "email": "t3dodson@gmail.com"
     }
   ],
-  "version": "0.5.1",
+  "version": "0.5.2",
   "keywords": [
     "csv",
     "csvtojson",
@@ -42,14 +42,16 @@
   },
   "devDependencies": {
     "grunt": "^0.4.5",
+    "grunt-browserify": "^4.0.1",
     "grunt-contrib-jshint": "^0.11.2",
-    "grunt-contrib-uglify": "^0.9.1",
+    "grunt-contrib-uglify": "^0.11.0",
     "grunt-contrib-watch": "^0.6.1",
     "grunt-git": "^0.3.5",
     "grunt-madge": "0.0.6",
     "grunt-mocha-test": "^0.12.7",
     "grunt-newer": "^1.1.0",
     "imgur": "^0.1.5",
+    "load-grunt-tasks": "^3.4.0",
     "mocha": "^2.2.5"
   },
   "dependencies": {

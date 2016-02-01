@@ -68,6 +68,16 @@ describe("CSV Converter", function() {
       done();
     });
   });
+  it ("should fromFile should emit error",function(done){
+    var csvFile = __dirname + "/data/dataWithUnclosedQuotes";
+    var conv = new Converter({
+      workerNum: 1
+    });
+    conv.fromFile(csvFile, function(err, res) {
+      assert(err);
+      done();
+    });
+  });
   it ("should parse no header with dynamic column number",function(done){
     var testData = __dirname + "/data/noheaderWithVaryColumnNum";
     var rs = fs.readFileSync(testData,"utf8");
