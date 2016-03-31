@@ -197,6 +197,7 @@ describe("CSV Converter", function () {
       assert(d.column9 === true);
       assert(d.column10[0]===23);
       assert(d.column10[1]===31);
+      assert(d.column11[0].hello==="world");
       assert(d["name#!"]==="sss");
     });
     csvConverter.on("end_parsed",function (){

@@ -34,7 +34,7 @@ Parser.prototype.convertType = function(item) {
       return false;
     } else if (trimed.length === 4 && trimed.toLowerCase() === "true") {
       return true;
-    } else if (trimed[0] === "{" && trimed[trimed.length - 1] === "}") {
+    } else if (trimed[0] === "{" && trimed[trimed.length - 1] === "}" || trimed[0] === "[" && trimed[trimed.length - 1]==="]") {
       try {
         return JSON.parse(trimed);
       } catch (e) {

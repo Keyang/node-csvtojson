@@ -18,15 +18,16 @@
       "email": "t3dodson@gmail.com"
     }
   ],
-  "version": "0.5.2",
+  "version": "0.5.3",
   "keywords": [
     "csv",
     "csvtojson",
     "json",
-    "convert",
-    "parser",
-    "exntendible",
-    "plugin"
+    "csv to json",
+    "csv convert",
+    "tojson",
+    "convert csv to json",
+    "csv-json"
   ],
   "bin": {
     "csvtojson": "./bin/csvtojson"
