@@ -1,14 +1,26 @@
 /**
  */
+var CSV = require('csv-string');
 
 module.exports = {
+  getDelimiter: getDelimiter, // Handle auto delimiter: return explicitely specified delimiter or try auto detect
   rowSplit: rowSplit, //Split a csv row to an array based on delimiter and quote
   isToogleQuote: isToogleQuote, //returns if a segmenthas even number of quotes
   twoDoubleQuote: twoDoubleQuote //converts two double quotes to one
 }
 var cachedRegExp = {};
 
+function getDelimiter(rowStr, originalDelimiter) {
+  if (originalDelimiter === "auto") {
+    var delimiter = CSV.detect(rowStr);
+    return delimiter === null ? "," : delimiter;
+  } else {
+    return originalDelimiter;
+  }
+}
+
 function rowSplit(rowStr, delimiter, quote, trim) {
+  delimiter = getDelimiter(rowStr, delimiter);
   var rowArr = rowStr.split(delimiter);
   var row = [];
   var inquote = false;
