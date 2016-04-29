@@ -13,7 +13,7 @@ function Converter(params) {
   Transform.call(this); //TODO what does this do? -->This calls the constructor of Transform and initialise anything the Transform needs.(like var initialisation)
   var _param = {
     constructResult: true, //set to false to not construct result in memory. suitable for big csv data
-    delimiter: ',', // change the delimiter of csv columns
+    delimiter: ',', // change the delimiter of csv columns. It is able to use an array to specify potencial delimiters. e.g. [",","|",";"]
     quote: '"', //quote for a column containing delimiter.
     trim: true, //trim column's space charcters
     checkType: true, //whether check column type
@@ -121,6 +121,11 @@ Converter.prototype.initNoFork = function() {
   this._csvLineBuffer = "";
   // this.lineParser = new CSVLine(this.param);
   // this.lineParser.on("error", onError.bind(this));
+  if (this.param.delimiter instanceof Array || this.param.delimiter.toLowerCase()==="auto"){
+    this.param.needCheckDelimiter=true;
+  }else{
+    this.param.needCheckDelimiter=false;
+  }
   this.processor = new Processor(this.param);
   // this.processor.on("error", onError.bind(this));
   // var syncWorker = new Worker(this.param, true);

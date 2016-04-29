@@ -53,11 +53,7 @@ function init(param) {
   function processHeadRow(msg, cb) {
     // headRow = msg.row;
     var row = [];
-    if (param.headers) {
-      row = param.headers;
-    } else if (msg.row.length > 0) {
-      row = utils.rowSplit(msg.row, param.delimiter, param.quote, param.trim);
-    }
+    row = utils.rowSplit(msg.row, param);
     headRow = row;
     if (row.length > 0) {
       parseRules = parserMgr.initParsers(row, param);
@@ -98,7 +94,7 @@ function init(param) {
     var i, item, parser, head,
       data = msg.data,
       index = msg.index;
-    var row = utils.rowSplit(data, param.delimiter, param.quote, param.trim);
+    var row = utils.rowSplit(data, param);
     if (param.checkColumn && row.length != parseRules.length) {
       return cb("Error: column_mismatched. Data: " + data + ". Row index: " + index);
     }

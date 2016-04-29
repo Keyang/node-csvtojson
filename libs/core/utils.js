@@ -1,6 +1,3 @@
-/**
- */
-var CSV = require('csv-string');
 
 module.exports = {
   getDelimiter: getDelimiter, // Handle auto delimiter: return explicitely specified delimiter or try auto detect
@@ -9,17 +6,36 @@ module.exports = {
   twoDoubleQuote: twoDoubleQuote //converts two double quotes to one
 }
 var cachedRegExp = {};
-
-function getDelimiter(rowStr, originalDelimiter) {
-  if (originalDelimiter === "auto") {
-    var delimiter = CSV.detect(rowStr);
-    return delimiter === null ? "," : delimiter;
-  } else {
-    return originalDelimiter;
+var defaulDelimiters=[",","|","\t",";",":"];
+function getDelimiter(rowStr,param) {
+  var checker;
+  if (param.delimiter==="auto"){
+    checker=defaulDelimiters;
+  }else if (param.delimiter instanceof Array){
+    checker=param.delimiter;
+  }else{
+    return ",";
   }
+  var count=0;
+  var rtn=",";
+  checker.forEach(function(delim){
+    var delimCount=rowStr.split(delim).length;
+    if (delimCount>count){
+      rtn=delim;
+      count=delimCount;
+    }
+  });
+  return rtn;
 }
 
-function rowSplit(rowStr, delimiter, quote, trim) {
+function rowSplit(rowStr, param) {
+  var quote=param.quote;
+  var trim=param.trim;
+  if (param.needCheckDelimiter===true){
+      param.delimiter=getDelimiter(rowStr,param);
+      param.needCheckDelimiter=false;
+  }
+  var delimiter=param.delimiter;
   delimiter = getDelimiter(rowStr, delimiter);
   var rowArr = rowStr.split(delimiter);
   var row = [];
