@@ -1,14 +1,42 @@
-/**
- */
 
 module.exports = {
+  getDelimiter: getDelimiter, // Handle auto delimiter: return explicitely specified delimiter or try auto detect
   rowSplit: rowSplit, //Split a csv row to an array based on delimiter and quote
   isToogleQuote: isToogleQuote, //returns if a segmenthas even number of quotes
   twoDoubleQuote: twoDoubleQuote //converts two double quotes to one
 }
 var cachedRegExp = {};
+var defaulDelimiters=[",","|","\t",";",":"];
+function getDelimiter(rowStr,param) {
+  var checker;
+  if (param.delimiter==="auto"){
+    checker=defaulDelimiters;
+  }else if (param.delimiter instanceof Array){
+    checker=param.delimiter;
+  }else{
+    return ",";
+  }
+  var count=0;
+  var rtn=",";
+  checker.forEach(function(delim){
+    var delimCount=rowStr.split(delim).length;
+    if (delimCount>count){
+      rtn=delim;
+      count=delimCount;
+    }
+  });
+  return rtn;
+}
 
-function rowSplit(rowStr, delimiter, quote, trim) {
+function rowSplit(rowStr, param) {
+  var quote=param.quote;
+  var trim=param.trim;
+  if (param.needCheckDelimiter===true){
+      param.delimiter=getDelimiter(rowStr,param);
+      param.needCheckDelimiter=false;
+  }
+  var delimiter=param.delimiter;
+  delimiter = getDelimiter(rowStr, delimiter);
   var rowArr = rowStr.split(delimiter);
   var row = [];
   var inquote = false;

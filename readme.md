@@ -142,7 +142,7 @@ var converter=new require("csvtojson").Converter({
 Following parameters are supported:
 
 * **constructResult**: true/false. Whether to construct final json object in memory which will be populated in "end_parsed" event. Set to false if deal with huge csv data. default: true.
-* **delimiter**: delimiter used for seperating columns. default: ","
+* **delimiter**: delimiter used for seperating columns. Use "auto" if delimiter is unknown in advance, in this case, delimiter will be auto-detected (by best attempt). default: ","
 * **quote**: If a column contains delimiter, it is able to use quote character to surround the column content. e.g. "hello, world" wont be split into two columns while parsing. default: " (double quote)
 * **trim**: Indicate if parser trim off spaces surrounding column content. e.g. "  content  " will be trimmed to "content". Default: true
 * **checkType**: This parameter turns on and off weather check field type. default is true. See [Field type](#field-type)
