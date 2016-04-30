@@ -1,9 +1,10 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 if (window){
   window.csvtojson=require("./index.js");
+  window.csvtojson.version=require("./package.json").version;
 }
 
-},{"./index.js":2}],2:[function(require,module,exports){
+},{"./index.js":2,"./package.json":69}],2:[function(require,module,exports){
 module.exports = require("./libs/csv2json.js");
 },{"./libs/csv2json.js":18}],3:[function(require,module,exports){
 var util = require("util");
@@ -21,7 +22,7 @@ function Converter(params) {
   Transform.call(this); //TODO what does this do? -->This calls the constructor of Transform and initialise anything the Transform needs.(like var initialisation)
   var _param = {
     constructResult: true, //set to false to not construct result in memory. suitable for big csv data
-    delimiter: ',', // change the delimiter of csv columns
+    delimiter: ',', // change the delimiter of csv columns. It is able to use an array to specify potencial delimiters. e.g. [",","|",";"]
     quote: '"', //quote for a column containing delimiter.
     trim: true, //trim column's space charcters
     checkType: true, //whether check column type
@@ -129,6 +130,11 @@ Converter.prototype.initNoFork = function() {
   this._csvLineBuffer = "";
   // this.lineParser = new CSVLine(this.param);
   // this.lineParser.on("error", onError.bind(this));
+  if (this.param.delimiter instanceof Array || this.param.delimiter.toLowerCase()==="auto"){
+    this.param.needCheckDelimiter=true;
+  }else{
+    this.param.needCheckDelimiter=false;
+  }
   this.processor = new Processor(this.param);
   // this.processor.on("error", onError.bind(this));
   // var syncWorker = new Worker(this.param, true);
@@ -859,7 +865,7 @@ Parser.prototype.convertType = function(item) {
       return false;
     } else if (trimed.length === 4 && trimed.toLowerCase() === "true") {
       return true;
-    } else if (trimed[0] === "{" && trimed[trimed.length - 1] === "}") {
+    } else if (trimed[0] === "{" && trimed[trimed.length - 1] === "}" || trimed[0] === "[" && trimed[trimed.length - 1]==="]") {
       try {
         return JSON.parse(trimed);
       } catch (e) {
@@ -999,17 +1005,44 @@ module.exports.initParsers = initParsers;
 module.exports.getParser = getParser;
 
 },{"./defaultParsers":7,"./parser.js":14}],16:[function(require,module,exports){
-/**
- */
 
 module.exports = {
+  getDelimiter: getDelimiter, // Handle auto delimiter: return explicitely specified delimiter or try auto detect
   rowSplit: rowSplit, //Split a csv row to an array based on delimiter and quote
   isToogleQuote: isToogleQuote, //returns if a segmenthas even number of quotes
   twoDoubleQuote: twoDoubleQuote //converts two double quotes to one
 }
 var cachedRegExp = {};
+var defaulDelimiters=[",","|","\t",";",":"];
+function getDelimiter(rowStr,param) {
+  var checker;
+  if (param.delimiter==="auto"){
+    checker=defaulDelimiters;
+  }else if (param.delimiter instanceof Array){
+    checker=param.delimiter;
+  }else{
+    return param.delimiter;
+  }
+  var count=0;
+  var rtn=",";
+  checker.forEach(function(delim){
+    var delimCount=rowStr.split(delim).length;
+    if (delimCount>count){
+      rtn=delim;
+      count=delimCount;
+    }
+  });
+  return rtn;
+}
 
-function rowSplit(rowStr, delimiter, quote, trim) {
+function rowSplit(rowStr, param) {
+  var quote=param.quote;
+  var trim=param.trim;
+  if (param.needCheckDelimiter===true){
+      param.delimiter=getDelimiter(rowStr,param);
+      param.needCheckDelimiter=false;
+  }
+  var delimiter=param.delimiter;
   var rowArr = rowStr.split(delimiter);
   var row = [];
   var inquote = false;
@@ -1111,7 +1144,7 @@ function init(param) {
     parseRules = [];
     headRow = [];
     while (number > 0) {
-      var p = getConstParser(numbe,paramr,param);
+      var p = getConstParser(number,param);
       parseRules.unshift(p);
       headRow.unshift(p.getName());
       number--;
@@ -1125,7 +1158,7 @@ function init(param) {
     if (param.headers) {
       row = param.headers;
     } else if (msg.row.length > 0) {
-      row = utils.rowSplit(msg.row, param.delimiter, param.quote, param.trim);
+      row = utils.rowSplit(msg.row, param);
     }
     headRow = row;
     if (row.length > 0) {
@@ -1167,7 +1200,7 @@ function init(param) {
     var i, item, parser, head,
       data = msg.data,
       index = msg.index;
-    var row = utils.rowSplit(data, param.delimiter, param.quote, param.trim);
+    var row = utils.rowSplit(data, param);
     if (param.checkColumn && row.length != parseRules.length) {
       return cb("Error: column_mismatched. Data: " + data + ". Row index: " + index);
     }
@@ -10040,6 +10073,70 @@ function extend() {
     }
 
     return target
+}
+
+},{}],69:[function(require,module,exports){
+module.exports={
+  "name": "csvtojson",
+  "description": "A tool concentrating on converting csv data to JSON with customised parser supporting",
+  "author": "Keyang Xiang <keyang.xiang@gmail.com>",
+  "homepage": "http://keyangxiang.com/blog/csv2json/",
+  "bugs": "https://github.com/Keyang/node-csvtojson/issues",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Keyang/node-csvtojson.git"
+  },
+  "contributors": [
+    {
+      "name": "Keyang Xiang",
+      "email": "keyang.xiang@gmail.com"
+    },
+    {
+      "name": "Tom Dodson",
+      "email": "t3dodson@gmail.com"
+    }
+  ],
+  "version": "0.5.4",
+  "keywords": [
+    "csv",
+    "csvtojson",
+    "json",
+    "csv to json",
+    "csv convert",
+    "tojson",
+    "convert csv to json",
+    "csv-json"
+  ],
+  "bin": {
+    "csvtojson": "./bin/csvtojson"
+  },
+  "license": [
+    {
+      "type": "MIT",
+      "url": "https://github.com/Keyang/node-csvtojson/blob/master/LICENSE"
+    }
+  ],
+  "engines": {
+    "node": ">=0.10"
+  },
+  "devDependencies": {
+    "grunt": "^0.4.5",
+    "grunt-browserify": "^4.0.1",
+    "grunt-contrib-jshint": "^0.11.2",
+    "grunt-contrib-uglify": "^0.11.0",
+    "grunt-contrib-watch": "^0.6.1",
+    "grunt-git": "^0.3.5",
+    "grunt-madge": "0.0.6",
+    "grunt-mocha-test": "^0.12.7",
+    "grunt-newer": "^1.1.0",
+    "imgur": "^0.1.5",
+    "load-grunt-tasks": "^3.4.0",
+    "mocha": "^2.2.5"
+  },
+  "dependencies": {
+    "async": "^1.2.1",
+    "csv-string": "^2.3.0"
+  }
 }
 
 },{}]},{},[1]);

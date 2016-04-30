@@ -83,4 +83,5 @@ module.exports = function(grunt) {
   });
   grunt.registerTask('default', ['watch']);
   grunt.registerTask('test', ['mochaTest']);
+  grunt.registerTask("build:browser",["browserify:dist","uglify:client"]);
 };
