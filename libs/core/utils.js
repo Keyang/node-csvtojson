@@ -14,7 +14,7 @@ function getDelimiter(rowStr,param) {
   }else if (param.delimiter instanceof Array){
     checker=param.delimiter;
   }else{
-    return ",";
+    return param.delimiter;
   }
   var count=0;
   var rtn=",";
@@ -36,7 +36,6 @@ function rowSplit(rowStr, param) {
       param.needCheckDelimiter=false;
   }
   var delimiter=param.delimiter;
-  delimiter = getDelimiter(rowStr, delimiter);
   var rowArr = rowStr.split(delimiter);
   var row = [];
   var inquote = false;

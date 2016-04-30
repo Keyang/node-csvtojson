@@ -128,6 +128,18 @@ describe("CSV Converter", function() {
     });
     rs.pipe(conv);
   });
+  it ("should detect delimiter ",function(done){
+    var testData = __dirname + "/data/dataWithAutoDelimiter";
+    var rs = fs.createReadStream(testData);
+    var conv=new Converter({delimiter:"auto"});
+    conv.on("end_parsed",function(res){
+      assert.equal(res[0].col1,"Mini. Sectt:hisar S.O");
+      assert.equal(res[1].col1,"#Mini. Sectt");
+      done();
+    });
+    rs.pipe(conv);
+
+  })
   // it ("should convert big csv",function(done){
   //   // var rs=fs.createReadStream(__dirname+"/data/large-csv-sample.csv");
   //   var rs=fs.createReadStream("/Users/kxiang/tmp/csvdata");

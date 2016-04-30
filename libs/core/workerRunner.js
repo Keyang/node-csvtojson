@@ -53,7 +53,11 @@ function init(param) {
   function processHeadRow(msg, cb) {
     // headRow = msg.row;
     var row = [];
-    row = utils.rowSplit(msg.row, param);
+    if (param.headers) {
+      row = param.headers;
+    } else if (msg.row.length > 0) {
+      row = utils.rowSplit(msg.row, param);
+    }
     headRow = row;
     if (row.length > 0) {
       parseRules = parserMgr.initParsers(row, param);

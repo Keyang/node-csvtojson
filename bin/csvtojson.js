@@ -71,12 +71,16 @@ function csvtojson() {
       "options": {},
       "inputStream": process.stdin
     };
-    function parseObject(val){
+    function parseObject(val,optional){
       try {
         return JSON.parse(val);
       }catch(e){
-        console.error(e);
-        process.exit(1);
+        if (optional){
+          return val;
+        }else{
+          console.error(e);
+          process.exit(1);
+        }
       }
     }
     function parseBool(str, optName) {
@@ -108,7 +112,9 @@ function csvtojson() {
         } else if (type ==="number"){
           parsedCmd.options[key] = parseFloat(val);
         } else if (type ==="object"){
-          parsedCmd.options[key] = parseObject(val);
+          parsedCmd.options[key] = parseObject(val,false);
+        }else if (type === "~object"){
+          parsedCmd.options[key] = parseObject(val,true);
         } else {
           throw ({
             name: "UnimplementedException",

@@ -6,8 +6,8 @@
   },
   "options": {
     "--delimiter": {
-      "desc": "delimiter to separate columns. default comma (,). e.g. --delimiter=#",
-      "type": "string"
+      "desc": "delimiter to separate columns. Possible to give an array or just use 'auto'. default comma (,). e.g. --delimiter=# --delimiter='[\",\",\";\"]' --delimiter=auto",
+      "type": "~object"
     },
     "--quote": {
       "desc": "quote surrounding a column content containing delimiters. default double quote (\"). e.g. --quote=# ",
