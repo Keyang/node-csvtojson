@@ -18,7 +18,7 @@
       "email": "t3dodson@gmail.com"
     }
   ],
-  "version": "0.5.4",
+  "version": "0.5.5",
   "keywords": [
     "csv",
     "csvtojson",
@@ -56,7 +56,6 @@
     "mocha": "^2.2.5"
   },
   "dependencies": {
-    "async": "^1.2.1",
-    "csv-string": "^2.3.0"
+    "async": "^1.2.1"
   }
 }
