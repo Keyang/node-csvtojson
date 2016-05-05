@@ -1049,28 +1049,73 @@ function rowSplit(rowStr, param) {
   var quoteBuff = '';
   for (var i=0;i<rowArr.length;i++){
     var e=rowArr[i];
-    if (isToogleQuote(e, quote)) { //if current col has odd quotes, switch quote status
-      if (inquote) { //if currently in open quote status, close it and output data
-        quoteBuff += delimiter;
-        quoteBuff += twoDoubleQuote(e.substr(0, e.length - 1), quote);
-        row.push(trim ? quoteBuff.trim() : quoteBuff);
-        quoteBuff = '';
-      } else { // currently not in open quote status, open it
-        quoteBuff += twoDoubleQuote(e.substring(1), quote);
-      }
-      inquote = !inquote;
-    } else if (inquote) { // if current col has even quotes, do not switch quote status
-      //if current status is in quote, add to buffer wait to close
-      quoteBuff += delimiter + twoDoubleQuote(e, quote);
-    } else { // if current status is not in quote, out put data
-      if (e.indexOf(quote) === 0 && e[e.length - 1] === quote) { //if current col contain full quote segment,remove quote first
-        e = e.substring(1, e.length - 1);
-      }
-      if (trim) {
-        e = e.trim();
-      }
-      row.push(twoDoubleQuote(e, quote));
+    if (!inquote && trim){
+      e=e.trim();
     }
+    var len=e.length;
+    if (!inquote){
+      if (e[0] === quote){ //possible open
+          e=e.substr(1);
+          len-=1;
+          if (e[0]!==quote){ // open quote
+              if (e[len-1] === quote){ // possible close
+                  if (e[len-2]!==quote){ // close quote
+                    e=e.substring(0,len-1);
+                    e=twoDoubleQuote(e,quote);
+                    row.push(e);
+                    continue;
+                  }
+              }
+              inquote=true;
+              quoteBuff+=e;
+              continue;
+          }else{
+            row.push(e);
+            continue;
+          }
+      }else{
+          row.push(e);
+          continue;
+      }
+    }else{ //previous quote not closed
+      if (e[len-1] === quote && e[len-2] !==quote){ //close double quote
+        inquote=false;
+        e=e.substr(0,len-1);
+        quoteBuff+=delimiter+e;
+        quoteBuf=twoDoubleQuote(quoteBuff,quote);
+        if (trim){
+          quoteBuff=quoteBuff.trimRight();
+        }
+        row.push(quoteBuff);
+        quoteBuff="";
+      }else{
+        quoteBuff+=delimiter+e;
+      }
+    }
+
+
+    // if (isToogleQuote(e, quote)) { //if current col has odd quotes, switch quote status
+    //   if (inquote) { //if currently in open quote status, close it and output data
+    //     quoteBuff += delimiter;
+    //     quoteBuff += twoDoubleQuote(e.substr(0, e.length - 1), quote);
+    //     row.push(trim ? quoteBuff.trim() : quoteBuff);
+    //     quoteBuff = '';
+    //   } else { // currently not in open quote status, open it
+    //     quoteBuff += twoDoubleQuote(e.substring(1), quote);
+    //   }
+    //   inquote = !inquote;
+    // } else if (inquote) { // if current col has even quotes, do not switch quote status
+    //   //if current status is in quote, add to buffer wait to close
+    //   quoteBuff += delimiter + twoDoubleQuote(e, quote);
+    // } else { // if current status is not in quote, out put data
+    //   if (trim) {
+    //     e = e.trim();
+    //   }
+    //   if (e.indexOf(quote) === 0 && e[e.length - 1] === quote) { //if current col contain full quote segment,remove quote first
+    //     e = e.substring(1, e.length - 1);
+    //   }
+    //   row.push(twoDoubleQuote(e, quote));
+    // }
   }
   return row;
 }
@@ -10096,7 +10141,7 @@ module.exports={
       "email": "t3dodson@gmail.com"
     }
   ],
-  "version": "0.5.4",
+  "version": "0.5.6",
   "keywords": [
     "csv",
     "csvtojson",
@@ -10134,8 +10179,7 @@ module.exports={
     "mocha": "^2.2.5"
   },
   "dependencies": {
-    "async": "^1.2.1",
-    "csv-string": "^2.3.0"
+    "async": "^1.2.1"
   }
 }
 
