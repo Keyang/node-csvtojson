@@ -139,6 +139,19 @@ describe("CSV Converter", function() {
     });
     rs.pipe(conv);
 
+  });
+  it ("should stripe out whitespaces if trim is true",function(done){
+    var testData = __dirname + "/data/dataWithWhiteSpace";
+    var rs = fs.createReadStream(testData);
+    var conv=new Converter({trim:true});
+    conv.on("end_parsed",function(res){
+      // console.log(res);
+      assert.equal(res[0]["Column 1"],"Column1Row1");
+      assert.equal(res[0]["Column 2"],"Column2Row1");
+      done();
+    });
+    rs.pipe(conv);
+
   })
   // it ("should convert big csv",function(done){
   //   // var rs=fs.createReadStream(__dirname+"/data/large-csv-sample.csv");

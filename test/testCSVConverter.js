@@ -66,7 +66,7 @@ describe("CSV Converter", function () {
     });
     obj.on("end_parsed", function (result) {
       assert(result[0].col1 === "\"Mini. Sectt");
-      assert(result[3].col2 === "125001,fenvkdsf");
+      assert.equal(result[3].col2 , "125001,fenvkdsf");
       // console.log(result);
       done();
     });
@@ -136,8 +136,8 @@ describe("CSV Converter", function () {
     var csvConverter = new Converter();
     csvConverter.on("end_parsed", function () {});
     csvConverter.fromString(data, function (err, jsonObj) {
-      //console.log(jsonObj);
       assert(jsonObj[0].TIMESTAMP === '13954264"22', JSON.stringify(jsonObj[0].TIMESTAMP));
+
       assert(jsonObj[1].TIMESTAMP === 'abc, def, ccc', JSON.stringify(jsonObj[1].TIMESTAMP));
       done();
     });
