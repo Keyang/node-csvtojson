@@ -268,7 +268,7 @@ Converter.prototype._line = function(line) {
     this.emit("error", "row_exceed", this._csvLineBuffer);
   }
   if (!utils.isToogleQuote(this._csvLineBuffer, this.param.quote)) { //if a complete record is in buffer.push to result
-    data = this._csvLineBuffer;
+    var data = this._csvLineBuffer;
     this._csvLineBuffer = '';
     lines.push(data);
   } else { //if the record in buffer is not a complete record (quote does not close). wait next line
@@ -1070,6 +1070,9 @@ function rowSplit(rowStr, param) {
               quoteBuff+=e;
               continue;
           }else{
+            if (len ===1){ // original column is empty quote pairs like ""
+              e="";
+            }
             row.push(e);
             continue;
           }
@@ -10141,7 +10144,7 @@ module.exports={
       "email": "t3dodson@gmail.com"
     }
   ],
-  "version": "0.5.6",
+  "version": "0.5.8",
   "keywords": [
     "csv",
     "csvtojson",
@@ -10155,12 +10158,7 @@ module.exports={
   "bin": {
     "csvtojson": "./bin/csvtojson"
   },
-  "license": [
-    {
-      "type": "MIT",
-      "url": "https://github.com/Keyang/node-csvtojson/blob/master/LICENSE"
-    }
-  ],
+  "license": "MIT",
   "engines": {
     "node": ">=0.10"
   },
