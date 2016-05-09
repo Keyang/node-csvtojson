@@ -1059,7 +1059,7 @@ function rowSplit(rowStr, param) {
           len-=1;
           if (e[0]!==quote){ // open quote
               if (e[len-1] === quote){ // possible close
-                  if (e[len-2]!==quote){ // close quote
+                  if (e[len-2]!==quote || e[len-2]===quote && e[len-3] === quote){ // close quote
                     e=e.substring(0,len-1);
                     e=twoDoubleQuote(e,quote);
                     row.push(e);
@@ -1081,11 +1081,11 @@ function rowSplit(rowStr, param) {
           continue;
       }
     }else{ //previous quote not closed
-      if (e[len-1] === quote && e[len-2] !==quote){ //close double quote
+      if (e[len-1] === quote && (e[len-2] !==quote || e[len-2] === quote && e[len-3] === quote)){ //close double quote
         inquote=false;
         e=e.substr(0,len-1);
         quoteBuff+=delimiter+e;
-        quoteBuf=twoDoubleQuote(quoteBuff,quote);
+        quoteBuff=twoDoubleQuote(quoteBuff,quote);
         if (trim){
           quoteBuff=quoteBuff.trimRight();
         }
@@ -10144,7 +10144,7 @@ module.exports={
       "email": "t3dodson@gmail.com"
     }
   ],
-  "version": "0.5.8",
+  "version": "0.5.9",
   "keywords": [
     "csv",
     "csvtojson",
