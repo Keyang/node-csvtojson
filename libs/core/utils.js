@@ -63,6 +63,9 @@ function rowSplit(rowStr, param) {
               quoteBuff+=e;
               continue;
           }else{
+            if (len ===1){ // original column is empty quote pairs like ""
+              e="";
+            }
             row.push(e);
             continue;
           }
