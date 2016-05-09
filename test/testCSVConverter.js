@@ -335,4 +335,21 @@ describe("CSV Converter", function () {
       done();
     });
   })
+  it ("should handle when there is an empty string",function(done){
+    var testData = __dirname + "/data/dataWithEmptyString";
+    var rs = fs.createReadStream(testData);
+    var st = rs.pipe(new Converter({
+      noheader:true,
+      headers:["a","b", "c"]
+    }));
+    st.on("end_parsed",function (res){
+      var j = res[0];
+
+      assert(res.length===2);
+      assert(j.a==="green");
+      assert(j.b===40);
+      assert(j.c==="");
+      done();
+    });
+  })
 });
