@@ -259,7 +259,7 @@ Converter.prototype._line = function(line) {
     this.emit("error", "row_exceed", this._csvLineBuffer);
   }
   if (!utils.isToogleQuote(this._csvLineBuffer, this.param.quote)) { //if a complete record is in buffer.push to result
-    data = this._csvLineBuffer;
+    var data = this._csvLineBuffer;
     this._csvLineBuffer = '';
     lines.push(data);
   } else { //if the record in buffer is not a complete record (quote does not close). wait next line
