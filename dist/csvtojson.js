@@ -1034,7 +1034,20 @@ function getDelimiter(rowStr,param) {
   });
   return rtn;
 }
-
+function isQuoteOpen(str,param){
+  var quote=param.quote;
+  return str[0] === quote && (str[1]!==quote || str[1]===quote && (str[2] === quote || str.length ===2));
+}
+function isQuoteClose(str,param){
+  var quote=param.quote;
+  var count=0;
+  var idx=str.length-1;
+  while (str[idx] === quote){
+    idx--;
+    count++;
+  }
+  return count%2!==0;
+}
 function rowSplit(rowStr, param) {
   var quote=param.quote;
   var trim=param.trim;
@@ -1054,34 +1067,24 @@ function rowSplit(rowStr, param) {
     }
     var len=e.length;
     if (!inquote){
-      if (e[0] === quote){ //possible open
+      if (isQuoteOpen(e,param)){ //quote open
           e=e.substr(1);
-          len-=1;
-          if (e[0]!==quote){ // open quote
-              if (e[len-1] === quote){ // possible close
-                  if (e[len-2]!==quote || e[len-2]===quote && e[len-3] === quote){ // close quote
-                    e=e.substring(0,len-1);
-                    e=twoDoubleQuote(e,quote);
-                    row.push(e);
-                    continue;
-                  }
-              }
-              inquote=true;
-              quoteBuff+=e;
+          if (isQuoteClose(e,param)){ //quote close
+              e=e.substring(0,e.length-1);
+              e=twoDoubleQuote(e,quote);
+              row.push(e);
               continue;
           }else{
-            if (len ===1){ // original column is empty quote pairs like ""
-              e="";
-            }
-            row.push(e);
+            inquote=true;
+            quoteBuff+=e;
             continue;
           }
       }else{
-          row.push(e);
-          continue;
+        row.push(e);
+        continue;
       }
     }else{ //previous quote not closed
-      if (e[len-1] === quote && (e[len-2] !==quote || e[len-2] === quote && e[len-3] === quote)){ //close double quote
+      if (isQuoteClose(e,param)){ //close double quote
         inquote=false;
         e=e.substr(0,len-1);
         quoteBuff+=delimiter+e;
@@ -10144,7 +10147,7 @@ module.exports={
       "email": "t3dodson@gmail.com"
     }
   ],
-  "version": "0.5.9",
+  "version": "0.5.10",
   "keywords": [
     "csv",
     "csvtojson",
@@ -10174,10 +10177,13 @@ module.exports={
     "grunt-newer": "^1.1.0",
     "imgur": "^0.1.5",
     "load-grunt-tasks": "^3.4.0",
-    "mocha": "^2.2.5"
+    "mocha": "^2.4.5"
   },
   "dependencies": {
     "async": "^1.2.1"
+  },
+  "scripts":{
+    "test":"mocha ./test -R spec"
   }
 }
 
