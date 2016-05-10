@@ -48,9 +48,12 @@
     "grunt-newer": "^1.1.0",
     "imgur": "^0.1.5",
     "load-grunt-tasks": "^3.4.0",
-    "mocha": "^2.2.5"
+    "mocha": "^2.4.5"
   },
   "dependencies": {
     "async": "^1.2.1"
+  },
+  "scripts":{
+    "test":"mocha ./test -R spec"
   }
 }

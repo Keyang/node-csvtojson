@@ -158,7 +158,6 @@ describe("CSV Converter", function() {
     var rs = fs.createReadStream(testData);
     var conv=new Converter({trim:true});
     conv.on("end_parsed",function(res){
-      console.log(res);
       assert.equal(res[0].Description,"ac, abs, moon");
       assert.equal(res[1].Model,"Venture \"Extended Edition\"");
       assert.equal(res[2].Model,"Venture \"Extended Edition, Very Large\"");

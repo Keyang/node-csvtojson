@@ -149,7 +149,8 @@ describe("CSV Converter", function () {
     var csvConverter = new Converter();
     csvConverter.on("end_parsed", function () {});
     csvConverter.fromString(data, function (err, jsonObj) {
-      assert(jsonObj[0].data === "xyabcde", jsonObj);
+      assert.equal(jsonObj[0].title , "\"");
+      assert.equal(jsonObj[0].data , "xyabcde");
       assert(jsonObj[0].uuid === "fejal\"eifa", jsonObj);
       assert(jsonObj[0].fieldA === "bnej\"\"falkfe", jsonObj);
       done();
