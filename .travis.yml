@@ -1,4 +1,4 @@
-language: node-js
+language: node_js
 node_js:
   - "5"
   - "5.1"
