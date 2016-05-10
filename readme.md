@@ -1,3 +1,5 @@
+<img src="https://travis-ci.org/Keyang/node-csvtojson.svg?branch=master"/>
+
 # CSVTOJSON
 All you need nodejs csv to json converter.
 * Large CSV data
