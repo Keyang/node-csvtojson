@@ -1,5 +1,4 @@
-<img src="https://travis-ci.org/Keyang/node-csvtojson.svg?branch=master"/>
-
+[![Build Status](https://travis-ci.org/Keyang/node-csvtojson.svg?branch=master)](https://travis-ci.org/Keyang/node-csvtojson)
 # CSVTOJSON
 All you need nodejs csv to json converter.
 * Large CSV data
