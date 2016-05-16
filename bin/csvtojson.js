@@ -6,7 +6,7 @@ function csvtojson() {
   var cmds = options.commands;
   var opts = options.options;
   var exps = options.examples;
-  var pkg=require("../package.json");
+  var pkg = require("../package.json");
   /**
    *{
     "cmd": "parse", command to run
@@ -16,11 +16,12 @@ function csvtojson() {
    *
    */
   var parsedCmd;
+
   function _showHelp(errno) {
     var key;
     errno = typeof errno === "number" ? errno : 0;
     console.log("csvtojson: Convert csv to JSON format");
-    console.log("version:",pkg.version);
+    console.log("version:", pkg.version);
     console.log("Usage: csvtojson [<command>] [<options>] filepath\n");
     console.log("Commands: ");
     for (key in cmds) {
@@ -44,12 +45,28 @@ function csvtojson() {
   function parse() {
     var is = parsedCmd.inputStream;
     parsedCmd.options.constructResult = false;
-    parsedCmd.options.toArrayString = true;
+    if (parsedCmd.options.toArrayString === undefined) {
+      parsedCmd.options.toArrayString = true;
+    }
+    if (parsedCmd.options.maxRowLength === undefined) {
+      parsedCmd.options.maxRowLength = 10240;
+    }
     if (is === process.stdin && is.isTTY) {
       console.log("Please specify csv file path or pipe the csv data through.\n");
       _showHelp(1);
     }
-    is.pipe(new Converter(parsedCmd.options)).pipe(process.stdout);
+    var conv = new Converter(parsedCmd.options);
+    conv.on("error", function (err, pos) {
+      if (!parsedCmd.options.quiet) {
+        console.error("csvtojson got an error: ", err);
+        if (pos) {
+          console.error("The error happens at following line: ");
+          console.log(pos);
+        }
+      }
+      process.exit(1);
+    })
+    is.pipe(conv).pipe(process.stdout);
   }
 
   function run(cmd, options) {
@@ -57,9 +74,9 @@ function csvtojson() {
       parse();
     } else if (cmd === "startserver") {
       web.startWebServer(options);
-    } else if (cmd ==="version"){
+    } else if (cmd === "version") {
       console.log(pkg.version);
-    }else {
+    } else {
       console.log("unknown command %s.", cmd);
       _showHelp(1);
     }
@@ -71,18 +88,20 @@ function csvtojson() {
       "options": {},
       "inputStream": process.stdin
     };
-    function parseObject(val,optional){
+
+    function parseObject(val, optional) {
       try {
         return JSON.parse(val);
-      }catch(e){
-        if (optional){
+      } catch (e) {
+        if (optional) {
           return val;
-        }else{
+        } else {
           console.error(e);
           process.exit(1);
         }
       }
     }
+
     function parseBool(str, optName) {
       str = str.toLowerCase();
       if (str === "true" || str === "y") {
@@ -93,7 +112,7 @@ function csvtojson() {
       console.log("Unknown boolean value %s for parameter %s.", str, optName);
       _showHelp(1);
     }
-    process.argv.slice(2).forEach(function(item) {
+    process.argv.slice(2).forEach(function (item) {
       if (item.indexOf("--") > -1) {
         var itemArr = item.split("=");
         var optName = itemArr[0];
@@ -109,12 +128,12 @@ function csvtojson() {
           parsedCmd.options[key] = val.toString();
         } else if (type === "boolean") {
           parsedCmd.options[key] = parseBool(val, optName);
-        } else if (type ==="number"){
+        } else if (type === "number") {
           parsedCmd.options[key] = parseFloat(val);
-        } else if (type ==="object"){
-          parsedCmd.options[key] = parseObject(val,false);
-        }else if (type === "~object"){
-          parsedCmd.options[key] = parseObject(val,true);
+        } else if (type === "object") {
+          parsedCmd.options[key] = parseObject(val, false);
+        } else if (type === "~object") {
+          parsedCmd.options[key] = parseObject(val, true);
         } else {
           throw ({
             name: "UnimplementedException",

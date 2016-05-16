@@ -1,64 +1,72 @@
 {
-  "commands": {
-    "parse": "(Default)Parse a csv file to json",
-    "startserver": "(Deprecated)Start a web server",
-    "version": "Show version of current csvtojson"
-  },
-  "options": {
-    "--delimiter": {
-      "desc": "delimiter to separate columns. Possible to give an array or just use 'auto'. default comma (,). e.g. --delimiter=# --delimiter='[\",\",\";\"]' --delimiter=auto",
-      "type": "~object"
+    "commands": {
+        "parse": "(Default)Parse a csv file to json",
+        "startserver": "(Deprecated)Start a web server",
+        "version": "Show version of current csvtojson"
     },
-    "--quote": {
-      "desc": "quote surrounding a column content containing delimiters. default double quote (\"). e.g. --quote=# ",
-      "type": "string"
-    },
-    "--trim": {
-      "desc": "Indicate if parser trim off spaces surrounding column content. e.g. \" content \" will be trimmed to \"content\". Default: true",
-      "type": "boolean"
-    },
-    "--checkType": {
-      "desc": "This parameter turns on and off whether check field type. default is true.",
-      "type": "boolean"
+    "options": {
+        "--delimiter": {
+            "desc": "delimiter to separate columns. Possible to give an array or just use 'auto'. default comma (,). e.g. --delimiter=# --delimiter='[\",\",\";\"]' --delimiter=auto",
+            "type": "~object"
+        },
+        "--quote": {
+            "desc": "quote surrounding a column content containing delimiters. default double quote (\"). e.g. --quote=# ",
+            "type": "string"
+        },
+        "--trim": {
+            "desc": "Indicate if parser trim off spaces surrounding column content. e.g. \" content \" will be trimmed to \"content\". Default: true",
+            "type": "boolean"
+        },
+        "--checkType": {
+            "desc": "This parameter turns on and off whether check field type. default is true.",
+            "type": "boolean"
 
+        },
+        "--ignoreEmpty": {
+            "desc": "This parameter turns on and off whether ignore empty column values while parsing. default is false",
+            "type": "boolean"
+        },
+        "--workerNum": {
+            "desc": "Number of worker processes. The worker process will use multi-cores to help process CSV data. Set to number of Core to improve the performance of processing large csv file. Keep 1 for small csv files. Default 1.",
+            "type": "number"
+        },
+        "--noheader": {
+            "desc": "Indicating csv data has no header row and first row is data row. Default is false",
+            "type": "boolean"
+        },
+        "--headers": {
+            "desc": "An array to specify the headers of CSV data. If --noheader is false, this value will override CSV header. Default: null. Example: [\"my field\",\"name\"]",
+            "type": "object"
+        },
+        "--flatKeys": {
+            "desc": "Don't interpret dots (.) and square brackets in header fields as nested object or array identifiers at all (treat them like regular characters for JSON field identifiers). Default: false.",
+            "type": "boolean"
+        },
+        "--maxRowLength": {
+            "desc": "the max character a csv row could have. 0 means infinite. If max number exceeded, parser will emit \"error\" of \"row_exceed\". if a possibly corrupted csv data provided, give it a number like 65535 so the parser wont consume memory. default: 10240",
+            "type": "number"
+        },
+        "--checkColumn": {
+            "desc": "whether check column number of a row is the same as headers. If column number mismatched headers number, an error of \"mismatched_column\" will be emitted.. default: false",
+            "type": "boolean"
+        },
+        "--eol": {
+            "desc": "Explicitly specify the end of line character to use.",
+            "type": "string"
+        },
+        "--toArrayString": {
+            "desc": "Output result as JSON array. Default is true, set to false to output JSON objects (not array)",
+            "type": "boolean"
+        },
+        "--quiet": {
+            "desc": "If any error happens, quit the process quietly rather than log out the error. Default is false.",
+            "type": "boolean"
+        }
     },
-    "--ignoreEmpty": {
-      "desc": "This parameter turns on and off whether ignore empty column values while parsing. default is false",
-      "type": "boolean"
-    },
-    "--workerNum": {
-      "desc": "Number of worker processes. The worker process will use multi-cores to help process CSV data. Set to number of Core to improve the performance of processing large csv file. Keep 1 for small csv files. Default 1.",
-      "type": "number"
-    },
-    "--noheader": {
-      "desc": "Indicating csv data has no header row and first row is data row. Default is false",
-      "type": "boolean"
-    },
-    "--headers": {
-      "desc": "An array to specify the headers of CSV data. If --noheader is false, this value will override CSV header. Default: null. Example: [\"my field\",\"name\"]",
-      "type": "object"
-    },
-    "--flatKeys": {
-      "desc": "Don't interpret dots (.) and square brackets in header fields as nested object or array identifiers at all (treat them like regular characters for JSON field identifiers). Default: false.",
-      "type": "boolean"
-    },
-    "--maxRowLength": {
-      "desc": "the max character a csv row could have. 0 means infinite. If max number exceeded, parser will emit \"error\" of \"row_exceed\". if a possibly corrupted csv data provided, give it a number like 65535 so the parser wont consume memory. default: 0",
-      "type": "number"
-    },
-    "--checkColumn": {
-      "desc": "whether check column number of a row is the same as headers. If column number mismatched headers number, an error of \"mismatched_column\" will be emitted.. default: false",
-      "type": "boolean"
-    },
-    "--eol": {
-      "desc": "Explicitly specify the end of line character to use.",
-      "type": "string"
-    }
-  },
-  "examples": [
-    "csvtojson < csvfile",
-    "csvtojson <path to csvfile>",
-    "cat <csvfile> | csvtojson",
-    "csvtojson <csvfilepath> --checkType=false --trim=false --delimiter=#"
-  ]
+    "examples": [
+        "csvtojson < csvfile",
+        "csvtojson <path to csvfile>",
+        "cat <csvfile> | csvtojson",
+        "csvtojson <csvfilepath> --checkType=false --trim=false --delimiter=#"
+    ]
 }
