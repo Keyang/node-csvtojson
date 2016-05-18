@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/Keyang/node-csvtojson.svg?branch=master)](https://travis-ci.org/Keyang/node-csvtojson)
+
 # CSVTOJSON
 All you need nodejs csv to json converter.
 * Large CSV data
@@ -144,7 +145,7 @@ Following parameters are supported:
 
 * **constructResult**: true/false. Whether to construct final json object in memory which will be populated in "end_parsed" event. Set to false if deal with huge csv data. default: true.
 * **delimiter**: delimiter used for seperating columns. Use "auto" if delimiter is unknown in advance, in this case, delimiter will be auto-detected (by best attempt). Use an array to give a list of potential delimiters e.g. [",","|","$"]. default: ","
-* **quote**: If a column contains delimiter, it is able to use quote character to surround the column content. e.g. "hello, world" wont be split into two columns while parsing. default: " (double quote)
+* **quote**: If a column contains delimiter, it is able to use quote character to surround the column content. e.g. "hello, world" wont be split into two columns while parsing. Set to "off" will ignore all quotes. default: " (double quote)
 * **trim**: Indicate if parser trim off spaces surrounding column content. e.g. "  content  " will be trimmed to "content". Default: true
 * **checkType**: This parameter turns on and off weather check field type. default is true. See [Field type](#field-type)
 * **toArrayString**: Stringify the stream output to JSON array. This is useful when pipe output to a file which expects stringified JSON array. default is false and only stringified JSON (without []) will be pushed to downstream.
@@ -723,6 +724,10 @@ The parameter of Parse function is a JSON object. It contains following fields:
 
 
 #Change Log
+
+## 0.5.12
+* Added support for scientific notation number support (#100)
+* Added "off" option to quote parameter 
 
 ## 0.5.4
 * Added new feature: accept special delimiter "auto" and array

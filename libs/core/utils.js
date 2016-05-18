@@ -50,6 +50,9 @@ function rowSplit(rowStr, param) {
   }
   var delimiter=param.delimiter;
   var rowArr = rowStr.split(delimiter);
+  if (quote ==="off"){
+    return rowArr;
+  }
   var row = [];
   var inquote = false;
   var quoteBuff = '';
