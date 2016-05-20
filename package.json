@@ -51,9 +51,10 @@
     "mocha": "^2.4.5"
   },
   "dependencies": {
-    "async": "^1.2.1"
+    "async": "^1.2.1",
+    "minimist": "^1.2.0"
   },
-  "scripts":{
-    "test":"mocha ./test -R spec"
+  "scripts": {
+    "test": "mocha ./test -R spec"
   }
 }

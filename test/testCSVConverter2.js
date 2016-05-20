@@ -166,6 +166,17 @@ describe("CSV Converter", function() {
     rs.pipe(conv);
 
   });
+  it ("should auto flat header if header is not valid nested json keys",function(done){
+    var testData = __dirname + "/data/invalidHeader";
+    var rs = fs.createReadStream(testData);
+    var conv=new Converter();
+    conv.on("end_parsed",function(res){
+      assert.equal(res[0]["header1.filed1"],"q7");
+      assert.equal(res[0]["header2.field1[]"],"undefinedzvTY3Qd3pSkKOk");
+      done();
+    });
+    rs.pipe(conv);
+  })
   // it ("should convert big csv",function(done){
   //   // var rs=fs.createReadStream(__dirname+"/data/large-csv-sample.csv");
   //   var rs=fs.createReadStream("/Users/kxiang/tmp/csvdata");

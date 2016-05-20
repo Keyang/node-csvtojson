@@ -38,21 +38,33 @@ module.exports = {
     var headArr = (params.config && params.config.flatKeys) ? [fieldStr] : fieldStr.split('.');
     var match, index, key, pointer;
     //now the pointer is pointing the position to add a key/value pair.
-    pointer = processHead(params.resultRow, headArr, arrReg, params.config && params.config.flatKeys);
+    var pointer = processHead(params.resultRow, headArr, arrReg, params.config && params.config.flatKeys);
     key = headArr.shift();
     match = (params.config && params.config.flatKeys) ? false : key.match(arrReg);
     if (match) { // the last element is an array, we need check and treat it as an array.
-      key = key.replace(match[0], '');
-      if (!pointer[key] || !(pointer[key] instanceof Array)) {
-        pointer[key] = [];
+      try {
+        key = key.replace(match[0], '');
+        if (!pointer[key] || !(pointer[key] instanceof Array)) {
+          pointer[key] = [];
+        }
+        if (pointer[key]) {
+          index = match[1];
+          if (index === '') {
+            index = pointer[key].length;
+          }
+          pointer[key][index] = params.item;
+        } else {
+          params.resultRow[fieldStr] = params.item;
+        }
+      } catch (e) {
+        params.resultRow[fieldStr] = params.item;
       }
-      index = match[1];
-      if (index === '') {
-        index = pointer[key].length;
-      }
-      pointer[key][index] = params.item;
     } else {
-      pointer[key] =  params.item;
+      if (typeof pointer=== "string"){
+        params.resultRow[fieldStr] = params.item;
+      }else{
+        pointer[key] = params.item;
+      }
     }
   }
 };
