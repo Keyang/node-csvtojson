@@ -27,6 +27,7 @@ All you need nodejs csv to json converter.
   * [Synchronouse Transformer](#synchronouse-transformer)
   * [Asynchronouse Transformer](#asynchronouse-transformer)
   * [Convert to other data type](#convert-to-other-data-type)
+* [Hooks](#hooks)
 * [Events](#events)
 * [Flags](#flags)
 * [Big CSV File Streaming](#big-csv-file)
@@ -300,6 +301,43 @@ It will be converted to:
 }
 ```
 
+# Hooks
+## preProcessRaw
+This hook is called when parser received any data from upper stream and allow developers to change it. e.g.
+```js
+/*
+CSV data:
+a,b,c,d,e
+12,e3,fb,w2,dd
+*/
+
+var conv=new Converter();
+conv.preProcessRaw=function(data,cb){
+    //change all 12 to 23
+    cb(data.replace("12","23"));
+}
+conv.fromString(csv,function(err,json){
+  //json:{a:23 ....}
+})
+```
+By default, the preProcessRaw just returns the data from the source
+```js
+Converter.prototype.preProcessRaw=function(data,cb){
+  cb(data);
+}
+```
+It is also very good to sanitise/prepare the CSV data stream.
+```js
+var headWhiteSpaceRemoved=false;
+conv.preProcessRaw=function(data,cb){
+    if (!headWhiteSpaceRemoved){
+      data=data.replace(/^\s+/,"");
+      cb(data);
+    }else{
+      cb(data);
+    }
+}
+```
 
 # Events
 
@@ -727,7 +765,7 @@ The parameter of Parse function is a JSON object. It contains following fields:
 
 ## 0.5.12
 * Added support for scientific notation number support (#100)
-* Added "off" option to quote parameter 
+* Added "off" option to quote parameter
 
 ## 0.5.4
 * Added new feature: accept special delimiter "auto" and array

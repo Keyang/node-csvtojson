@@ -10,9 +10,7 @@ var utils = require("./utils.js");
 var async = require("async");
 
 function Converter(params) {
-  Transform.call(this,{
-    highWaterMark:1024
-  }); //TODO what does this do? -->This calls the constructor of Transform and initialise anything the Transform needs.(like var initialisation)
+  Transform.call(this);
   var _param = {
     constructResult: true, //set to false to not construct result in memory. suitable for big csv data
     delimiter: ',', // change the delimiter of csv columns. It is able to use an array to specify potencial delimiters. e.g. [",","|",";"]
@@ -190,16 +188,25 @@ Converter.prototype.flushBuffer = function() {
   }
   this.checkAndFlush();
 }
-var size = 0;
+Converter.prototype.preProcessRaw=function(data,cb){
+  cb(data);
+}
 
 Converter.prototype._transformNoFork = function(data, encoding, cb) {
-  size += data.length;
   if (this.param.toArrayString && this.started === false) {
     this.started = true;
     this.push("[" + eol, "utf8");
   }
-  var lines = this.toCSVLines(this.toLines(data, encoding)); //lines of csv
-  this.processCSVLines(lines, cb);
+  data=data.toString("utf8");
+  var self=this;
+  this.preProcessRaw(data,function(d){
+    if (d && d.length>0){
+      var lines = self.toCSVLines(self.toLines(d)); //lines of csv
+      self.processCSVLines(lines, cb);
+    }else{
+      cb();
+    }
+  })
   // async.eachLimit(lines,1,function(line,scb){
   //   this.push(line.data);
   //   scb();
@@ -232,18 +239,17 @@ Converter.prototype.processCSVLines = function(csvLines, cb) {
     }
   }.bind(this), cb);
 }
-Converter.prototype.toLines = function(data, encoding) {
-  if (encoding === "buffer") {
-    encoding = "utf8";
-  }
-  data = this._lineBuffer + data.toString(encoding);
+Converter.prototype.toLines = function(data) {
+  data = this._lineBuffer + data;
   var eol = this.getEol(data);
   return data.split(eol);
 }
+var lineNumber=0;
 Converter.prototype.toCSVLines = function(fileLines, last) {
   var recordLine = "";
   var lines = [];
   while (fileLines.length > 1) {
+    lineNumber++;
     var line = fileLines.shift();
     lines = lines.concat(this._line(line));
   }

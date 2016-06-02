@@ -32,7 +32,7 @@ function Processor(params) {
   this.runningWorker = 0;
   this.flushCb = null;
   if (this.param.workerNum > 1) {
-    for (var i = 0; i < this.param.workerNum; i++) {
+    for (var i = 0; i < this.param.workerNum-1; i++) {
       var worker = new Worker(this.param, false);
       // worker.on("error",onError);
       this.addWorker(worker);
