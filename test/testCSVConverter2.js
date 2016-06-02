@@ -177,13 +177,29 @@ describe("CSV Converter", function() {
     });
     rs.pipe(conv);
   })
-  it ("should pre process data in the line",function(done){
+  it ("should pre process raw data in the line",function(done){
     var testData = __dirname + "/data/quoteTolerant";
     var rs = fs.createReadStream(testData);
     var conv=new Converter();
     conv.preProcessRaw=function(d,cb){
       d=d.replace('32"','32""');
       cb(d);
+    }
+    conv.on("end_parsed",function(res){
+      assert(res[0].Description.indexOf('32"')>-1);
+      done();
+    });
+    rs.pipe(conv);
+  })
+  it ("should pre process by line in the line",function(done){
+    var testData = __dirname + "/data/quoteTolerant";
+    var rs = fs.createReadStream(testData);
+    var conv=new Converter();
+    conv.preProcessLine=function(line,lineNumber){
+      if (lineNumber === 2){
+        line=line.replace('32"','32""');
+      }
+      return line;
     }
     conv.on("end_parsed",function(res){
       assert(res[0].Description.indexOf('32"')>-1);

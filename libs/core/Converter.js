@@ -42,6 +42,7 @@ function Converter(params) {
   this.pipe(this.resultObject); // it is important to have downstream for a transform otherwise it will stuck
   this.started = false;
   this.recordNum = 0;
+  this.lineNumber=0;
   this.runningProcess = 0;
   //this._pipe(this.lineParser).pipe(this.processor);
   if (this.param.fork) {
@@ -244,14 +245,18 @@ Converter.prototype.toLines = function(data) {
   var eol = this.getEol(data);
   return data.split(eol);
 }
-var lineNumber=0;
+Converter.prototype.preProcessLine=function(line,lineNumber){
+    return line;
+}
 Converter.prototype.toCSVLines = function(fileLines, last) {
   var recordLine = "";
   var lines = [];
   while (fileLines.length > 1) {
-    lineNumber++;
-    var line = fileLines.shift();
-    lines = lines.concat(this._line(line));
+    this.lineNumber++;
+    var line = this.preProcessLine(fileLines.shift(),this.lineNumber);
+    if (line && line.length>0){
+      lines = lines.concat(this._line(line));
+    }
   }
   this._lineBuffer = fileLines[0];
   if (last && this._csvLineBuffer.length > 0) {

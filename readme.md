@@ -338,6 +338,29 @@ conv.preProcessRaw=function(data,cb){
     }
 }
 ```
+## preProcessLine
+this hook is called when a file line is emitted. It is called with two parameters `fileLineData,lineNumber`. The `lineNumber` is starting from 1.
+```js
+/*
+CSV data:
+a,b,c,d,e
+12,e3,fb,w2,dd
+*/
+
+var conv=new Converter();
+conv.preProcessLine=function(line,lineNumber){
+    //only change 12 to 23 for line 2
+    if (lineNumber === 2){
+      line=line.replace("12","23");
+    }
+    return line;
+}
+conv.fromString(csv,function(err,json){
+  //json:{a:23 ....}
+})
+```
+Notice that preProcessLine does not support async changes not like preProcessRaw hook.
+
 
 # Events
 
