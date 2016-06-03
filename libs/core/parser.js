@@ -16,7 +16,7 @@ function Parser(name, regExp, parser, processSafe) {
     this.parse = parser;
   }
 }
-var numReg = /^([-+]?[1-9][0-9]*\.?)|^([-+]?0\.)[0-9]+([eE][-+]?[0-9]+)?$/;
+var numReg = /^(([-+]?[1-9][0-9]*\.?)|([-+]?0\.))[0-9]+([eE][-+]?[0-9]+)?$/;
 Parser.prototype.convertType = function(item) {
   var type=this.type;
   if (type === 'number') {
