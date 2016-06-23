@@ -9,8 +9,8 @@ var Worker = require("./Worker.js");
 var utils = require("./utils.js");
 var async = require("async");
 
-function Converter(params) {
-  Transform.call(this);
+function Converter(params,options) {
+  Transform.call(this,options);
   var _param = {
     constructResult: true, //set to false to not construct result in memory. suitable for big csv data
     delimiter: ',', // change the delimiter of csv columns. It is able to use an array to specify potencial delimiters. e.g. [",","|",";"]
@@ -37,7 +37,9 @@ function Converter(params) {
     console.warn("Parameter should be a JSON object like {'constructResult':false}");
     _param.constructResult = params;
   }
+  this._options=options || {};
   this.param = _param;
+  this.param._options=this._options;
   this.resultObject = new Result(this);
   this.pipe(this.resultObject); // it is important to have downstream for a transform otherwise it will stuck
   this.started = false;
@@ -184,7 +186,11 @@ Converter.prototype.flushBuffer = function() {
     if (this.param.toArrayString && this.recordNum > 0) {
       this.push("," + eol);
     }
-    this.push(resultJSONStr, "utf8");
+    if (this._options && this._options.objectMode){
+      this.push(resultRow);
+    }else{
+      this.push(resultJSONStr, "utf8");
+    }
     this.recordNum++;
   }
   this.checkAndFlush();

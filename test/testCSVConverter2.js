@@ -207,6 +207,22 @@ describe("CSV Converter", function() {
     });
     rs.pipe(conv);
   })
+  it ("should support object mode",function(done){
+    var testData = __dirname + "/data/complexJSONCSV";
+    var rs = fs.createReadStream(testData);
+    var conv=new Converter({},{
+      objectMode:true
+    });
+    conv.on("data",function(d){
+      assert(typeof d  === "object");
+    });
+    conv.on("end_parsed",function(res){
+      assert(res);
+      assert(res.length>0);
+      done();
+    })
+    rs.pipe(conv);
+  })
   // it ("should convert big csv",function(done){
   //   // var rs=fs.createReadStream(__dirname+"/data/large-csv-sample.csv");
   //   var rs=fs.createReadStream("/Users/kxiang/tmp/csvdata");

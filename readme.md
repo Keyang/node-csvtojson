@@ -39,6 +39,7 @@ All you need nodejs csv to json converter.
 * [Header Configuration](#header-configuration)
 * [Error Handling](#error-handling)
 * [Customised Parser](#parser)
+* [Stream Options](#stream-options)
 * [Change Log](#change-log)
 
 GitHub: https://github.com/Keyang/node-csvtojson
@@ -781,10 +782,25 @@ The parameter of Parse function is a JSON object. It contains following fields:
    ]
 }
 ```
+#Stream Options
+Since version 1.0.0, the Converter constructor takes stream options as second parameter.
 
+```js
+const conv=new Converter(params,{
+  objectMode:true, // stream down JSON object instead of JSON array
+  highWaterMark:65535 //Buffer level
+})
+
+```
+
+See more detailed information [here](https://nodejs.org/api/stream.html#stream_class_stream_transform).
 
 
 #Change Log
+
+## 1.0.0
+* Add [Stream Options](#stream-options)
+* Change version syntax to follow x.y.z
 
 ## 0.5.12
 * Added support for scientific notation number support (#100)
@@ -886,3 +902,4 @@ csvConverter.fromString(csvString, callback);
 The callback function above is optional. see [Parse String](#parse-string).
 
 After version 0.3, csvtojson requires node 0.10 and above.
+
