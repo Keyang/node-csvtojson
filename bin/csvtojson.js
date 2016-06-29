@@ -55,6 +55,9 @@ function csvtojson() {
       console.log("Please specify csv file path or pipe the csv data through.\n");
       _showHelp(1);
     }
+    if (parsedCmd.options.delimiter === "\\t" ){
+      parsedCmd.options.delimiter="\t";
+    }
     var conv = new Converter(parsedCmd.options);
     conv.on("error", function (err, pos) {
       if (!parsedCmd.options.quiet) {

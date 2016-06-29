@@ -4,7 +4,7 @@ var argv=process.argv;
 argv.shift();
 argv.shift();
 var args=minimist(argv);
-var headers=["name","header1.filed1","header1.file2","description","header2.field1[]","header2.field1[]","header2.filed2"];
+var headers=["name","header1","file2","description","header2","field2","header3"];
 
 if (args.headers){
   headers=JSON.parse(args.headers);
