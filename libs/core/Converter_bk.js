@@ -4,34 +4,54 @@ var Readable = require("stream").Readable;
 var Result = require("./Result");
 var os = require("os");
 var eol = os.EOL;
-// var Processor = require("./Processor.js");
+var Processor = require("./Processor.js");
+var Worker = require("./Worker.js");
 var utils = require("./utils.js");
 var async = require("async");
-var defParam=require("./defParam");
-var csvline=require("./csvline");
-var fileline=require("./fileline");
-var dataToCSVLine=require("./dataToCSVLine");
-var linesToJson=require("./linesToJson");
+
 function Converter(params,options) {
   Transform.call(this,options);
-  _param=defParam(params);
+  var _param = {
+    constructResult: true, //set to false to not construct result in memory. suitable for big csv data
+    delimiter: ',', // change the delimiter of csv columns. It is able to use an array to specify potencial delimiters. e.g. [",","|",";"]
+    quote: '"', //quote for a column containing delimiter.
+    trim: true, //trim column's space charcters
+    checkType: true, //whether check column type
+    toArrayString: false, //stream down stringified json array instead of string of json. (useful if downstream is file writer etc)
+    ignoreEmpty: false, //Ignore empty value while parsing. if a value of the column is empty, it will be skipped parsing.
+    workerNum: 1, //number of parallel workers. If multi-core CPU available, increase the number will get better performance for large csv data.
+    fork: false, //use another CPU core to convert the csv stream
+    noheader: false, //indicate if first line of CSV file is header or not.
+    headers: null, //an array of header strings. If noheader is false and headers is array, csv header will be ignored.
+    flatKeys: false, // Don't interpret dots and square brackets in header fields as nested object or array identifiers at all.
+    maxRowLength: 0, //the max character a csv row could have. 0 means infinite. If max number exceeded, parser will emit "error" of "row_exceed". if a possibly corrupted csv data provided, give it a number like 65535 so the parser wont consume memory. default: 0
+    checkColumn: false //whether check column number of a row is the same as headers. If column number mismatched headers number, an error of "mismatched_column" will be emitted.. default: false
+  };
+  if (params && typeof params === "object") {
+    for (var key in params) {
+      if (params.hasOwnProperty(key)) {
+        _param[key] = params[key];
+      }
+    }
+  } else if (typeof params === "boolean") { //backcompatible with older version
+    console.warn("Parameter should be a JSON object like {'constructResult':false}");
+    _param.constructResult = params;
+  }
   this._options=options || {};
   this.param = _param;
   this.param._options=this._options;
   this.resultObject = new Result(this);
   this.pipe(this.resultObject); // it is important to have downstream for a transform otherwise it will stuck
-  this.started = false;//indicate if parsing has started.
+  this.started = false;
   this.recordNum = 0;
   this.lineNumber=0;
   this.runningProcess = 0;
-  this._csvLineBuffer="";
-  this.lastIndex=0;
   //this._pipe(this.lineParser).pipe(this.processor);
   if (this.param.fork) {
     this.param.fork=false;
     this.param.workerNum=2;
   }
-  // this.initNoFork();
+  this.initNoFork();
   this.flushCb = null;
   this.processEnd = false;
   this.sequenceBuffer = [];
@@ -43,121 +63,56 @@ function Converter(params,options) {
   return this;
 }
 util.inherits(Converter, Transform);
-Converter.prototype._transform = function(data, encoding, cb) {
-  if (this.param.toArrayString && this.started === false) {
-    this.started = true;
-    this.push("[" + eol, "utf8");
-  }
-  data=data.toString("utf8");
-  var self=this;
-  this.preProcessRaw(data,function(d){
-    if (d && d.length>0){
-      self.processData(self.prepareData(d), cb);
-    }else{
-      cb();
-    }
-  })
-};
-Converter.prototype.prepareData=function(data){
-  return this._csvLineBuffer+data;
-}
-Converter.prototype.setPartialData=function(d){
-  this._csvLineBuffer=d;
-}
-Converter.prototype.processData=function(data,cb){
-  var params=this.param;
-  if (!params._headers){ //header is not inited. init header
-    this.processHead(data,cb);
-  }else{
-    if (params.workerNum===1){
-      var lines=dataToCSVLine(data,params);
-      this.setPartialData(lines.partial);
-      var res=linesToJson(lines.lines,params,this.recordNum);
-      this.processResult(res,cb);
-    }else{
-      this.workerProcess(data,cb);
-    }
-  }
-}
-Converter.prototype.initWorker=function(){
-  var workerNum=this.param.workerNum-1;
-  if (workerNum.length>0){
-    workerMgr.initWorker(workerNum,this.param);
-  }
-}
-Converter.prototype.workerProcess=function(data,cb){
-  var self=this;
-  workerMgr.sendWorker(data,this.lastIndex,function(length,partial){
-        self.setPartialData(partial);
-        self.lastIndex+=length;
-        cb();
-    },function(results){
-      self.processResult(results,function(){},true);
-    })
-}
-Converter.prototype.processHead=function(data,cb){
-  var params=this.param;
-  if (!params._headers){ //header is not inited. init header
-    var lines=dataToCSVLine(data,params);
-    this.setPartialData(lines.partial);
-    if (params.noheader){
-      if (params.headers){
-        params._headers=params.headers;
-      }else{
-        params._headers=[];
-      }
-    }else{
-      var headerRow=lines.lines.shift();
-      if (params.headers){
-        params._headers=params.headers;
-      }else{
-        params._headers=headerRow;
-      }
-    }
-    var res=linesToJson(lines.lines,params,0);
-    this.processResult(res,cb);
-  }else{
-    cb();
-  }
-}
-Converter.prototype.processResult=function(result,cb,isAsync){
-    for (var i=0;i<result.length;i++){
-      var r=result[i];
-      if (r.err){
-        this.emit("error",r.err);
-      }else{
-        if (isAsync){
-          this.sequenceBuffer[r.index]=r;
-        }else{
-          this.emitResult(r);
-        }
-      }
-    }
-    if (isAsync){
-      this.flushBuffer(cb);
-    }else{
-      this.lastIndex+=result.length;
-      cb();
-    }
-}
-Converter.prototype.emitResult=function(r){
-  var index=r.index;
-  var row=r.row;
-  var resultRow=r.json;
-  if (this.transform && typeof this.transform==="function"){
-    this.transform(resultRow,row,index);
-  }
-  this.emit("record_parsed", resultRow, row, index);
-  if (this.param.toArrayString && index > 0) {
-    this.push("," + eol);
-  }
-  if (this._options && this._options.objectMode){
-    this.push(resultRow);
-  }else{
-    this.push(JSON.stringify(resultRow), "utf8");
-  }
-  this.recordNum=index+1;
-}
+// Converter.prototype.initFork = function() {
+//   var env = process.env;
+//   env.params = JSON.stringify(this.param);
+//   this.child = require("child_process").fork(__dirname + "/fork.js", {
+//     env: env,
+//     silent: true
+//   });
+//   this.child.stderr.on("data", function(d, e) {
+//     process.stderr.write(d, e);
+//     // this.push(d, e);
+//     // this.emit("record_parsed");
+//   }.bind(this));
+//   // this.child.stdout.on("data",function(d){
+//   //   this.push(d.toString("utf8"));
+//   // }.bind(this));
+//   this.child.on("message", function(msg) {
+//     if (msg.action === "record_parsed") {
+//       //var recs = msg.arguments;
+//       var args = msg.arguments;
+//       //console.log(recs);
+//       //var recs=args[0];
+//       //for (var i=0;i<recs.length;i++){
+//       //this.emit("record_parsed", recs[i][0], recs[i][1], recs[i][2]);
+//       //}
+//       this.emit("record_parsed", args[0], args[1], args[2]);
+//     } else if (msg.action === "data") {
+//       var args = msg.arguments;
+//       this.push(new Buffer(args[0]), args[1]);
+//     } else if (msg.action === "error") {
+//       var args = msg.arguments;
+//       args.unshift("error");
+//       this.hasError = true;
+//       this.emit.apply(this, args);
+//     }
+//   }.bind(this));
+//   this._transform = this._transformFork;
+//   this._flush = this._flushFork;
+//   //child.on("message",function(msg){
+//   //var syncLock=false;
+//   //if (msg.action=="record_parsed"){
+//   //this.sequenceBuffer[msg.index]=msg;
+//   //if
+//   //}
+//   //}.bind(this));
+//   //child.on("exit",function(code){
+//   //this.processEnd=true;
+//   //this.flushBuffer();
+//   //this.checkAndFlush();
+//   //}.bind(this));
+// }
 Converter.prototype.initNoFork = function() {
   // function onError() {
   //   var args = Array.prototype.slice.call(arguments, 0);
@@ -215,19 +170,59 @@ Converter.prototype.initNoFork = function() {
   this._transform = this._transformNoFork;
   this._flush = this._flushNoFork;
 }
-Converter.prototype.flushBuffer = function(cb) {
+Converter.prototype.flushBuffer = function() {
   while (this.sequenceBuffer[this.recordNum]) {
-    var r=this.sequenceBuffer[this.recordNum];
-    this.sequenceBuffer[this.recordNum] = undefined;
-    this.emitResult(r);
+    var index = this.recordNum;
+    var obj = this.sequenceBuffer[index];
+    this.sequenceBuffer[index] = undefined;
+    var resultJSONStr = obj.resultJSONStr;
+    var resultRow = JSON.parse(resultJSONStr)
+    var row = obj.row;
+    if (this.transform && typeof this.transform==="function"){
+      this.transform(resultRow,row,index);
+      resultJSONStr=JSON.stringify(resultRow);
+    }
+    this.emit("record_parsed", resultRow, row, index);
+    if (this.param.toArrayString && this.recordNum > 0) {
+      this.push("," + eol);
+    }
+    if (this._options && this._options.objectMode){
+      this.push(resultRow);
+    }else{
+      this.push(resultJSONStr, "utf8");
+    }
+    this.recordNum++;
   }
   this.checkAndFlush();
-  cb();
 }
 Converter.prototype.preProcessRaw=function(data,cb){
   cb(data);
 }
 
+Converter.prototype._transformNoFork = function(data, encoding, cb) {
+  if (this.param.toArrayString && this.started === false) {
+    this.started = true;
+    this.push("[" + eol, "utf8");
+  }
+  data=data.toString("utf8");
+  var self=this;
+  this.preProcessRaw(data,function(d){
+    if (d && d.length>0){
+      var lines = self.toCSVLines(self.toLines(d)); //lines of csv
+      self.processCSVLines(lines, cb);
+    }else{
+      cb();
+    }
+  })
+  // async.eachLimit(lines,1,function(line,scb){
+  //   this.push(line.data);
+  //   scb();
+  // }.bind(this),function(err){
+  //   cb();
+  // });
+  //this.push(data,encoding);
+  // cb();
+};
 Converter.prototype.processCSVLines = function(csvLines, cb) {
   // for (var i=0;i<csvLines.length;i++){
   //   this.push(csvLines[i].data);
@@ -275,11 +270,28 @@ Converter.prototype.toCSVLines = function(fileLines, last) {
   }
   return lines;
 }
-Converter.prototype._flush = function(cb) {
+Converter.prototype._line = function(line) {
+  var lines = [];
+  this._csvLineBuffer += line;
+  if (this.param.maxRowLength && this._csvLineBuffer.length > this.param.maxRowLength) {
+    this.hasError = true;
+    this.emit("error", "row_exceed", this._csvLineBuffer);
+  }
+  if (!utils.isToogleQuote(this._csvLineBuffer, this.param.quote)) { //if a complete record is in buffer.push to result
+    var data = this._csvLineBuffer;
+    this._csvLineBuffer = '';
+    lines.push(data);
+  } else { //if the record in buffer is not a complete record (quote does not close). wait next line
+    this._csvLineBuffer += this.getEol();
+  }
+  return lines;
+}
+Converter.prototype._flushNoFork = function(cb) {
   var self = this;
   this.flushCb = cb;
-  if (this._csvLineBuffer.length > 0) {
-    this.processData(this._csvLineBuffer,function(){
+  if (this._lineBuffer.length > 0) {
+    var lines = this._line(this._lineBuffer);
+    this.processCSVLines(lines, function() {
       this.checkAndFlush();
     }.bind(this));
   } else {
@@ -303,7 +315,7 @@ Converter.prototype.checkAndFlush = function() {
       this.push(eol + "]", "utf8");
     }
     this.flushCb();
-    // this.processor.releaseWorker();
+    this.processor.releaseWorker();
     this.flushCb = null;
   }
 }
