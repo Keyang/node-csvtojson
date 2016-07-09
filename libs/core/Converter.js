@@ -183,8 +183,11 @@ Converter.prototype.flushBuffer = function() {
       resultJSONStr=JSON.stringify(resultRow);
     }
     this.emit("record_parsed", resultRow, row, index);
-    if (this.param.toArrayString && this.recordNum > 0) {
-      this.push("," + eol);
+    if (this.recordNum > 0) {
+      if (this.param.toArrayString) {
+        this.push(",");
+      }
+      this.push(eol);
     }
     if (this._options && this._options.objectMode){
       this.push(resultRow);
