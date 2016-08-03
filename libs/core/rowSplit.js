@@ -78,8 +78,9 @@ function isQuoteClose(str,param){
 }
 function twoDoubleQuote(str,quote){
   var twoQuote=quote+quote;
-  while(str.indexOf(twoQuote)>-1){
-    str=str.replace(twoQuote,quote);
+  var curIndex=-1;
+  while((curIndex=str.indexOf(twoQuote,curIndex))>-1){
+    str=str.substring(0,curIndex)+str.substring(++curIndex);
   }
   return str;
 }

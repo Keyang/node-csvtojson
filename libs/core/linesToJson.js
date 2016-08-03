@@ -42,7 +42,7 @@ function processRow(row,param,index) {
   var parseRules=param.parseRules;
   if (param.checkColumn && row.length != parseRules.length) {
     return {
-      err:new CSVError ("column_mismatched",index)
+      err:CSVError.column_mismatched (index)
     }
   }
   var resultRow = {};

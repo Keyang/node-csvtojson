@@ -116,6 +116,7 @@ describe("CSV Converter", function () {
     var csvConverter = new Converter();
     csvConverter.fromString(data, function (err, jsonObj) {
       assert(err);
+      assert.equal(err.err,"unclosed_quote");
       done();
     });
   });
@@ -151,8 +152,8 @@ describe("CSV Converter", function () {
     csvConverter.fromString(data, function (err, jsonObj) {
       assert.equal(jsonObj[0].title , "\"");
       assert.equal(jsonObj[0].data , "xyabcde");
-      assert(jsonObj[0].uuid === "fejal\"eifa", jsonObj);
-      assert(jsonObj[0].fieldA === "bnej\"\"falkfe", jsonObj);
+      assert.equal(jsonObj[0].uuid, "fejal\"eifa");
+      assert.equal(jsonObj[0].fieldA, "bnej\"\"falkfe");
       done();
     });
   });
