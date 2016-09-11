@@ -59,7 +59,20 @@ module.exports=function rowSplit(rowStr, param) {
       }
     }
   }
-  return {cols:row,closed:!inquote};
+
+  if (param.workerNum<=1){
+    return {cols:row,closed:!inquote};
+  }else{
+    if (inquote && quoteBuff.length>0){//for multi core, quote will be closed at the end of line
+      quoteBuff=twoDoubleQuote(quoteBuff,quote);
+      if (trim){
+        quoteBuff=quoteBuff.trimRight();
+      }
+      row.push(quoteBuff);
+    }
+    return {cols:row,closed:true};
+  }
+  
 }
 
 function isQuoteOpen(str,param){

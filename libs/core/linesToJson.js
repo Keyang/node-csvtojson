@@ -6,7 +6,7 @@ var CSVError=require("./CSVError");
  * @param  {[type]} lines  [[col1,col2,col3]]
  * @param  {[type]} params Converter params with _headers field populated
  * @param  {[type]} idx start pos of the lines
- * @return {[type]}   {result:[{field1:res}],error:null}
+ * @return {[type]}   [{err:null,json:obj,index:line,row:[csv row]}]
  */
 module.exports=function(lines,params,idx){
   if (!params._headers){

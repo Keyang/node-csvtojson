@@ -13,6 +13,7 @@ var fileline=require("./fileline");
 var dataToCSVLine=require("./dataToCSVLine");
 var linesToJson=require("./linesToJson");
 var CSVError=require("./CSVError");
+var workerMgr=require("./workerMgr");
 function Converter(params,options) {
   Transform.call(this,options);
   _param=defParam(params);
@@ -27,19 +28,18 @@ function Converter(params,options) {
   this._csvLineBuffer="";
   this.lastIndex=0; // index in result json array
   //this._pipe(this.lineParser).pipe(this.processor);
-  if (this.param.fork) {
-    this.param.fork=false;
-    this.param.workerNum=2;
-  }
   // this.initNoFork();
+  if (this.param.forked){
+    this.param.forked=false;
+    this.workerNum=2;
+  } 
   this.flushCb = null;
   this.processEnd = false;
   this.sequenceBuffer = [];
-  this.on("end", function() {
-    var finalResult = this.param.constructResult ? this.resultObject.getBuffer() : {};
-    this.emit("end_parsed", finalResult);
-  }.bind(this));
+  
   this.on("error", function() {});
+  this.initWorker();
+  this.initEnd();
   return this;
 }
 util.inherits(Converter, Transform);
@@ -58,6 +58,26 @@ Converter.prototype._transform = function(data, encoding, cb) {
     }
   })
 };
+Converter.prototype.initEnd=function(){
+  var self=this;
+  function endHandler(){
+      var finalResult = self.param.constructResult ? self.resultObject.getBuffer() : {};
+      self.emit("end_parsed", finalResult);
+      workerMgr.destroyWorker();
+  }
+  this.on("end", endHandler);
+  // if (this.param.workerNum<=1){
+    
+  // }else{
+  //   workerMgr.drain=function(){
+  //     console.log("flushed",self.flushed)
+  //     if (self.flushed){
+  //       endHandler();
+  //     }
+      
+  //   }
+  // }
+}
 Converter.prototype.prepareData=function(data){
   return this._csvLineBuffer+data;
 }
@@ -69,32 +89,32 @@ Converter.prototype.processData=function(data,cb){
   if (!params._headers){ //header is not inited. init header
     this.processHead(data,cb);
   }else{
-    // if (params.workerNum===1){
+    if (params.workerNum<=1){
       var lines=dataToCSVLine(data,params);
       this.setPartialData(lines.partial);
       var res=linesToJson(lines.lines,params,this.recordNum);
       this.processResult(res,cb);
-    // }else{
-    //   this.workerProcess(data,cb);
-    // }
+    }else{
+      this.workerProcess(data,cb);
+    }
   }
 }
 Converter.prototype.initWorker=function(){
   var workerNum=this.param.workerNum-1;
-  if (workerNum.length>0){
+  if (workerNum>0){
     workerMgr.initWorker(workerNum,this.param);
   }
 }
-// Converter.prototype.workerProcess=function(data,cb){
-//   var self=this;
-//   workerMgr.sendWorker(data,this.lastIndex,function(length,partial){
-//         self.setPartialData(partial);
-//         self.lastIndex+=length;
-//         cb();
-//     },function(results){
-//       self.processResult(results,function(){},true);
-//     })
-// }
+Converter.prototype.workerProcess=function(data,cb){
+  var self=this;
+  workerMgr.sendWorker(data,this.lastIndex,function(length,partial){
+        self.setPartialData(partial);
+        self.lastIndex+=length;
+        cb();
+    },function(results){
+      self.processResult(results,function(){},true);
+    })
+}
 Converter.prototype.processHead=function(data,cb){
   var params=this.param;
   if (!params._headers){ //header is not inited. init header
@@ -114,13 +134,18 @@ Converter.prototype.processHead=function(data,cb){
         params._headers=headerRow;
       }
     }
+    if (this.param.workerNum>1){
+      workerMgr.setParams(params);
+    }
     var res=linesToJson(lines.lines,params,0);
+    
     this.processResult(res,cb);
   }else{
     cb();
   }
 }
 Converter.prototype.processResult=function(result,cb,isAsync){
+  
     for (var i=0;i<result.length;i++){
       var r=result[i];
       if (r.err){
@@ -128,13 +153,16 @@ Converter.prototype.processResult=function(result,cb,isAsync){
       }else{
         if (isAsync){
           this.sequenceBuffer[r.index]=r;
+          
         }else{
           this.emitResult(r);
         }
       }
     }
+    // this.lastIndex+=result.length;
+    // cb();
     if (isAsync){
-      // this.flushBuffer(cb);
+      this.flushBuffer(cb);
     }else{
       this.lastIndex+=result.length;
       cb();
@@ -217,15 +245,15 @@ Converter.prototype.emitResult=function(r){
 // }
 
 
-// Converter.prototype.flushBuffer = function(cb) {
-//   while (this.sequenceBuffer[this.recordNum]) {
-//     var r=this.sequenceBuffer[this.recordNum];
-//     this.sequenceBuffer[this.recordNum] = undefined;
-//     this.emitResult(r);
-//   }
-//   this.checkAndFlush();
-//   cb();
-// }
+Converter.prototype.flushBuffer = function(cb) {
+  while (this.sequenceBuffer[this.recordNum]) {
+    var r=this.sequenceBuffer[this.recordNum];
+    this.sequenceBuffer[this.recordNum] = undefined;
+    this.emitResult(r);
+  }
+  // this.checkAndFlush();
+  cb();
+}
 Converter.prototype.preProcessRaw=function(data,cb){
   cb(data);
 }
@@ -279,17 +307,16 @@ Converter.prototype.preProcessLine=function(line,lineNumber){
 // }
 Converter.prototype._flush = function(cb) {
   var self = this;
+  this.flushCb=cb;
   if (this._csvLineBuffer.length > 0) {
     if (this._csvLineBuffer[this._csvLineBuffer.length-1] != this.getEol()){
       this._csvLineBuffer+=this.getEol();
     }
     this.processData(this._csvLineBuffer,function(){
       this.checkAndFlush();
-      cb();
     }.bind(this));
   } else {
     this.checkAndFlush();
-    cb();
   }
   return;
 };
@@ -306,6 +333,13 @@ Converter.prototype.checkAndFlush = function() {
     }
     if (this.param.toArrayString) {
       this.push(eol + "]", "utf8");
+    }
+    if (workerMgr.isRunning()){
+      workerMgr.drain=function(){
+        this.flushCb();
+      }.bind(this);
+    }else{
+      this.flushCb();
     }
 }
 Converter.prototype.getEol = function(data) {
