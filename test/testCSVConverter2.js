@@ -223,6 +223,24 @@ describe("CSV Converter", function() {
     })
     rs.pipe(conv);
   })
+  it ("should get delimiter automatically if there is no header",function(done){
+    var test_converter = new Converter({
+      delimiter: 'auto',
+      headers: ['col1', 'col2'],
+      noheader: true,
+      checkColumn: true
+    });
+
+    var my_data = 'first_val\tsecond_val';
+    test_converter.fromString(my_data, function(err, result) {
+      assert(!err);
+      assert.equal(result.length,1);
+      assert.equal(result[0].col1,"first_val");
+      assert.equal(result[0].col2,"second_val");
+      done();
+    });
+  });
+
   // it ("should convert big csv",function(done){
   //   // var rs=fs.createReadStream(__dirname+"/data/large-csv-sample.csv");
   //   var rs=fs.createReadStream("/Users/kxiang/tmp/csvdata");

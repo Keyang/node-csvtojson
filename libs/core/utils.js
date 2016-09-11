@@ -42,6 +42,9 @@ function isQuoteClose(str,param){
   return count%2!==0;
 }
 function rowSplit(rowStr, param) {
+  if (rowStr ===""){
+    return [];
+  }
   var quote=param.quote;
   var trim=param.trim;
   if (param.needCheckDelimiter===true){
