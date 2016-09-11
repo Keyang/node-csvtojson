@@ -18,8 +18,8 @@ var Worker = require("./Worker.js");
 var utils = require("./utils.js");
 var async = require("async");
 
-function Converter(params) {
-  Transform.call(this); //TODO what does this do? -->This calls the constructor of Transform and initialise anything the Transform needs.(like var initialisation)
+function Converter(params,options) {
+  Transform.call(this,options);
   var _param = {
     constructResult: true, //set to false to not construct result in memory. suitable for big csv data
     delimiter: ',', // change the delimiter of csv columns. It is able to use an array to specify potencial delimiters. e.g. [",","|",";"]
@@ -46,11 +46,14 @@ function Converter(params) {
     console.warn("Parameter should be a JSON object like {'constructResult':false}");
     _param.constructResult = params;
   }
+  this._options=options || {};
   this.param = _param;
+  this.param._options=this._options;
   this.resultObject = new Result(this);
   this.pipe(this.resultObject); // it is important to have downstream for a transform otherwise it will stuck
   this.started = false;
   this.recordNum = 0;
+  this.lineNumber=0;
   this.runningProcess = 0;
   //this._pipe(this.lineParser).pipe(this.processor);
   if (this.param.fork) {
@@ -192,21 +195,34 @@ Converter.prototype.flushBuffer = function() {
     if (this.param.toArrayString && this.recordNum > 0) {
       this.push("," + eol);
     }
-    this.push(resultJSONStr, "utf8");
+    if (this._options && this._options.objectMode){
+      this.push(resultRow);
+    }else{
+      this.push(resultJSONStr, "utf8");
+    }
     this.recordNum++;
   }
   this.checkAndFlush();
 }
-var size = 0;
+Converter.prototype.preProcessRaw=function(data,cb){
+  cb(data);
+}
 
 Converter.prototype._transformNoFork = function(data, encoding, cb) {
-  size += data.length;
   if (this.param.toArrayString && this.started === false) {
     this.started = true;
     this.push("[" + eol, "utf8");
   }
-  var lines = this.toCSVLines(this.toLines(data, encoding)); //lines of csv
-  this.processCSVLines(lines, cb);
+  data=data.toString("utf8");
+  var self=this;
+  this.preProcessRaw(data,function(d){
+    if (d && d.length>0){
+      var lines = self.toCSVLines(self.toLines(d)); //lines of csv
+      self.processCSVLines(lines, cb);
+    }else{
+      cb();
+    }
+  })
   // async.eachLimit(lines,1,function(line,scb){
   //   this.push(line.data);
   //   scb();
@@ -239,20 +255,23 @@ Converter.prototype.processCSVLines = function(csvLines, cb) {
     }
   }.bind(this), cb);
 }
-Converter.prototype.toLines = function(data, encoding) {
-  if (encoding === "buffer") {
-    encoding = "utf8";
-  }
-  data = this._lineBuffer + data.toString(encoding);
+Converter.prototype.toLines = function(data) {
+  data = this._lineBuffer + data;
   var eol = this.getEol(data);
   return data.split(eol);
+}
+Converter.prototype.preProcessLine=function(line,lineNumber){
+    return line;
 }
 Converter.prototype.toCSVLines = function(fileLines, last) {
   var recordLine = "";
   var lines = [];
   while (fileLines.length > 1) {
-    var line = fileLines.shift();
-    lines = lines.concat(this._line(line));
+    this.lineNumber++;
+    var line = this.preProcessLine(fileLines.shift(),this.lineNumber);
+    if (line && line.length>0){
+      lines = lines.concat(this._line(line));
+    }
   }
   this._lineBuffer = fileLines[0];
   if (last && this._csvLineBuffer.length > 0) {
@@ -417,7 +436,7 @@ function Processor(params) {
   this.runningWorker = 0;
   this.flushCb = null;
   if (this.param.workerNum > 1) {
-    for (var i = 0; i < this.param.workerNum; i++) {
+    for (var i = 0; i < this.param.workerNum-1; i++) {
       var worker = new Worker(this.param, false);
       // worker.on("error",onError);
       this.addWorker(worker);
@@ -558,20 +577,40 @@ var Writable = require("stream").Writable;
 var util = require("util");
 var eol=require("os").EOL;
 function Result(csvParser) {
-  Writable.call(this);
+  Writable.call(this,csvParser._options);
+  this._option=csvParser._options || {};
   this.parser = csvParser;
   this.param = csvParser.param;
-  this.buffer = this.param.toArrayString?"":"["+eol;
+  this.buffer =this._option.objectMode?[]:"["+eol;
   this.started = false;
   var self = this;
   this.parser.on("end", function() {
-    if (!self.param.toArrayString){
+    if (typeof self.buffer === "string"){
       self.buffer += eol+ "]";
     }
   });
+  this._write=this._option.objectMode?_writeObject:_writeBuffer;
 }
 util.inherits(Result, Writable);
-Result.prototype._write = function(data, encoding, cb) {
+
+Result.prototype.getBuffer = function() {
+  return typeof this.buffer ==="string"?JSON.parse(this.buffer):this.buffer;
+};
+
+Result.prototype.disableConstruct = function() {
+  this._write = function(d, e, cb) {
+    // console.log(typeof d,d);
+    cb(); //do nothing just dropit
+  };
+};
+
+
+function _writeObject (data, encoding, cb) {
+  this.buffer.push(data);
+  cb();
+};
+
+function _writeBuffer(data, encoding, cb) {
   if (encoding === "buffer") {
     encoding = "utf8";
   }
@@ -586,17 +625,6 @@ Result.prototype._write = function(data, encoding, cb) {
     this.buffer += data.toString(encoding);
   }
   cb();
-};
-
-Result.prototype.getBuffer = function() {
-  // console.log(this.buffer);
-  return JSON.parse(this.buffer);
-};
-
-Result.prototype.disableConstruct = function() {
-  this._write = function(d, e, cb) {
-    cb(); //do nothing just dropit
-  };
 };
 
 module.exports = Result;
@@ -772,21 +800,33 @@ module.exports = {
     var headArr = (params.config && params.config.flatKeys) ? [fieldStr] : fieldStr.split('.');
     var match, index, key, pointer;
     //now the pointer is pointing the position to add a key/value pair.
-    pointer = processHead(params.resultRow, headArr, arrReg, params.config && params.config.flatKeys);
+    var pointer = processHead(params.resultRow, headArr, arrReg, params.config && params.config.flatKeys);
     key = headArr.shift();
     match = (params.config && params.config.flatKeys) ? false : key.match(arrReg);
     if (match) { // the last element is an array, we need check and treat it as an array.
-      key = key.replace(match[0], '');
-      if (!pointer[key] || !(pointer[key] instanceof Array)) {
-        pointer[key] = [];
+      try {
+        key = key.replace(match[0], '');
+        if (!pointer[key] || !(pointer[key] instanceof Array)) {
+          pointer[key] = [];
+        }
+        if (pointer[key]) {
+          index = match[1];
+          if (index === '') {
+            index = pointer[key].length;
+          }
+          pointer[key][index] = params.item;
+        } else {
+          params.resultRow[fieldStr] = params.item;
+        }
+      } catch (e) {
+        params.resultRow[fieldStr] = params.item;
       }
-      index = match[1];
-      if (index === '') {
-        index = pointer[key].length;
-      }
-      pointer[key][index] = params.item;
     } else {
-      pointer[key] =  params.item;
+      if (typeof pointer=== "string"){
+        params.resultRow[fieldStr] = params.item;
+      }else{
+        pointer[key] = params.item;
+      }
     }
   }
 };
@@ -847,7 +887,7 @@ function Parser(name, regExp, parser, processSafe) {
     this.parse = parser;
   }
 }
-var numReg = /^[-+]?[0-9]*\.?[0-9]+$/;
+var numReg = /^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$/;
 Parser.prototype.convertType = function(item) {
   var type=this.type;
   if (type === 'number') {
@@ -1049,6 +1089,9 @@ function isQuoteClose(str,param){
   return count%2!==0;
 }
 function rowSplit(rowStr, param) {
+  if (rowStr ===""){
+    return [];
+  }
   var quote=param.quote;
   var trim=param.trim;
   if (param.needCheckDelimiter===true){
@@ -1057,6 +1100,9 @@ function rowSplit(rowStr, param) {
   }
   var delimiter=param.delimiter;
   var rowArr = rowStr.split(delimiter);
+  if (quote ==="off"){
+    return rowArr;
+  }
   var row = [];
   var inquote = false;
   var quoteBuff = '';
@@ -10147,7 +10193,7 @@ module.exports={
       "email": "t3dodson@gmail.com"
     }
   ],
-  "version": "0.5.10",
+  "version": "1.0.1",
   "keywords": [
     "csv",
     "csvtojson",
@@ -10180,10 +10226,11 @@ module.exports={
     "mocha": "^2.4.5"
   },
   "dependencies": {
-    "async": "^1.2.1"
+    "async": "^1.2.1",
+    "minimist": "^1.2.0"
   },
-  "scripts":{
-    "test":"mocha ./test -R spec"
+  "scripts": {
+    "test": "mocha ./test -R spec"
   }
 }
 

@@ -240,7 +240,6 @@ describe("CSV Converter", function() {
       done();
     });
   });
-
   // it ("should convert big csv",function(done){
   //   // var rs=fs.createReadStream(__dirname+"/data/large-csv-sample.csv");
   //   var rs=fs.createReadStream("/Users/kxiang/tmp/csvdata");
