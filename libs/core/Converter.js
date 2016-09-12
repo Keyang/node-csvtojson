@@ -189,7 +189,7 @@ Converter.prototype.flushBuffer = function() {
     if (this._options && this._options.objectMode){
       this.push(resultRow);
     }else{
-      this.push(resultJSONStr, "utf8");
+      this.push(resultJSONStr + eol, "utf8");
     }
     this.recordNum++;
   }
