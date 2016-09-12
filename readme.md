@@ -798,6 +798,10 @@ See more detailed information [here](https://nodejs.org/api/stream.html#stream_c
 
 #Change Log
 
+## 1.0.2
+* supported ndjson format as per #113 and #87
+* issue: #120
+
 ## 1.0.0
 * Add [Stream Options](#stream-options)
 * Change version syntax to follow x.y.z
