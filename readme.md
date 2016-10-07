@@ -160,6 +160,7 @@ Following parameters are supported:
 * **maxRowLength**: the max character a csv row could have. 0 means infinite. If max number exceeded, parser will emit "error" of "row_exceed". if a possibly corrupted csv data provided, give it a number like 65535 so the parser wont consume memory. default: 0
 * **checkColumn**: whether check column number of a row is the same as headers. If column number mismatched headers number, an error of "mismatched_column" will be emitted.. default: false
 * **eol**: End of line character. If omitted, parser will attempt retrieve it from first chunk of CSV data. If no valid eol found, then operation system eol will be used.
+* **escape**: escape character used in quoted column. Default is double quote (") according to RFC4108. Change to back slash (\) or other chars for your own case.
 
 All parameters can be used in Command Line tool. see
 

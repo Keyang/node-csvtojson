@@ -15,6 +15,7 @@ function Converter(params,options) {
     constructResult: true, //set to false to not construct result in memory. suitable for big csv data
     delimiter: ',', // change the delimiter of csv columns. It is able to use an array to specify potencial delimiters. e.g. [",","|",";"]
     quote: '"', //quote for a column containing delimiter.
+    escape:'"', //escape char for quoted column
     trim: true, //trim column's space charcters
     checkType: true, //whether check column type
     toArrayString: false, //stream down stringified json array instead of string of json. (useful if downstream is file writer etc)

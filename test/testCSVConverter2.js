@@ -240,6 +240,20 @@ describe("CSV Converter", function() {
       done();
     });
   });
+  it ("should process escape chars",function(done){
+    var test_converter = new Converter({
+      escape:"\\"
+    });
+
+    var testData = __dirname + "/data/dataWithSlashEscape";
+    var rs = fs.createReadStream(testData);
+    test_converter.on("end_parsed",function(res){
+      assert.equal(res[0].raw.hello,"world");
+      assert.equal(res[0].raw.test,true);
+      done();
+    });
+    rs.pipe(test_converter);
+  });
   // it ("should convert big csv",function(done){
   //   // var rs=fs.createReadStream(__dirname+"/data/large-csv-sample.csv");
   //   var rs=fs.createReadStream("/Users/kxiang/tmp/csvdata");

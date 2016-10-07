@@ -61,6 +61,10 @@
         "--quiet": {
             "desc": "If any error happens, quit the process quietly rather than log out the error. Default is false.",
             "type": "boolean"
+        },
+        "--escape":{
+            "desc":"escape character used in quoted column. Default is double quote (\") according to RFC4108. Change to back slash (\\) or other chars for your own case.",
+            "type":"string"
         }
     },
     "examples": [
