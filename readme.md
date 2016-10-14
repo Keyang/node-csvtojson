@@ -24,8 +24,8 @@ All you need nodejs csv to json converter.
     * [Convert from CSV string](#from-string)
 * [Parameters](#params)
 * [Result Transform](#result-transform)
-  * [Synchronouse Transformer](#synchronouse-transformer)
-  * [Asynchronouse Transformer](#asynchronouse-transformer)
+  * [Synchronous Transformer](#synchronous-transformer)
+  * [Asynchronous Transformer](#asynchronous-transformer)
   * [Convert to other data type](#convert-to-other-data-type)
 * [Hooks](#hooks)
 * [Events](#events)
@@ -172,7 +172,7 @@ csvtojson --help
 
 To transform JSON result, (e.g. change value of one column), just simply add 'transform handler'.
 
-## Synchronouse transformer
+## Synchronous transformer
 
 ```js
 var Converter=require("csvtojson").Converter;
@@ -197,9 +197,9 @@ csvConverter.fromString(csvString,function(err,result){
 
 As shown in example above, it is able to apply any changes to the result json which will be pushed to down stream and "record_parsed" event.
 
-## Asynchronouse Transformer
+## Asynchronous Transformer
 
-Asynchronouse transformation can be achieve either through "record_parsed" event or creating a Writable stream.
+Asynchronous transformation can be achieve either through "record_parsed" event or creating a Writable stream.
 
 ### Use record_parsed
 
