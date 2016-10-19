@@ -52,7 +52,8 @@
   },
   "dependencies": {
     "async": "^1.2.1",
-    "minimist": "^1.2.0"
+    "minimist": "^1.2.0",
+    "request": "^2.74.0"
   },
   "scripts": {
     "test": "mocha ./test -R spec"
