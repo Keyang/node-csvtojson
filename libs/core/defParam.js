@@ -13,7 +13,8 @@ module.exports=function(params){
     headers: null, //an array of header strings. If noheader is false and headers is array, csv header will be ignored.
     flatKeys: false, // Don't interpret dots and square brackets in header fields as nested object or array identifiers at all.
     maxRowLength: 0, //the max character a csv row could have. 0 means infinite. If max number exceeded, parser will emit "error" of "row_exceed". if a possibly corrupted csv data provided, give it a number like 65535 so the parser wont consume memory. default: 0
-    checkColumn: false //whether check column number of a row is the same as headers. If column number mismatched headers number, an error of "mismatched_column" will be emitted.. default: false
+    checkColumn: false, //whether check column number of a row is the same as headers. If column number mismatched headers number, an error of "mismatched_column" will be emitted.. default: false
+    escape:'"' //escape char for quoted column
   };
   for (var key in params) {
     if (params.hasOwnProperty(key)) {

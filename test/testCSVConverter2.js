@@ -223,6 +223,45 @@ describe("CSV Converter", function() {
     })
     rs.pipe(conv);
   })
+  it ("should get delimiter automatically if there is no header",function(done){
+    var test_converter = new Converter({
+      delimiter: 'auto',
+      headers: ['col1', 'col2'],
+      noheader: true,
+      checkColumn: true
+    });
+
+    var my_data = 'first_val\tsecond_val';
+    test_converter.fromString(my_data, function(err, result) {
+      assert(!err);
+      assert.equal(result.length,1);
+      assert.equal(result[0].col1,"first_val");
+      assert.equal(result[0].col2,"second_val");
+      done();
+    });
+  });
+  it ("should process escape chars",function(done){
+    var test_converter = new Converter({
+      escape:"\\"
+    });
+
+    var testData = __dirname + "/data/dataWithSlashEscape";
+    var rs = fs.createReadStream(testData);
+    test_converter.on("end_parsed",function(res){
+      assert.equal(res[0].raw.hello,"world");
+      assert.equal(res[0].raw.test,true);
+      done();
+    });
+    rs.pipe(test_converter);
+  });
+  it ("should output ndjson format",function(done){
+    var conv=new Converter();
+    conv.fromString("a,b,c\n1,2,3\n4,5,6").on("data",function(d){
+      d=d.toString();
+      assert.equal(d[d.length-1],"\n")
+    }) 
+    .on("end",done)
+  })
   // it ("should convert big csv",function(done){
   //   // var rs=fs.createReadStream(__dirname+"/data/large-csv-sample.csv");
   //   var rs=fs.createReadStream("/Users/kxiang/tmp/csvdata");
