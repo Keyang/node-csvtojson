@@ -254,6 +254,14 @@ describe("CSV Converter", function() {
     });
     rs.pipe(test_converter);
   });
+  it ("should output ndjson format",function(done){
+    var conv=new Converter();
+    conv.fromString("a,b,c\n1,2,3\n4,5,6").on("data",function(d){
+      d=d.toString();
+      assert.equal(d[d.length-1],"\n")
+    }) 
+    .on("end",done)
+  })
   // it ("should convert big csv",function(done){
   //   // var rs=fs.createReadStream(__dirname+"/data/large-csv-sample.csv");
   //   var rs=fs.createReadStream("/Users/kxiang/tmp/csvdata");
