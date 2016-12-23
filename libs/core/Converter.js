@@ -37,17 +37,35 @@ function Converter(params,options) {
   this.processEnd = false;
   this.sequenceBuffer = [];
   this._needJson=null;
-  this.on("data", function() {});
+  this._needEmitResult=null;
+  this._needEmitFinalResult=null;
+  this._needPush=null;
+  this.finalResult=[];
+  // this.on("data", function() {});
   this.on("error", function() {});
   this.initWorker();
-  this.initEnd();
   return this;
 }
 util.inherits(Converter, Transform);
 Converter.prototype._transform = function(data, encoding, cb) {
+  if (this._needEmitFinalResult === null){
+    this._needEmitFinalResult=this.listeners("end_parsed").length > 0
+  }
+  if (this._needEmitResult===null){
+    this._needEmitResult=this.listeners("record_parsed").length>0
+  }
+  if (this._needJson === null){
+    this._needJson=this._needEmitFinalResult || this._needEmitResult || this.transform || this._options.objectMode;
+  }
+  if (this._needPush === null){
+    this._needPush = this.listeners("data").length > 0 || this.listeners("readable").length>0
+    // this._needPush=false;
+  }
   if (this.param.toArrayString && this.started === false) {
     this.started = true;
-    this.push("[" + eol, "utf8");
+    if (this._needPush){
+      this.push("[" + eol, "utf8");
+    }
   }
   data=data.toString("utf8");
   var self=this;
@@ -59,28 +77,6 @@ Converter.prototype._transform = function(data, encoding, cb) {
     }
   })
 };
-Converter.prototype.initEnd=function(){
-  var self=this;
-  function endHandler(){
-      var finalResult = self.param.constructResult ? self.resultObject.getBuffer() : {};
-      self.emit("end_parsed", finalResult);
-      if (self.workerMgr){
-        self.workerMgr.destroyWorker();
-      }
-  }
-  this.on("end", endHandler);
-  // if (this.param.workerNum<=1){
-    
-  // }else{
-  //   workerMgr.drain=function(){
-  //     console.log("flushed",self.flushed)
-  //     if (self.flushed){
-  //       endHandler();
-  //     }
-      
-  //   }
-  // }
-}
 Converter.prototype.prepareData=function(data){
   return this._csvLineBuffer+data;
 }
@@ -119,8 +115,9 @@ Converter.prototype.initWorker=function(){
 Converter.prototype.workerProcess=function(data,cb){
   var self=this;
   var line=fileline(data,this.param)
+  var eol=this.getEol(data)
   this.setPartialData(line.partial)
-  this.workerMgr.sendWorker(line.lines.join("\n"),this.lastIndex,cb,function(results,lastIndex){
+  this.workerMgr.sendWorker(line.lines.join(eol)+eol,this.lastIndex,cb,function(results,lastIndex){
       var cur=self.sequenceBuffer[0];
       if (cur.idx === lastIndex){
         cur.result=results;
@@ -180,7 +177,7 @@ Converter.prototype.processHead=function(data,cb){
   }
 }
 Converter.prototype.processResult=function(result){
-  
+    
     for (var i=0;i<result.length;i++){
       var r=result[i];
       if (r.err){
@@ -193,9 +190,6 @@ Converter.prototype.processResult=function(result){
     // cb();
 }
 Converter.prototype.emitResult=function(r){
-  if (this._needJson === null){
-    this._needJson=this.listeners("record_parsed").length>0 || this.transform || this._options.objectMode;
-  }
   var index=r.index;
   var row=r.row;
   var result=r.json;
@@ -212,146 +206,49 @@ Converter.prototype.emitResult=function(r){
       row=JSON.parse(row)
     }
   }
+  if (this.param.constructResult && this._needEmitFinalResult){
+    this.finalResult.push(resultJson)
+  }
   if (this.transform && typeof this.transform==="function"){
     this.transform(resultJson,row,index);
   }
-  if (this.listeners("record_parsed").length>0){
+  if (this._needEmitResult){
     this.emit("record_parsed", resultJson, row, index);
   }
-  if (this.param.toArrayString && index > 0) {
+  if (this.param.toArrayString && index > 0 && this._needPush) {
     this.push("," + eol);
   }
   if (this._options && this._options.objectMode){
     this.push(resultJson);
   }else{
-    if (resultStr===null){
-      resultStr=JSON.stringify(resultJson)
+    if (this._needPush){
+      if (resultStr===null){
+        resultStr=JSON.stringify(resultJson)
+      }
+      this.push(!this.param.toArrayString?resultStr+eol:resultStr, "utf8");
     }
-    this.push(resultStr, "utf8");
   }
 }
-// Converter.prototype.initNoFork = function() {
-//   // function onError() {
-//   //   var args = Array.prototype.slice.call(arguments, 0);
-//   //   args.unshift("error");
-//   //   this.hasError = true;
-//   //   this.emit.apply(this, args);
-//   // };
-//   this._lineBuffer = "";
-//   this._csvLineBuffer = "";
-//   // this.lineParser = new CSVLine(this.param);
-//   // this.lineParser.on("error", onError.bind(this));
-//   if (this.param.delimiter instanceof Array || this.param.delimiter.toLowerCase()==="auto"){
-//     this.param.needCheckDelimiter=true;
-//   }else{
-//     this.param.needCheckDelimiter=false;
-//   }
-//   this.processor = new Processor(this.param);
-//   // this.processor.on("error", onError.bind(this));
-//   // var syncWorker = new Worker(this.param, true);
-//   // // syncWorker.on("error",onError);
-//   // this.processor.addWorker(syncWorker);
-//   // if (this.param.workerNum > 1) {
-//   //   for (var i = 1; i < this.param.workerNum; i++) {
-//   //     var worker = new Worker(this.param, false);
-//   //     // worker.on("error",onError);
-//   //     this.processor.addWorker(worker);
-//   //   }
-//   // } else if (this.param.workerNum < 1) {
-//   //   this.param.workerNum = 1;
-//   // }
-//   if (!this.param.constructResult) {
-//     this.resultObject.disableConstruct();
-//   }
-//   // this.lineParser.pipe(this.processor);
-//   var syncLock = false;
-//   // this.processor.on("record_parsed", function(resultRow, row, index) {
-//   //   // this.emit("record_parsed", resultRow, row, index);
-//   //   this.sequenceBuffer[index] = {
-//   //     resultRow: resultRow,
-//   //     row: row,
-//   //     index: index
-//   //   };
-//   //   //critical area
-//   //   if (!syncLock) {
-//   //     syncLock = true;
-//   //     this.flushBuffer();
-//   //     syncLock = false;
-//   //   }
-//   // }.bind(this));
-//   // this.processor.on("end_parse", function() {
-//   //   this.processEnd = true;
-//   //   this.flushBuffer();
-//   //   this.checkAndFlush();
-//   // }.bind(this));
-//   this._transform = this._transformNoFork;
-//   this._flush = this._flushNoFork;
-// }
 
-
-Converter.prototype.flushBuffer = function(cb) {
-  while (this.sequenceBuffer[this.recordNum]) {
-    var r=this.sequenceBuffer[this.recordNum];
-    this.sequenceBuffer[this.recordNum] = undefined;
-    this.emitResult(r);
-  }
-  // this.checkAndFlush();
-  cb();
-}
 Converter.prototype.preProcessRaw=function(data,cb){
   cb(data);
 }
 
-// Converter.prototype.processCSVLines = function(csvLines, cb) {
-//   // for (var i=0;i<csvLines.length;i++){
-//   //   this.push(csvLines[i].data);
-//   // }
-//   // cb();
-//   // return;
-//   this.runningProcess++;
-//   this.processor.rows(csvLines, function(err, resArr) {
-//     this.runningProcess--;
-//     if (err) {
-//       this.emit("error","row_process",err);
-//     } else {
-//       for (var i = 0; i < resArr.length; i++) {
-//         this.sequenceBuffer[resArr[i].index] = {
-//           resultJSONStr: resArr[i].jsonRaw,
-//           row: resArr[i].row,
-//           index: resArr[i].index
-//         }
-//       }
-//       this.flushBuffer();
-//     }
-//   }.bind(this), cb);
-// }
-// Converter.prototype.toLines = function(data) {
-//   data = this._lineBuffer + data;
-//   var eol = this.getEol(data);
-//   return data.split(eol);
-// }
 Converter.prototype.preProcessLine=function(line,lineNumber){
     return line;
 }
-// Converter.prototype.toCSVLines = function(fileLines, last) {
-//   var recordLine = "";
-//   var lines = [];
-//   while (fileLines.length > 1) {
-//     this.lineNumber++;
-//     var line = this.preProcessLine(fileLines.shift(),this.lineNumber);
-//     if (line && line.length>0){
-//       lines = lines.concat(this._line(line));
-//     }
-//   }
-//   this._lineBuffer = fileLines[0];
-//   if (last && this._csvLineBuffer.length > 0) {
-//     this.emit("error", "unclosed_quote", this._csvLineBuffer)
-//   }
-//   return lines;
-// }
 Converter.prototype._flush = function(cb) {
   var self = this;
-  this.flushCb=cb;
+  this.flushCb=function(){
+    self.emit("end_parsed",self.finalResult);
+    if (self.workerMgr){
+      self.workerMgr.destroyWorker();
+    }
+    cb()
+    if (!self._needPush){
+      self.emit("end")
+    }
+  };
   if (this._csvLineBuffer.length > 0) {
     if (this._csvLineBuffer[this._csvLineBuffer.length-1] != this.getEol()){
       this._csvLineBuffer+=this.getEol();
@@ -375,7 +272,7 @@ Converter.prototype.checkAndFlush = function() {
     if (this._csvLineBuffer.length !== 0) {
       this.emit("error", CSVError.unclosed_quote(this.recordNum,this._csvLineBuffer), this._csvLineBuffer);
     }
-    if (this.param.toArrayString) {
+    if (this.param.toArrayString && this._needPush) {
       this.push(eol + "]", "utf8");
     }
     if (this.workerMgr && this.workerMgr.isRunning()){

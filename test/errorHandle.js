@@ -9,7 +9,7 @@ describe("Converter error handling", function() {
     conv.on("error", function(err) {
       assert(err.err === "unclosed_quote");
       done();
-    });
+    })
     rs.pipe(conv);
   });
   // it("should handle quote not closed in a forked process", function(done) {

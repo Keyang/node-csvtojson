@@ -243,7 +243,7 @@ describe("CSV Converter", function () {
       count++;
     });
     csvConverter.on("end",function (){
-      assert(count === 5290);
+      assert.equal(count, 5290);
       done();
     });
     rs.pipe(csvConverter);

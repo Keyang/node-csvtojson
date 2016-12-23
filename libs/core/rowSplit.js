@@ -6,16 +6,19 @@ var getDelimiter=require("./getDelimiter");
  * @return {[type]}        {cols:["a","b","c"],closed:boolean} the closed field indicate if the row is a complete row
  */
 module.exports=function rowSplit(rowStr, param) {
-
+  if (rowStr ===""){
+    return {cols:[],closed:true};
+  }
   var quote=param.quote;
   var trim=param.trim;
+  var escape=param.escape;
   if (param.delimiter instanceof Array || param.delimiter.toLowerCase()==="auto"){
       param.delimiter=getDelimiter(rowStr,param);
   }
   var delimiter=param.delimiter;
   var rowArr = rowStr.split(delimiter);
   if (quote ==="off"){
-    return rowArr;
+    return {cols:rowArr,closed:true};
   }
   var row = [];
   var inquote = false;
@@ -31,7 +34,7 @@ module.exports=function rowSplit(rowStr, param) {
           e=e.substr(1);
           if (isQuoteClose(e,param)){ //quote close
               e=e.substring(0,e.length-1);
-              e=twoDoubleQuote(e,quote);
+              e=_escapeQuote(e,quote,escape);;
               row.push(e);
               continue;
           }else{
@@ -48,7 +51,7 @@ module.exports=function rowSplit(rowStr, param) {
         inquote=false;
         e=e.substr(0,len-1);
         quoteBuff+=delimiter+e;
-        quoteBuff=twoDoubleQuote(quoteBuff,quote);
+        quoteBuff=_escapeQuote(quoteBuff,quote,escape);
         if (trim){
           quoteBuff=quoteBuff.trimRight();
         }
@@ -60,30 +63,34 @@ module.exports=function rowSplit(rowStr, param) {
     }
   }
 
-  if (param.workerNum<=1){
-    return {cols:row,closed:!inquote};
-  }else{
-    if (inquote && quoteBuff.length>0){//for multi core, quote will be closed at the end of line
-      quoteBuff=twoDoubleQuote(quoteBuff,quote);
-      if (trim){
-        quoteBuff=quoteBuff.trimRight();
-      }
-      row.push(quoteBuff);
-    }
-    return {cols:row,closed:true};
-  }
+  return {cols:row,closed:!inquote};
+  // if (param.workerNum<=1){
+  // }else{
+  //   if (inquote && quoteBuff.length>0){//for multi core, quote will be closed at the end of line
+  //     quoteBuff=_escapeQuote(quoteBuff,quote,escape);;
+  //     if (trim){
+  //       quoteBuff=quoteBuff.trimRight();
+  //     }
+  //     row.push(quoteBuff);
+  //   }
+  //   return {cols:row,closed:true};
+  // }
   
 }
 
 function isQuoteOpen(str,param){
   var quote=param.quote;
-  return str[0] === quote && (str[1]!==quote || str[1]===quote && (str[2] === quote || str.length ===2));
+  var escape=param.escape;
+  return str[0] === quote && (
+    str[1]!==quote || 
+    str[1]===escape && (str[2] === quote || str.length ===2));
 }
 function isQuoteClose(str,param){
   var quote=param.quote;
   var count=0;
   var idx=str.length-1;
-  while (str[idx] === quote){
+  var escape=param.escape;
+  while (str[idx] === quote || str[idx]===escape){
     idx--;
     count++;
   }
@@ -96,4 +103,17 @@ function twoDoubleQuote(str,quote){
     str=str.substring(0,curIndex)+str.substring(++curIndex);
   }
   return str;
+}
+var cachedRegExp = {}
+function _escapeQuote(segment, quote,escape) {
+  
+  var key="es|"+quote+"|"+escape;
+  if (cachedRegExp[key] === undefined){
+    if (escape ==="\\"){
+      escape="\\\\";
+    }
+    cachedRegExp[key]=new RegExp(escape+quote,'g');
+  }
+  var regExp = cachedRegExp[key];
+  return segment.replace(regExp, quote);
 }

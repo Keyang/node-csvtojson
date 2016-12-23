@@ -8,7 +8,6 @@ describe("csvtojson multi core", function () {
     });
     var stream = fs.createReadStream(__dirname+"/data/testData");
     obj.on("end_parsed", function (obj) {
-      console.log(obj);
       assert(obj.length === 2);
       done();
     });

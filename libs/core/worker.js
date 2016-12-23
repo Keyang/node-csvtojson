@@ -2,6 +2,7 @@ var param=null;
 var fileLine=require("./fileline");
 var csvline=require("./csvline");
 var linesToJson=require("./linesToJson");
+var CSVError=require('./CSVError')
 var eom="\x03";
 var eom1="\x0e"
 var eom2="\x0f"
@@ -21,14 +22,7 @@ process.stdin.on("data",function(d){
   while (cmdArr.length >1){
     processMsg(cmdArr.shift());
   }
-  if (all.substring(all.length-3) === eom) {
-    processMsg(cmdArr.shift());
-  }
-  if (cmdArr.length>0){
-    buffer=cmdArr[0];
-  }else{
-    buffer="";
-  }
+  buffer=cmdArr[0];
 });
 process.on("message",processMsg)
 function processMsg(msg){
@@ -68,12 +62,20 @@ function processData(data){
   // process.send("0"+lines.lines.length+"|"+lines.partial);
   var csvLines=csvline(lines.lines,param);
   var res=linesToJson(csvLines.lines,param,startIdx);
-  //1<line num>|^<row>|^data|&<line num>|^<row>|^data
+  if (csvLines.partial){
+    var lastIdx=res.length>0? res[res.length-1].index+1 : startIdx
+    res.push({
+      err:CSVError.unclosed_quote(lastIdx,csvLines.partial)
+    })
+  }
+  // console.error(res)
+  //1<line num>|^<row>|^err|^data|&<line num>|^<row>|^err|^data
   var str="1";
   res.forEach(function(item){
-    str+=item.index+eom2+JSON.stringify(item.row)+eom2+JSON.stringify(item.json)+eom1
+    var errStr=item.err?item.err.toString():"";
+    str+=item.index+eom2+JSON.stringify(item.row)+eom2+errStr+eom2+JSON.stringify(item.json)+eom1
   })
-  sendData("1"+str);
+  sendData(str);
 }
 
 function sendData(str){

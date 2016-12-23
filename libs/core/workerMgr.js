@@ -3,6 +3,7 @@ var spawn=require("child_process").spawn;
 var eom="\x03"
 var eom1="\x0e"
 var eom2="\x0f"
+var CSVError=require('./CSVError')
 function workerMgr(){
 
   var exports={
@@ -87,17 +88,7 @@ function Worker(params){
       while (cmdArr.length >1){
         self.onChildMsg(cmdArr.shift());
       }
-      if (all.substring(all.length-3) === eom) {
-        self.onChildMsg(cmdArr.shift());
-      }
-      if (cmdArr.length>0){
-        self.buffer=cmdArr[0];
-      }else{
-        self.buffer="";
-      }
-  })
-  this.cp.on("exit",function(){
-    console.log("EXIT!!!");
+      self.buffer=cmdArr[0];
   })
 }
 
@@ -133,7 +124,8 @@ Worker.prototype.onChildMsg=function(msg){
           res.push({
             index:sp[0],
             row:sp[1],
-            json:sp[2]
+            err:sp[2]?CSVError.fromArray(JSON.parse(sp[2])):null,
+            json:sp[3]
           }) 
         })
         this.cbResult(res);

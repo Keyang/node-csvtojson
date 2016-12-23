@@ -64,7 +64,7 @@ describe("CSV Converter", function() {
     });
     conv.fromFile(csvFile, function(err, res) {
       assert(!err);
-      assert(res.length === 5290);
+      assert.equal(res.length , 5290);
       done();
     });
   });
