@@ -20,8 +20,8 @@ function Converter(params,options) {
   this._options=options || {};
   this.param = _param;
   this.param._options=this._options;
-  this.resultObject = new Result(this);
-  this.pipe(this.resultObject); // it is important to have downstream for a transform otherwise it will stuck
+  // this.resultObject = new Result(this);
+  // this.pipe(this.resultObject); // it is important to have downstream for a transform otherwise it will stuck
   this.started = false;//indicate if parsing has started.
   this.recordNum = 0;
   this.lineNumber=0; //file line number
@@ -36,7 +36,8 @@ function Converter(params,options) {
   this.flushCb = null;
   this.processEnd = false;
   this.sequenceBuffer = [];
-  
+  this._needJson=null;
+  this.on("data", function() {});
   this.on("error", function() {});
   this.initWorker();
   this.initEnd();
@@ -63,7 +64,9 @@ Converter.prototype.initEnd=function(){
   function endHandler(){
       var finalResult = self.param.constructResult ? self.resultObject.getBuffer() : {};
       self.emit("end_parsed", finalResult);
-      workerMgr.destroyWorker();
+      if (self.workerMgr){
+        self.workerMgr.destroyWorker();
+      }
   }
   this.on("end", endHandler);
   // if (this.param.workerNum<=1){
@@ -92,8 +95,11 @@ Converter.prototype.processData=function(data,cb){
     if (params.workerNum<=1){
       var lines=dataToCSVLine(data,params);
       this.setPartialData(lines.partial);
-      var res=linesToJson(lines.lines,params,this.recordNum);
-      this.processResult(res,cb);
+      var jsonArr=linesToJson(lines.lines,params,this.recordNum);
+      this.processResult(jsonArr)
+      this.lastIndex+=jsonArr.length;
+      this.recordNum+=jsonArr.length;
+      cb();
     }else{
       this.workerProcess(data,cb);
     }
@@ -102,18 +108,45 @@ Converter.prototype.processData=function(data,cb){
 Converter.prototype.initWorker=function(){
   var workerNum=this.param.workerNum-1;
   if (workerNum>0){
-    workerMgr.initWorker(workerNum,this.param);
+    this.workerMgr=workerMgr();
+    this.workerMgr.initWorker(workerNum,this.param);
   }
 }
+/**
+ * workerpRocess does not support embeded multiple lines. 
+ */
+
 Converter.prototype.workerProcess=function(data,cb){
   var self=this;
-  workerMgr.sendWorker(data,this.lastIndex,function(length,partial){
-        self.setPartialData(partial);
-        self.lastIndex+=length;
-        cb();
-    },function(results){
-      self.processResult(results,function(){},true);
-    })
+  var line=fileline(data,this.param)
+  this.setPartialData(line.partial)
+  this.workerMgr.sendWorker(line.lines.join("\n"),this.lastIndex,cb,function(results,lastIndex){
+      var cur=self.sequenceBuffer[0];
+      if (cur.idx === lastIndex){
+        cur.result=results;
+        var records=[];
+        while (self.sequenceBuffer[0] && self.sequenceBuffer[0].result){
+          var buf=self.sequenceBuffer.shift();
+          records=records.concat(buf.result)
+        }
+        self.processResult(records)
+        self.recordNum+=records.length;
+      }else{
+        for (var i=0;i<self.sequenceBuffer.length;i++){
+          var buf=self.sequenceBuffer[i];
+          if (buf.idx === lastIndex){
+            buf.result=results;
+            break;
+          }
+        }
+      }
+      // self.processResult(JSON.parse(results),function(){},true);
+  })
+  this.sequenceBuffer.push({
+    idx:this.lastIndex,
+    result:null
+  });
+  this.lastIndex+=line.lines.length;
 }
 Converter.prototype.processHead=function(data,cb){
   var params=this.param;
@@ -135,56 +168,67 @@ Converter.prototype.processHead=function(data,cb){
       }
     }
     if (this.param.workerNum>1){
-      workerMgr.setParams(params);
+      this.workerMgr.setParams(params);
     }
     var res=linesToJson(lines.lines,params,0);
-    
-    this.processResult(res,cb);
+    this.processResult(res);
+    this.lastIndex+=res.length;
+    this.recordNum+=res.length;
+    cb();
   }else{
     cb();
   }
 }
-Converter.prototype.processResult=function(result,cb,isAsync){
+Converter.prototype.processResult=function(result){
   
     for (var i=0;i<result.length;i++){
       var r=result[i];
       if (r.err){
         this.emit("error",r.err);
       }else{
-        if (isAsync){
-          this.sequenceBuffer[r.index]=r;
-          
-        }else{
-          this.emitResult(r);
-        }
+        this.emitResult(r);
       }
     }
     // this.lastIndex+=result.length;
     // cb();
-    if (isAsync){
-      this.flushBuffer(cb);
-    }else{
-      this.lastIndex+=result.length;
-      cb();
-    }
 }
 Converter.prototype.emitResult=function(r){
+  if (this._needJson === null){
+    this._needJson=this.listeners("record_parsed").length>0 || this.transform || this._options.objectMode;
+  }
   var index=r.index;
   var row=r.row;
-  var resultRow=r.json;
-  if (this.transform && typeof this.transform==="function"){
-    this.transform(resultRow,row,index);
+  var result=r.json;
+  var resultJson=null;
+  var resultStr=null;
+  if (typeof result === "string"){
+    resultStr=result;
+  }else{
+    resultJson=result;
   }
-  this.emit("record_parsed", resultRow, row, index);
+  if (resultJson===null && this._needJson){
+    resultJson=JSON.parse(resultStr)
+    if (typeof row ==="string"){
+      row=JSON.parse(row)
+    }
+  }
+  if (this.transform && typeof this.transform==="function"){
+    this.transform(resultJson,row,index);
+  }
+  if (this.listeners("record_parsed").length>0){
+    this.emit("record_parsed", resultJson, row, index);
+  }
   if (this.param.toArrayString && index > 0) {
     this.push("," + eol);
   }
   if (this._options && this._options.objectMode){
-    this.push(resultRow);
+    this.push(resultJson);
   }else{
-    this.push(JSON.stringify(resultRow), "utf8");
+    if (resultStr===null){
+      resultStr=JSON.stringify(resultJson)
+    }
+    this.push(resultStr, "utf8");
   }
-  this.recordNum=index+1;
 }
 // Converter.prototype.initNoFork = function() {
 //   // function onError() {
@@ -329,13 +373,13 @@ Converter.prototype._flush = function(cb) {
 // }
 Converter.prototype.checkAndFlush = function() {
     if (this._csvLineBuffer.length !== 0) {
-      this.emit("error", CSVError.unclosed_quote(this.lastIndex,this._csvLineBuffer), this._csvLineBuffer);
+      this.emit("error", CSVError.unclosed_quote(this.recordNum,this._csvLineBuffer), this._csvLineBuffer);
     }
     if (this.param.toArrayString) {
       this.push(eol + "]", "utf8");
     }
-    if (workerMgr.isRunning()){
-      workerMgr.drain=function(){
+    if (this.workerMgr && this.workerMgr.isRunning()){
+      this.workerMgr.drain=function(){
         this.flushCb();
       }.bind(this);
     }else{

@@ -1,66 +1,109 @@
-module.exports={
-  initWorker:initWorker,
-  sendWorker:sendWorker,
-  setParams:setParams,
-  drain:function(){},
-  isRunning:isRunning,
-  destroyWorker:destroyWorker
-}
-var workers=[];
-var running=0;
-var fork=require("child_process").fork;
-function initWorker(num,params){
-  workers=[];
-  running=0;
-  for (var i=0;i<num;i++){
-    workers.push(new Worker(params));
+module.exports=workerMgr;
+var spawn=require("child_process").spawn;
+var eom="\x03"
+var eom1="\x0e"
+var eom2="\x0f"
+function workerMgr(){
+
+  var exports={
+    initWorker:initWorker,
+    sendWorker:sendWorker,
+    setParams:setParams,
+    drain:function(){},
+    isRunning:isRunning,
+    destroyWorker:destroyWorker
+
   }
-  
-}
-function isRunning(){
-  return running>0;
-}
-function destroyWorker(){
-  workers.forEach(function(w){
-    w.destroy();
-  });
-}
-
-function sendWorker(data,startIdx,cbLine,cbResult){
-  var worker=workers.shift();
-  workers.push(worker);
-  running++;
-  worker.parse(data,startIdx,cbLine,function(){
-    var args=Array.prototype.slice.call(arguments,0);
-    cbResult.apply(this,args);
-    running--;
-    if (running===0){
-      module.exports.drain();
+  var workers=[];
+  var running=0;
+  var waiting=null;
+  function initWorker(num,params){
+    workers=[];
+    running=0;
+    waiting=null;
+    for (var i=0;i<num;i++){
+      workers.push(new Worker(params));
     }
-  });
-}
+    
+  }
+  function isRunning(){
+    return running>0;
+  }
+  function destroyWorker(){
+    workers.forEach(function(w){
+      w.destroy();
+    });
+  }
 
-function setParams(params){
-  workers.forEach(function(w){
-    w.setParams(params);
-  });
-}
+  function sendWorker(data,startIdx,transformCb,cbResult){
+    if (workers.length>0){
+      var worker=workers.shift();
+      running++;
+      worker.parse(data,startIdx,function(result){
+        // var arr=JSON.parse(result);
+        // arr.forEach(function(item){
+        //   console.log('idx',item.index)
+        // })
+        workers.push(worker)
+        cbResult(result,startIdx);
+        running--;
+        if (waiting === null && running===0){
+          exports.drain();
+        }else if (waiting){
+          sendWorker.apply(this,waiting)
+          waiting=null;
+        }
+      });
+      process.nextTick(transformCb)
+    }else{
+      waiting=[data,startIdx,transformCb,cbResult];
+    }
+  }
 
+  function setParams(params){
+    workers.forEach(function(w){
+      w.setParams(params);
+    });
+  }
+  return exports;
+}
 
 function Worker(params){
-  this.cp=fork(__dirname+"/worker.js",[],{
+  this.cp=spawn(process.execPath,[__dirname+"/worker.js"],{
     env:{
       child:true
     },
-    stdio:[0,1,2]
+    stdio:['pipe','pipe',2,'ipc']
+    // stdio:[0,1,2,'ipc']
   });
   this.setParams(params);
   this.cp.on("message",this.onChildMsg.bind(this));
+  this.buffer="";
+  var self=this;
+  this.cp.stdout.on("data",function(d){
+    var str=d.toString("utf8");
+     var all=self.buffer+str;
+      var cmdArr=all.split(eom)
+      while (cmdArr.length >1){
+        self.onChildMsg(cmdArr.shift());
+      }
+      if (all.substring(all.length-3) === eom) {
+        self.onChildMsg(cmdArr.shift());
+      }
+      if (cmdArr.length>0){
+        self.buffer=cmdArr[0];
+      }else{
+        self.buffer="";
+      }
+  })
+  this.cp.on("exit",function(){
+    console.log("EXIT!!!");
+  })
 }
 
 Worker.prototype.setParams=function(params){
   var msg="0"+JSON.stringify(params);
-  this.cp.send(msg);
+  this.sendMsg(msg);
 }
 /**
  * msg is like:
@@ -68,6 +111,7 @@ Worker.prototype.setParams=function(params){
  * cmd is from 0-9
  */
 Worker.prototype.onChildMsg=function(msg){
+  if (msg){
   var cmd=msg[0];
   var data=msg.substr(1);
   switch (cmd){
@@ -81,17 +125,32 @@ Worker.prototype.onChildMsg=function(msg){
       break;
     case "1": // json array of current chunk
       if (this.cbResult){
-        this.cbResult(JSON.parse(data));
+        var rows=data.split(eom1);
+        rows.pop();
+        var res=[];
+        rows.forEach(function(row){
+          var sp=row.split(eom2);
+          res.push({
+            index:sp[0],
+            row:sp[1],
+            json:sp[2]
+          }) 
+        })
+        this.cbResult(res);
       }
       break;
   }
+  }
 }
-Worker.prototype.parse=function(data,startIdx,cbLine,cbResult){
-  this.cbLine=cbLine;
+Worker.prototype.parse=function(data,startIdx,cbResult){
   this.cbResult=cbResult;
   var msg="1"+startIdx+"|"+data;
-  this.cp.send(msg);
+  this.sendMsg(msg);
 }
 Worker.prototype.destroy=function(){
   this.cp.kill();
+}
+Worker.prototype.sendMsg=function(msg){
+  this.cp.stdin.write(msg+eom,"utf8")
+  // this.cp.send(msg)
 }

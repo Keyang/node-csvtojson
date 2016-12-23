@@ -2,6 +2,9 @@ var param=null;
 var fileLine=require("./fileline");
 var csvline=require("./csvline");
 var linesToJson=require("./linesToJson");
+var eom="\x03";
+var eom1="\x0e"
+var eom2="\x0f"
 /**
  * message is like :
  * 0{"a":"b"}
@@ -9,7 +12,27 @@ var linesToJson=require("./linesToJson");
  * <cmd><data>
  * <cmd> is 0-9
  */
-process.on("message",function(msg){
+var buffer="";
+process.stdin.on("data",function(d){
+  // console.error(typeof d)
+  var str=d.toString("utf8");
+  var all=buffer+str;
+  var cmdArr=all.split(eom)
+  while (cmdArr.length >1){
+    processMsg(cmdArr.shift());
+  }
+  if (all.substring(all.length-3) === eom) {
+    processMsg(cmdArr.shift());
+  }
+  if (cmdArr.length>0){
+    buffer=cmdArr[0];
+  }else{
+    buffer="";
+  }
+});
+process.on("message",processMsg)
+function processMsg(msg){
+  if (msg){
     var cmd=msg[0];
     var data=msg.substr(1);
     switch (cmd){
@@ -20,9 +43,10 @@ process.on("message",function(msg){
         processData(data);
         break;
       default:
-        console.error("Unknown command: ",msg);
+        console.error("Unknown command: "+msg);
     }
-});
+  }
+}
 
 function initParams(data){
    param=JSON.parse(data);
@@ -41,9 +65,18 @@ function processData(data){
   var startIdx=parseInt(data.substr(0,sepIdx));
   var csvData=data.substr(sepIdx+1);
   var lines=fileLine(csvData,param);//convert to file lines.
-  process.send("0"+lines.lines.length+"|"+lines.partial);
+  // process.send("0"+lines.lines.length+"|"+lines.partial);
   var csvLines=csvline(lines.lines,param);
   var res=linesToJson(csvLines.lines,param,startIdx);
-  process.send("1"+JSON.stringify(res));
+  //1<line num>|^<row>|^data|&<line num>|^<row>|^data
+  var str="1";
+  res.forEach(function(item){
+    str+=item.index+eom2+JSON.stringify(item.row)+eom2+JSON.stringify(item.json)+eom1
+  })
+  sendData("1"+str);
 }
 
+function sendData(str){
+  process.stdout.write(str+eom);
+  // process.send(str)
+}

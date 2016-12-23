@@ -799,6 +799,10 @@ See more detailed information [here](https://nodejs.org/api/stream.html#stream_c
 
 #Change Log
 
+## 1.1.0
+
+* Remove support of `new Converter(true)`
+
 ## 1.0.2
 * supported ndjson format as per #113 and #87
 * issue: #120
