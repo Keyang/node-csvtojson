@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.org/Keyang/node-csvtojson.svg?branch=master)](https://travis-ci.org/Keyang/node-csvtojson)
+
+
 #CSVTOJSON
 
 Nodejs csv to json converter. Fully featured:
@@ -7,18 +10,20 @@ Nodejs csv to json converter. Fully featured:
 * Parse CSV to JSON or CSV column arrays
 * Support all types of CSV
 * Non-blocking parsing / multi core support
-* Extremely fast 
+* [Extremely fast](https://github.com/Keyang/node-csvtojson/blob/develop/docs/performance.md): **4 - 6 times faster** than other csv parsers on node.js
 * Streaming data / low memory usage on large CSV data source
 
 
 
 ## Major update v1.1.0
 
-Version 1.1.0 has added new features and optimised lib performance. It also introduced simpler APIs to use. Thus readme is re-written to adapt the preferred new APIs. The lib will support old APIs. To review the old readme please click here. 
+Version 1.1.0 has added new features and optimised lib performance. It also introduced simpler APIs to use. Thus readme is re-written to adapt the preferred new APIs. The lib will support old APIs. To review the old readme please [click here](https://github.com/Keyang/node-csvtojson/blob/develop/readme-old.md). 
 
-* Performance Optimisation: V1.1.0 is 30%-50% faster
+* [Performance Optimisation](https://github.com/Keyang/node-csvtojson/blob/develop/docs/performance.md#performance-optimisation): V1.1.0 is 30%-50% faster
 * Better error tolerance
 * Simplified API (see below)
+
+All changes are backward compatible.
 
 # Demo
 
@@ -457,7 +462,7 @@ $ csvtojson --workerNum=4
 
 This will create 3 extra workers. Main process will only be used for delegating data / emitting result / pushing to downstream. Just keep in mind, those operations on Main process are not free and it will still take a certain amount CPU time.
 
-See here for how `csvtojson` leverages CPU usage when using multi-cores.
+See [here](https://github.com/Keyang/node-csvtojson/blob/develop/docs/performance.md#cpu-usage-leverage) for how `csvtojson` leverages CPU usage when using multi-cores.
 
 
 #Change Log

@@ -1,12 +1,8 @@
 var util = require("util");
 var Transform = require("stream").Transform;
-var Readable = require("stream").Readable;
-var Result = require("./Result");
 var os = require("os");
 var eol = os.EOL;
 // var Processor = require("./Processor.js");
-var utils = require("./utils.js");
-var async = require("async");
 var defParam=require("./defParam");
 var csvline=require("./csvline");
 var fileline=require("./fileline");
