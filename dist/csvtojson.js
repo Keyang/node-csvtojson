@@ -4,303 +4,313 @@ if (window){
   window.csvtojson.version=require("./package.json").version;
 }
 
-},{"./index.js":2,"./package.json":69}],2:[function(require,module,exports){
+},{"./index.js":2,"./package.json":73}],2:[function(require,module,exports){
 module.exports = require("./libs/csv2json.js");
-},{"./libs/csv2json.js":18}],3:[function(require,module,exports){
+},{"./libs/csv2json.js":23}],3:[function(require,module,exports){
+var util=require("util");
+module.exports=CSVError;
+function CSVError(err,index,extra){
+  Error.call(this,"");
+  this.err=err;
+  this.line=index;
+  this.extra=extra;
+  this.message="Error: "+err+". JSON Line number: "+index+ (extra?" near: "+extra:"");
+  this.name="CSV Error";
+}
+util.inherits(CSVError,Error);
+
+CSVError.prototype.toString=function(){
+  return JSON.stringify([this.err,this.line,this.extra]);
+}
+
+CSVError.column_mismatched=function(index,extra){
+  return new CSVError("column_mismatched",index,extra);
+}
+
+CSVError.unclosed_quote=function(index,extra){
+  return new CSVError("unclosed_quote",index,extra);
+}
+
+CSVError.fromArray=function(arr){
+  return new CSVError(arr[0],arr[1],arr[2]);
+}
+},{"util":71}],4:[function(require,module,exports){
+(function (process){
 var util = require("util");
 var Transform = require("stream").Transform;
-var Readable = require("stream").Readable;
-var Result = require("./Result");
 var os = require("os");
 var eol = os.EOL;
-var Processor = require("./Processor.js");
-var Worker = require("./Worker.js");
-var utils = require("./utils.js");
-var async = require("async");
-
+// var Processor = require("./Processor.js");
+var defParam=require("./defParam");
+var csvline=require("./csvline");
+var fileline=require("./fileline");
+var dataToCSVLine=require("./dataToCSVLine");
+var linesToJson=require("./linesToJson");
+var CSVError=require("./CSVError");
+var workerMgr=require("./workerMgr");
 function Converter(params,options) {
   Transform.call(this,options);
-  var _param = {
-    constructResult: true, //set to false to not construct result in memory. suitable for big csv data
-    delimiter: ',', // change the delimiter of csv columns. It is able to use an array to specify potencial delimiters. e.g. [",","|",";"]
-    quote: '"', //quote for a column containing delimiter.
-    trim: true, //trim column's space charcters
-    checkType: true, //whether check column type
-    toArrayString: false, //stream down stringified json array instead of string of json. (useful if downstream is file writer etc)
-    ignoreEmpty: false, //Ignore empty value while parsing. if a value of the column is empty, it will be skipped parsing.
-    workerNum: 1, //number of parallel workers. If multi-core CPU available, increase the number will get better performance for large csv data.
-    fork: false, //use another CPU core to convert the csv stream
-    noheader: false, //indicate if first line of CSV file is header or not.
-    headers: null, //an array of header strings. If noheader is false and headers is array, csv header will be ignored.
-    flatKeys: false, // Don't interpret dots and square brackets in header fields as nested object or array identifiers at all.
-    maxRowLength: 0, //the max character a csv row could have. 0 means infinite. If max number exceeded, parser will emit "error" of "row_exceed". if a possibly corrupted csv data provided, give it a number like 65535 so the parser wont consume memory. default: 0
-    checkColumn: false //whether check column number of a row is the same as headers. If column number mismatched headers number, an error of "mismatched_column" will be emitted.. default: false
-  };
-  if (params && typeof params === "object") {
-    for (var key in params) {
-      if (params.hasOwnProperty(key)) {
-        _param[key] = params[key];
-      }
-    }
-  } else if (typeof params === "boolean") { //backcompatible with older version
-    console.warn("Parameter should be a JSON object like {'constructResult':false}");
-    _param.constructResult = params;
-  }
+  _param=defParam(params);
   this._options=options || {};
   this.param = _param;
   this.param._options=this._options;
-  this.resultObject = new Result(this);
-  this.pipe(this.resultObject); // it is important to have downstream for a transform otherwise it will stuck
-  this.started = false;
+  // this.resultObject = new Result(this);
+  // this.pipe(this.resultObject); // it is important to have downstream for a transform otherwise it will stuck
+  this.started = false;//indicate if parsing has started.
   this.recordNum = 0;
-  this.lineNumber=0;
-  this.runningProcess = 0;
+  this.lineNumber=0; //file line number
+  this._csvLineBuffer="";
+  this.lastIndex=0; // index in result json array
   //this._pipe(this.lineParser).pipe(this.processor);
-  if (this.param.fork) {
-    this.param.fork=false;
-    this.param.workerNum=2;
-  }
-  this.initNoFork();
+  // this.initNoFork();
+  if (this.param.forked){
+    this.param.forked=false;
+    this.workerNum=2;
+  } 
   this.flushCb = null;
   this.processEnd = false;
   this.sequenceBuffer = [];
-  this.on("end", function() {
-    var finalResult = this.param.constructResult ? this.resultObject.getBuffer() : {};
-    this.emit("end_parsed", finalResult);
-  }.bind(this));
+  this._needJson=null;
+  this._needEmitResult=null;
+  this._needEmitFinalResult=null;
+  this._needEmitJson=null;
+  this._needPush=null;
+  this._needEmitCsv=null;
+  this._csvTransf=null;
+  this.finalResult=[];
+  // this.on("data", function() {});
   this.on("error", function() {});
+  this.initWorker();
+  process.nextTick(function(){
+    if (this._needEmitFinalResult === null){
+      this._needEmitFinalResult=this.listeners("end_parsed").length > 0
+    }
+    if (this._needEmitResult===null){
+      this._needEmitResult=this.listeners("record_parsed").length>0
+    }
+    if (this._needEmitJson === null){
+      this._needEmitJson=this.listeners("json").length>0
+    }
+    if (this._needEmitCsv === null){
+      this._needEmitCsv=this.listeners("csv").length>0
+    }
+    if (this._needJson === null){
+      this._needJson=this._needEmitJson || this._needEmitFinalResult || this._needEmitResult || this.transform || this._options.objectMode;
+    }
+    if (this._needPush === null){
+      this._needPush = this.listeners("data").length > 0 || this.listeners("readable").length>0
+      // this._needPush=false;
+    }
+    this.param._needParseJson=this._needJson || this._needPush; 
+
+  }.bind(this))
   return this;
 }
 util.inherits(Converter, Transform);
-// Converter.prototype.initFork = function() {
-//   var env = process.env;
-//   env.params = JSON.stringify(this.param);
-//   this.child = require("child_process").fork(__dirname + "/fork.js", {
-//     env: env,
-//     silent: true
-//   });
-//   this.child.stderr.on("data", function(d, e) {
-//     process.stderr.write(d, e);
-//     // this.push(d, e);
-//     // this.emit("record_parsed");
-//   }.bind(this));
-//   // this.child.stdout.on("data",function(d){
-//   //   this.push(d.toString("utf8"));
-//   // }.bind(this));
-//   this.child.on("message", function(msg) {
-//     if (msg.action === "record_parsed") {
-//       //var recs = msg.arguments;
-//       var args = msg.arguments;
-//       //console.log(recs);
-//       //var recs=args[0];
-//       //for (var i=0;i<recs.length;i++){
-//       //this.emit("record_parsed", recs[i][0], recs[i][1], recs[i][2]);
-//       //}
-//       this.emit("record_parsed", args[0], args[1], args[2]);
-//     } else if (msg.action === "data") {
-//       var args = msg.arguments;
-//       this.push(new Buffer(args[0]), args[1]);
-//     } else if (msg.action === "error") {
-//       var args = msg.arguments;
-//       args.unshift("error");
-//       this.hasError = true;
-//       this.emit.apply(this, args);
-//     }
-//   }.bind(this));
-//   this._transform = this._transformFork;
-//   this._flush = this._flushFork;
-//   //child.on("message",function(msg){
-//   //var syncLock=false;
-//   //if (msg.action=="record_parsed"){
-//   //this.sequenceBuffer[msg.index]=msg;
-//   //if
-//   //}
-//   //}.bind(this));
-//   //child.on("exit",function(code){
-//   //this.processEnd=true;
-//   //this.flushBuffer();
-//   //this.checkAndFlush();
-//   //}.bind(this));
-// }
-Converter.prototype.initNoFork = function() {
-  // function onError() {
-  //   var args = Array.prototype.slice.call(arguments, 0);
-  //   args.unshift("error");
-  //   this.hasError = true;
-  //   this.emit.apply(this, args);
-  // };
-  this._lineBuffer = "";
-  this._csvLineBuffer = "";
-  // this.lineParser = new CSVLine(this.param);
-  // this.lineParser.on("error", onError.bind(this));
-  if (this.param.delimiter instanceof Array || this.param.delimiter.toLowerCase()==="auto"){
-    this.param.needCheckDelimiter=true;
-  }else{
-    this.param.needCheckDelimiter=false;
-  }
-  this.processor = new Processor(this.param);
-  // this.processor.on("error", onError.bind(this));
-  // var syncWorker = new Worker(this.param, true);
-  // // syncWorker.on("error",onError);
-  // this.processor.addWorker(syncWorker);
-  // if (this.param.workerNum > 1) {
-  //   for (var i = 1; i < this.param.workerNum; i++) {
-  //     var worker = new Worker(this.param, false);
-  //     // worker.on("error",onError);
-  //     this.processor.addWorker(worker);
-  //   }
-  // } else if (this.param.workerNum < 1) {
-  //   this.param.workerNum = 1;
-  // }
-  if (!this.param.constructResult) {
-    this.resultObject.disableConstruct();
-  }
-  // this.lineParser.pipe(this.processor);
-  var syncLock = false;
-  // this.processor.on("record_parsed", function(resultRow, row, index) {
-  //   // this.emit("record_parsed", resultRow, row, index);
-  //   this.sequenceBuffer[index] = {
-  //     resultRow: resultRow,
-  //     row: row,
-  //     index: index
-  //   };
-  //   //critical area
-  //   if (!syncLock) {
-  //     syncLock = true;
-  //     this.flushBuffer();
-  //     syncLock = false;
-  //   }
-  // }.bind(this));
-  // this.processor.on("end_parse", function() {
-  //   this.processEnd = true;
-  //   this.flushBuffer();
-  //   this.checkAndFlush();
-  // }.bind(this));
-  this._transform = this._transformNoFork;
-  this._flush = this._flushNoFork;
-}
-Converter.prototype.flushBuffer = function() {
-  while (this.sequenceBuffer[this.recordNum]) {
-    var index = this.recordNum;
-    var obj = this.sequenceBuffer[index];
-    this.sequenceBuffer[index] = undefined;
-    var resultJSONStr = obj.resultJSONStr;
-    var resultRow = JSON.parse(resultJSONStr)
-    var row = obj.row;
-    if (this.transform && typeof this.transform==="function"){
-      this.transform(resultRow,row,index);
-      resultJSONStr=JSON.stringify(resultRow);
-    }
-    this.emit("record_parsed", resultRow, row, index);
-    if (this.param.toArrayString && this.recordNum > 0) {
-      this.push("," + eol);
-    }
-    if (this._options && this._options.objectMode){
-      this.push(resultRow);
-    }else{
-      this.push(resultJSONStr, "utf8");
-    }
-    this.recordNum++;
-  }
-  this.checkAndFlush();
-}
-Converter.prototype.preProcessRaw=function(data,cb){
-  cb(data);
-}
-
-Converter.prototype._transformNoFork = function(data, encoding, cb) {
+Converter.prototype._transform = function(data, encoding, cb) {
   if (this.param.toArrayString && this.started === false) {
     this.started = true;
-    this.push("[" + eol, "utf8");
+    if (this._needPush){
+      this.push("[" + eol, "utf8");
+    }
   }
   data=data.toString("utf8");
   var self=this;
   this.preProcessRaw(data,function(d){
     if (d && d.length>0){
-      var lines = self.toCSVLines(self.toLines(d)); //lines of csv
-      self.processCSVLines(lines, cb);
+      self.processData(self.prepareData(d), cb);
     }else{
       cb();
     }
   })
-  // async.eachLimit(lines,1,function(line,scb){
-  //   this.push(line.data);
-  //   scb();
-  // }.bind(this),function(err){
-  //   cb();
-  // });
-  //this.push(data,encoding);
-  // cb();
 };
-Converter.prototype.processCSVLines = function(csvLines, cb) {
-  // for (var i=0;i<csvLines.length;i++){
-  //   this.push(csvLines[i].data);
-  // }
-  // cb();
-  // return;
-  this.runningProcess++;
-  this.processor.rows(csvLines, function(err, resArr) {
-    this.runningProcess--;
-    if (err) {
-      this.emit("error","row_process",err);
-    } else {
-      for (var i = 0; i < resArr.length; i++) {
-        this.sequenceBuffer[resArr[i].index] = {
-          resultJSONStr: resArr[i].jsonRaw,
-          row: resArr[i].row,
-          index: resArr[i].index
+Converter.prototype.prepareData=function(data){
+  return this._csvLineBuffer+data;
+}
+Converter.prototype.setPartialData=function(d){
+  this._csvLineBuffer=d;
+}
+Converter.prototype.processData=function(data,cb){
+  var params=this.param;
+  if (!params._headers){ //header is not inited. init header
+    this.processHead(data,cb);
+  }else{
+    if (params.workerNum<=1){
+      var lines=dataToCSVLine(data,params);
+      this.setPartialData(lines.partial);
+      var jsonArr=linesToJson(lines.lines,params,this.recordNum);
+      this.processResult(jsonArr)
+      this.lastIndex+=jsonArr.length;
+      this.recordNum+=jsonArr.length;
+      cb();
+    }else{
+      this.workerProcess(data,cb);
+    }
+  }
+}
+Converter.prototype.initWorker=function(){
+  var workerNum=this.param.workerNum-1;
+  if (workerNum>0){
+    this.workerMgr=workerMgr();
+    this.workerMgr.initWorker(workerNum,this.param);
+  }
+}
+/**
+ * workerpRocess does not support embeded multiple lines. 
+ */
+
+Converter.prototype.workerProcess=function(data,cb){
+  var self=this;
+  var line=fileline(data,this.param)
+  var eol=this.getEol(data)
+  this.setPartialData(line.partial)
+  this.workerMgr.sendWorker(line.lines.join(eol)+eol,this.lastIndex,cb,function(results,lastIndex){
+      var cur=self.sequenceBuffer[0];
+      if (cur.idx === lastIndex){
+        cur.result=results;
+        var records=[];
+        while (self.sequenceBuffer[0] && self.sequenceBuffer[0].result){
+          var buf=self.sequenceBuffer.shift();
+          records=records.concat(buf.result)
+        }
+        self.processResult(records)
+        self.recordNum+=records.length;
+      }else{
+        for (var i=0;i<self.sequenceBuffer.length;i++){
+          var buf=self.sequenceBuffer[i];
+          if (buf.idx === lastIndex){
+            buf.result=results;
+            break;
+          }
         }
       }
-      this.flushBuffer();
+      // self.processResult(JSON.parse(results),function(){},true);
+  })
+  this.sequenceBuffer.push({
+    idx:this.lastIndex,
+    result:null
+  });
+  this.lastIndex+=line.lines.length;
+}
+Converter.prototype.processHead=function(data,cb){
+  var params=this.param;
+  if (!params._headers){ //header is not inited. init header
+    var lines=dataToCSVLine(data,params);
+    this.setPartialData(lines.partial);
+    if (params.noheader){
+      if (params.headers){
+        params._headers=params.headers;
+      }else{
+        params._headers=[];
+      }
+    }else{
+      var headerRow=lines.lines.shift();
+      if (params.headers){
+        params._headers=params.headers;
+      }else{
+        params._headers=headerRow;
+      }
     }
-  }.bind(this), cb);
+    if (this.param.workerNum>1){
+      this.workerMgr.setParams(params);
+    }
+    var res=linesToJson(lines.lines,params,0);
+    this.processResult(res);
+    this.lastIndex+=res.length;
+    this.recordNum+=res.length;
+    cb();
+  }else{
+    cb();
+  }
 }
-Converter.prototype.toLines = function(data) {
-  data = this._lineBuffer + data;
-  var eol = this.getEol(data);
-  return data.split(eol);
+Converter.prototype.processResult=function(result){
+    
+    for (var i=0;i<result.length;i++){
+      var r=result[i];
+      if (r.err){
+        this.emit("error",r.err);
+      }else{
+        this.emitResult(r);
+      }
+    }
+    // this.lastIndex+=result.length;
+    // cb();
 }
+Converter.prototype.emitResult=function(r){
+  var index=r.index;
+  var row=r.row;
+  var result=r.json;
+  var resultJson=null;
+  var resultStr=null;
+  if (typeof result === "string"){
+    resultStr=result;
+  }else{
+    resultJson=result;
+  }
+  if (resultJson===null && this._needJson){
+    resultJson=JSON.parse(resultStr)
+    if (typeof row ==="string"){
+      row=JSON.parse(row)
+    }
+  }
+  if (this.transform && typeof this.transform==="function"){
+    this.transform(resultJson,row,index);
+    resultStr=null;
+  }
+  if (this._needEmitJson){
+    this.emit("json",resultJson,index)
+  }
+  if (this._needEmitCsv){
+    if (typeof row ==="string"){
+      row=JSON.parse(row)
+    }
+    this.emit("csv",row,index)
+  }
+  if (this.param.constructResult && this._needEmitFinalResult){
+    this.finalResult.push(resultJson)
+  }
+  if (this._needEmitResult){
+    this.emit("record_parsed", resultJson, row, index);
+  }
+  if (this.param.toArrayString && index > 0 && this._needPush) {
+    this.push("," + eol);
+  }
+  if (this._options && this._options.objectMode){
+    this.push(resultJson);
+  }else{
+    if (this._needPush){
+      if (resultStr===null){
+        resultStr=JSON.stringify(resultJson)
+      }
+      this.push(!this.param.toArrayString?resultStr+eol:resultStr, "utf8");
+    }
+  }
+}
+
+Converter.prototype.preProcessRaw=function(data,cb){
+  cb(data);
+}
+
 Converter.prototype.preProcessLine=function(line,lineNumber){
     return line;
 }
-Converter.prototype.toCSVLines = function(fileLines, last) {
-  var recordLine = "";
-  var lines = [];
-  while (fileLines.length > 1) {
-    this.lineNumber++;
-    var line = this.preProcessLine(fileLines.shift(),this.lineNumber);
-    if (line && line.length>0){
-      lines = lines.concat(this._line(line));
-    }
-  }
-  this._lineBuffer = fileLines[0];
-  if (last && this._csvLineBuffer.length > 0) {
-    this.emit("error", "unclosed_quote", this._csvLineBuffer)
-  }
-  return lines;
-}
-Converter.prototype._line = function(line) {
-  var lines = [];
-  this._csvLineBuffer += line;
-  if (this.param.maxRowLength && this._csvLineBuffer.length > this.param.maxRowLength) {
-    this.hasError = true;
-    this.emit("error", "row_exceed", this._csvLineBuffer);
-  }
-  if (!utils.isToogleQuote(this._csvLineBuffer, this.param.quote)) { //if a complete record is in buffer.push to result
-    var data = this._csvLineBuffer;
-    this._csvLineBuffer = '';
-    lines.push(data);
-  } else { //if the record in buffer is not a complete record (quote does not close). wait next line
-    this._csvLineBuffer += this.getEol();
-  }
-  return lines;
-}
-Converter.prototype._flushNoFork = function(cb) {
+Converter.prototype._flush = function(cb) {
   var self = this;
-  this.flushCb = cb;
-  if (this._lineBuffer.length > 0) {
-    var lines = this._line(this._lineBuffer);
-    this.processCSVLines(lines, function() {
+  this.flushCb=function(){
+    self.emit("end_parsed",self.finalResult);
+    if (self.workerMgr){
+      self.workerMgr.destroyWorker();
+    }
+    cb()
+    if (!self._needPush){
+      self.emit("end")
+    }
+  };
+  if (this._csvLineBuffer.length > 0) {
+    if (this._csvLineBuffer[this._csvLineBuffer.length-1] != this.getEol()){
+      this._csvLineBuffer+=this.getEol();
+    }
+    this.processData(this._csvLineBuffer,function(){
       this.checkAndFlush();
     }.bind(this));
   } else {
@@ -316,17 +326,19 @@ Converter.prototype._flushNoFork = function(cb) {
 //   this.child.on("exit", cb);
 // }
 Converter.prototype.checkAndFlush = function() {
-  if (this.runningProcess === 0 && this.flushCb) {
     if (this._csvLineBuffer.length !== 0) {
-      this.emit("error", "unclosed_quote", this._csvLineBuffer);
+      this.emit("error", CSVError.unclosed_quote(this.recordNum,this._csvLineBuffer), this._csvLineBuffer);
     }
-    if (this.param.toArrayString) {
+    if (this.param.toArrayString && this._needPush) {
       this.push(eol + "]", "utf8");
     }
-    this.flushCb();
-    this.processor.releaseWorker();
-    this.flushCb = null;
-  }
+    if (this.workerMgr && this.workerMgr.isRunning()){
+      this.workerMgr.drain=function(){
+        this.flushCb();
+      }.bind(this);
+    }else{
+      this.flushCb();
+    }
 }
 Converter.prototype.getEol = function(data) {
   if (!this.param.eol && data) {
@@ -350,381 +362,158 @@ Converter.prototype.getEol = function(data) {
 };
 Converter.prototype.fromFile = function(filePath, cb) {
   var fs = require('fs');
+  var rs=null;
+  this.wrapCallback(cb, function() {
+    if (rs && rs.destroy){
+      rs.destroy();
+    }
+  });
   fs.exists(filePath, function(exist) {
     if (exist) {
-      var rs = fs.createReadStream(filePath);
+      rs = fs.createReadStream(filePath);
       rs.pipe(this);
-      this.wrapCallback(cb, function() {
-        rs.destroy();
-      });
     } else {
-      cb(new Error(filePath + " cannot be found."));
+      this.emit('error',new Error("File not exist"))
     }
   }.bind(this));
   return this;
 }
+Converter.prototype.fromStream=function(readStream,cb){
+  if (cb && typeof cb ==="function"){
+    this.wrapCallback(cb);
+  }
+  process.nextTick(function(){
+    readStream.pipe(this);
+  }.bind(this))
+  return this;
+}
+Converter.prototype.transf=function(func){
+  this.transform=func;
+  return this;
+}
 Converter.prototype.fromString = function(csvString, cb) {
-  var rs = new Readable();
-  var offset = 0;
   if (typeof csvString != "string") {
     return cb(new Error("Passed CSV Data is not a string."));
   }
-  rs._read = function(len) {
-    // console.log(offset,len,csvString.length);
-    var sub = csvString.substr(offset, len);
-    this.push(sub);
-    offset += len;
-    if (offset >= csvString.length) {
-      this.push(null);
-    }
-  };
-  rs.pipe(this);
   if (cb && typeof cb === "function") {
     this.wrapCallback(cb, function() {
-      rs.pause();
     });
   }
+  process.nextTick(function(){
+    this.end(csvString)
+  }.bind(this))
   return this;
 };
 Converter.prototype.wrapCallback = function(cb, clean) {
-  this.once("end_parsed", function(res) {
-    if (!this.hasError) {
-      cb(null, res);
-    }
-  }.bind(this));
+
+  if (clean === undefined){
+    clean=function(){}
+  }
+  if (cb && typeof cb ==="function"){
+    this.once("end_parsed", function(res) {
+      if (!this.hasError) {
+        cb(null, res);
+      }
+    }.bind(this));
+  }
   this.once("error", function(err) {
     this.hasError=true;
-    cb(Array.prototype.join.call(arguments, ", "));
+    if (cb && typeof cb  ==="function"){
+      cb(err);
+    }
     clean();
   }.bind(this));
 }
 
 module.exports = Converter;
 
-},{"./Processor.js":4,"./Result":5,"./Worker.js":6,"./utils.js":16,"async":24,"fs":25,"os":35,"stream":54,"util":67}],4:[function(require,module,exports){
+}).call(this,require('_process'))
+},{"./CSVError":3,"./csvline":5,"./dataToCSVLine":6,"./defParam":7,"./fileline":14,"./linesToJson":18,"./workerMgr":22,"_process":40,"fs":29,"os":39,"stream":58,"util":71}],5:[function(require,module,exports){
+var getEol=require("./getEol");
+var getDelimiter=require("./getDelimiter");
+var toLines=require("./fileline");
+var rowSplit=require("./rowSplit");
 /**
- * Processor processes a line of csv data.
- * Upstream: csv line
- * Downstream: any
+ * Convert lines to csv columns
+ * @param  {[type]} lines [file lines]
+ * @param  {[type]} param [Converter param]
+ * @return {[type]}  {lines:[[col1,col2,col3...]],partial:String}
  */
-module.exports = Processor;
-var util = require("util");
-var utils = require("./utils.js");
+module.exports=function(lines,param){
+  var csvLines=[];
+  var left="";
+  while (lines.length){
+    var line=left+lines.shift();
+    var row=rowSplit(line,param);
+    if (row.closed){
+      csvLines.push(row.cols);
+      left="";
+    }else{
+      left=line+getEol(line,param);
+    }
+  }
+  return {lines:csvLines,partial:left};
+}
 
-var parserMgr = require("./parserMgr.js");
-var Worker = require('./Worker');
-var async = require("async");
-
-function Processor(params) {
+},{"./fileline":14,"./getDelimiter":15,"./getEol":16,"./rowSplit":21}],6:[function(require,module,exports){
+var fileline=require("./fileline");
+var csvline=require("./csvline");
+/**
+ * Convert data chunk to csv lines with cols
+ * @param  {[type]} data   [description]
+ * @param  {[type]} params [description]
+ * @return {[type]}    {lines:[[col1,col2,col3]],partial:String}
+ */
+module.exports=function(data,params){
+    var line=fileline(data,params);
+    var lines=line.lines;
+    var csvLines=csvline(lines,params);
+    return {
+      lines:csvLines.lines,
+      partial:csvLines.partial+line.partial
+    }
+}
+},{"./csvline":5,"./fileline":14}],7:[function(require,module,exports){
+(function (process){
+module.exports=function(params){
   var _param = {
-    delimiter: ",",
-    quote: '"',
-    trim: true,
-    checkType: true,
-    ignoreEmpty: false,
-    workerNum: 1
-  }
-  for (var key in params) {
-    if (params.hasOwnProperty(key)) {
-      _param[key] = params[key];
-    }
-  }
-  this.param = _param;
-  this.workers = [];
-  this.recordNumber = -1;
-  this.valveCb = [];
-  this.runningWorker = 0;
-  this.flushCb = null;
-  if (this.param.workerNum > 1) {
-    for (var i = 0; i < this.param.workerNum-1; i++) {
-      var worker = new Worker(this.param, false);
-      // worker.on("error",onError);
-      this.addWorker(worker);
-    }
-  } else{
-    this.param.workerNum = 1;
-    this.addWorker(new Worker(this.param,true));
-  }
-
-}
-Processor.prototype.rows = function(csvRows, cb,valvCb) {
-  if (csvRows.length === 0) {
-    cb(null, []);
-    valvCb();
-    return;
-  }
-  var count = csvRows.length;
-  var rtn = [];
-  var _err = null;
-  if (this.recordNumber === -1) {
-    var headRow="";
-    if (!this.param.noheader){
-      headRow = csvRows.shift();
-    }
-    this.processHead(headRow, function() {
-      this.recordNumber++;
-      this.rows(csvRows, cb,valvCb);
-    }.bind(this));
-  } else {
-    var worker=this.getFreeWorker();
-    worker.processRows(csvRows,this.recordNumber,function(err,res){
-        this.addWorker(worker);
-        this.releaseValve();
-        cb(err,res);
-    }.bind(this));
-    this.recordNumber+=csvRows.length;
-    this.valve(valvCb);
-  }
-  // console.log(csvRows, csvRows.length);
-}
-Processor.prototype.processHead = function(row, cb) {
-  async.each(this.workers, function(worker, scb) {
-      worker.processHeadRow(row, scb);
-  }.bind(this), function() {
-    //console.log(arguments);
-    if (this.param.noheader) {
-      this.rowProcess(row, 0, cb); //wait until one row processing finished
-    } else {
-      cb();
-    }
-  }.bind(this));
-}
-  //   this.recordNumber++;
-  // }
-Processor.prototype.valve = function(cb) {
-  // console.log(this.workers.length);
-  if (this.workers.length>0) {
-    cb();
-  } else {
-    this.valveCb.push(cb);
-  }
-}
-Processor.prototype.releaseValve = function() {
-  if (this.valveCb.length > 0) {
-    var cb = this.valveCb.shift();
-    cb();
-  }
-}
-Processor.prototype.releaseWorker = function() {
-  this.released=true;
-  this.workers.forEach(function(worker) {
-    worker.release();
-  });
-}
-Processor.prototype.addWorker = function(worker) {
-  // if (this.released){
-  //   worker.release();
-  // }else{
-    this.workers.push(worker);
-  // }
-}
-Processor.prototype.getFreeWorker=function(){
-  return this.workers.shift();
-}
-Processor.prototype.processHeadRow = function(headRow, cb) {
-  this.parseRules = parserMgr.initParsers(headRow, this.param.checkType);
-  //check if all parsers are process safe.
-  var processSafe = true;
-  this.parseRules.forEach(function(parser) {
-    processSafe = processSafe && parser.processSafe;
-  });
-  if (!processSafe) {
-    if (this.workers.length > 1) {
-      console.log("multi workers for non-processsafe parser is not supported.");
-      //WARN multi workers for non-processsafe parser is not supported.
-    }
-    this.workers = [this.workers[0]];
-  }
-  async.each(this.workers, function(worker, scb) {
-    worker.processHeadRow(headRow, scb);
-  }, function() {
-    //console.log(arguments);
-    cb();
-  });
-}
-Processor.prototype.rowProcess = function(data, curIndex, cb) {
-  var worker;
-  if (this.workers.length > 1) { // if multi-worker enabled
-    // console.log(curIndex,data);
-    if (this.workers.length > 2) { // for 2+ workers, host process will concentrate on csv parsing while workers will convert csv lines to JSON.
-      worker = this.workers[(curIndex % (this.workers.length - 1)) + 1];
-    } else { //for 2 workers, leverage it as first worker has like 50% cpu used for csv parsing. the weight would be like 0,1,1,0,1,1,0
-      var index = curIndex % 3;
-      if (index > 1) {
-        index = 1;
-      }
-      worker = this.workers[index];
-    }
-  } else { //if only 1 worker
-    worker = this.workers[0];
-  }
-  worker.processRow(data, curIndex, cb);
-}
-Processor.prototype.checkAndFlush = function() {
-  if (this.runningWorker === 0 && this.flushCb) {
-    this.releaseWorker();
-    this.flushCb();
-    this.emit("end_parse");
-  }
-}
-Processor.prototype._flush = function(cb) {
-  this.flushCb = cb;
-  this.checkAndFlush();
-}
-
-},{"./Worker":6,"./parserMgr.js":15,"./utils.js":16,"async":24,"util":67}],5:[function(require,module,exports){
-var Writable = require("stream").Writable;
-var util = require("util");
-var eol=require("os").EOL;
-function Result(csvParser) {
-  Writable.call(this,csvParser._options);
-  this._option=csvParser._options || {};
-  this.parser = csvParser;
-  this.param = csvParser.param;
-  this.buffer =this._option.objectMode?[]:"["+eol;
-  this.started = false;
-  var self = this;
-  this.parser.on("end", function() {
-    if (typeof self.buffer === "string"){
-      self.buffer += eol+ "]";
-    }
-  });
-  this._write=this._option.objectMode?_writeObject:_writeBuffer;
-}
-util.inherits(Result, Writable);
-
-Result.prototype.getBuffer = function() {
-  return typeof this.buffer ==="string"?JSON.parse(this.buffer):this.buffer;
-};
-
-Result.prototype.disableConstruct = function() {
-  this._write = function(d, e, cb) {
-    // console.log(typeof d,d);
-    cb(); //do nothing just dropit
+    constructResult: true, //set to false to not construct result in memory. suitable for big csv data
+    delimiter: ',', // change the delimiter of csv columns. It is able to use an array to specify potencial delimiters. e.g. [",","|",";"]
+    quote: '"', //quote for a column containing delimiter.
+    trim: true, //trim column's space charcters
+    checkType: true, //whether check column type
+    toArrayString: false, //stream down stringified json array instead of string of json. (useful if downstream is file writer etc)
+    ignoreEmpty: false, //Ignore empty value while parsing. if a value of the column is empty, it will be skipped parsing.
+    workerNum: getEnv("CSV_WORKER",1), //number of parallel workers. If multi-core CPU available, increase the number will get better performance for large csv data.
+    fork: false, //use another CPU core to convert the csv stream
+    noheader: false, //indicate if first line of CSV file is header or not.
+    headers: null, //an array of header strings. If noheader is false and headers is array, csv header will be ignored.
+    flatKeys: false, // Don't interpret dots and square brackets in header fields as nested object or array identifiers at all.
+    maxRowLength: 0, //the max character a csv row could have. 0 means infinite. If max number exceeded, parser will emit "error" of "row_exceed". if a possibly corrupted csv data provided, give it a number like 65535 so the parser wont consume memory. default: 0
+    checkColumn: false, //whether check column number of a row is the same as headers. If column number mismatched headers number, an error of "mismatched_column" will be emitted.. default: false
+    escape:'"' //escape char for quoted column
   };
-};
-
-
-function _writeObject (data, encoding, cb) {
-  this.buffer.push(data);
-  cb();
-};
-
-function _writeBuffer(data, encoding, cb) {
-  if (encoding === "buffer") {
-    encoding = "utf8";
-  }
-  if (this.param.toArrayString){
-    this.buffer+=data.toString(encoding);
-  }else{
-    if (this.started) {
-      this.buffer += "," + eol;
-    } else {
-      this.started = true;
-    }
-    this.buffer += data.toString(encoding);
-  }
-  cb();
-};
-
-module.exports = Result;
-
-},{"os":35,"stream":54,"util":67}],6:[function(require,module,exports){
-(function (__dirname){
-/**
- * Async or sync worker
- */
-
-module.exports = Worker;
-var parserMgr = require("./parserMgr.js");
-var utils = require("./utils.js");
-
-function Worker(params, sync) {
-  var _param = {
-    checkType: true,
-    ignoreEmpty: false
+  if (!params){
+    params={};
   }
   for (var key in params) {
     if (params.hasOwnProperty(key)) {
       _param[key] = params[key];
     }
-  }
-  this.param = _param;
-  this.sync = sync ? true : false;
-  this.cmdCounter = 0;
-  if (!this.sync) {
-    this.child = require("child_process").fork(__dirname + "/workerRunner.js",[JSON.stringify(this.param)], {
-      silent: true,
-      env:{
-        child:true
-      }
-    });
-    this.child.on("message", this.onChildMsg.bind(this));
-  } else {
-    this.funcs = require("./workerRunner")(this.param);
-  }
-  this.childCallbacks = {};
-
-}
-Worker.prototype.release = function() {
-  if (!this.sync) {
-    this.child.kill();
-  }
-}
-Worker.prototype.processRows = function(csvRows, startIndex, cb) {
-  this.send({
-    action: "processRows",
-    csvRows: csvRows,
-    startIndex: startIndex
-  }, function(err, res) {
-    if (err) {
-      cb(err);
-    } else {
-      cb(null, res.data);
-    }
-  });
-}
-Worker.prototype.processRow = function(data, index, cb) {
-  this.send({
-    action: "processRow",
-    data: data,
-    index: index
-  }, cb);
-}
-Worker.prototype.onChildMsg = function(m) {
-  var action = m.action;
-  var cb = this.childCallbacks[action];
-  if (cb) {
-    delete m.action;
-    cb(m.error, m);
-    delete this.childCallbacks[action];
-  } else {
-    //None register child action
-  }
-}
-Worker.prototype.send = function(msg, cb) {
-  if (this.sync) {
-    this.funcs[msg.action](msg, cb);
-  } else {
-    var action = this.genAction(msg.action);
-    msg.action = action;
-    this.childCallbacks[action] = cb;
-    this.child.send(msg);
-  }
-}
-Worker.prototype.processHeadRow = function(headRow, cb) {
-  this.send({
-    action: "processHeadRow",
-    row: headRow
-  }, cb);
-}
-Worker.prototype.genAction = function(action) {
-  var d = this.cmdCounter++;
-  return action + "_" + d;
+  };
+  return _param;
 }
 
-}).call(this,"/libs/core")
-},{"./parserMgr.js":15,"./utils.js":16,"./workerRunner":17,"child_process":25}],7:[function(require,module,exports){
+
+function getEnv(key,def){
+  if (process.env[key]){
+    return process.env[key];
+  }else{
+    return def;
+  }
+}
+}).call(this,require('_process'))
+},{"_process":40}],8:[function(require,module,exports){
 module.exports = [
   require('./parser_array.js'),
   require('./parser_json.js'),
@@ -733,7 +522,7 @@ module.exports = [
   require("./parser_flat.js")
 ];
 
-},{"./parser_array.js":8,"./parser_flat.js":9,"./parser_json.js":10,"./parser_jsonarray.js":11,"./parser_omit.js":12}],8:[function(require,module,exports){
+},{"./parser_array.js":9,"./parser_flat.js":10,"./parser_json.js":11,"./parser_jsonarray.js":12,"./parser_omit.js":13}],9:[function(require,module,exports){
 module.exports = {
   "name": "array",
   "processSafe":true,
@@ -747,7 +536,7 @@ module.exports = {
   }
 };
 
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 module.exports = {
   "name": "flat",
   "processSafe":true,
@@ -759,7 +548,7 @@ module.exports = {
   }
 };
 
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 var arrReg = /\[([0-9]*)\]/;
 
 
@@ -831,7 +620,7 @@ module.exports = {
   }
 };
 
-},{}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 module.exports = {
   "name": "jsonarray",
   "processSafe":true,
@@ -855,7 +644,7 @@ module.exports = {
   }
 };
 
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 module.exports = {
   "name": "omit",
   "regExp": /^\*omit\*/,
@@ -863,12 +652,182 @@ module.exports = {
   "parserFunc": function parser_omit() {}
 };
 
-},{}],13:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
+var getEol=require("./getEol");
+/**
+ * convert data chunk to file lines array
+ * @param  {string} data  data chunk as utf8 string
+ * @param  {object} param Converter param object
+ * @return {Object}   {lines:[line1,line2...],partial:String}
+ */
+module.exports=function(data,param){
+  var eol=getEol(data,param);
+  var lines= data.split(eol);
+  var partial=lines.pop();
+  return {lines:lines,partial:partial};
+}
+},{"./getEol":16}],15:[function(require,module,exports){
+module.exports=getDelimiter;
+var defaulDelimiters=[",","|","\t",";",":"];
+function getDelimiter(rowStr,param) {
+  var checker;
+  if (param.delimiter==="auto"){
+    checker=defaulDelimiters;
+  }else if (param.delimiter instanceof Array){
+    checker=param.delimiter;
+  }else{
+    return param.delimiter;
+  }
+  var count=0;
+  var rtn=",";
+  checker.forEach(function(delim){
+    var delimCount=rowStr.split(delim).length;
+    if (delimCount>count){
+      rtn=delim;
+      count=delimCount;
+    }
+  });
+  return rtn;
+}
+},{}],16:[function(require,module,exports){
+//return eol from a data chunk.
+var eol=require("os").EOL;
+module.exports=function(data,param){
+  if (!param.eol && data) {
+    for (var i=0;i<data.length;i++){
+      if (data[i]==="\r"){
+        if (data[i+1] === "\n"){
+          param.eol="\r\n";
+        }else{
+          param.eol="\r";
+        }
+        return param.eol;
+      }else if (data[i]==="\n"){
+        param.eol="\n";
+        return param.eol;
+      }
+    }
+    param.eol=eol;
+  }
+  return param.eol;
+}
+},{"os":39}],17:[function(require,module,exports){
+module.exports=constructor;
 module.exports.Converter = require("./Converter.js");
 module.exports.Parser = require("./parser.js");
 module.exports.parserMgr = require("./parserMgr.js");
 
-},{"./Converter.js":3,"./parser.js":14,"./parserMgr.js":15}],14:[function(require,module,exports){
+
+function constructor(param,options){
+  return new module.exports.Converter(param,options)
+}
+},{"./Converter.js":4,"./parser.js":19,"./parserMgr.js":20}],18:[function(require,module,exports){
+var parserMgr = require("./parserMgr.js");
+var Parser = require("./parser");
+var CSVError=require("./CSVError");
+/**
+ * Convert lines of csv array into json
+ * @param  {[type]} lines  [[col1,col2,col3]]
+ * @param  {[type]} params Converter params with _headers field populated
+ * @param  {[type]} idx start pos of the lines
+ * @return {[type]}   [{err:null,json:obj,index:line,row:[csv row]}]
+ */
+module.exports=function(lines,params,idx){
+  if (params._needParseJson){
+    if (!params._headers){
+      params._headers=[];
+    }
+    if (!params.parseRules){
+      var row=params._headers;
+      params.parseRules=parserMgr.initParsers(row,params);
+    }
+    return processRows(lines,params,idx);
+  }else{
+    return justReturnRows(lines,params,idx);
+  }
+}
+
+function justReturnRows(lines,params,idx){
+  var rtn=[];
+  for (var i=0;i<lines.length;i++){
+    rtn.push({
+      err:null,
+      json:{},
+      index:idx++,
+      row:lines[i]
+    })
+  }
+  return rtn;
+}
+function processRows(csvRows, params,startIndex) {
+  var count = csvRows.length;
+  var res=[];
+  for (var i = 0; i < csvRows.length; i++) {
+    var r=processRow(csvRows[i],params,startIndex++);
+    if (r){
+      res.push(r);
+    }
+  }
+  return res;
+}
+function getConstParser(number,param) {
+  var inst= new Parser("field" + number, /.*/, function(params) {
+    var name = this.getName();
+    params.resultRow[name] = params.item;
+  }, true);
+  inst.setParam(param);
+  return inst;
+}
+function processRow(row,param,index) {
+  var i, item, parser, head;
+  var parseRules=param.parseRules;
+  if (param.checkColumn && row.length != parseRules.length) {
+    return {
+      err:CSVError.column_mismatched (index)
+    }
+  }
+  var resultRow = {};
+  var hasValue = false;
+  var headRow=param._headers;
+  for (i = 0; i < row.length; i++) {
+    item = row[i];
+    if (param.ignoreEmpty && item === '') {
+      continue;
+    }
+    hasValue = true;
+    parser = parseRules[i];
+    if (!parser) {
+      parser = parseRules[i] = getConstParser(i + 1,param);
+    }
+    head = headRow[i];
+    if (!head || head === "") {
+      head = headRow[i] = "field" + (i + 1);
+      parser.initHead(head);
+    }
+    if (param.checkType){
+      item=parser.convertType(item);
+    }
+    parser.parse({
+      head: head,
+      item: item,
+      itemIndex: i,
+      rawRow: row,
+      resultRow: resultRow,
+      rowIndex: index,
+      config: param || {}
+    });
+  }
+  if (hasValue) {
+    return {
+      json:resultRow,
+      index:index,
+      row:row
+    };
+  } else {
+    return null;
+  }
+}
+},{"./CSVError":3,"./parser":19,"./parserMgr.js":20}],19:[function(require,module,exports){
 var explicitTypes = ["number", "string"];
 
 function Parser(name, regExp, parser, processSafe) {
@@ -977,7 +936,7 @@ Parser.prototype.getName = function() {
 };
 module.exports = Parser;
 
-},{}],15:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 //implementation
 var registeredParsers = [];
 var Parser = require("./parser.js");
@@ -1044,64 +1003,28 @@ module.exports.addParser = addParser;
 module.exports.initParsers = initParsers;
 module.exports.getParser = getParser;
 
-},{"./defaultParsers":7,"./parser.js":14}],16:[function(require,module,exports){
-
-module.exports = {
-  getDelimiter: getDelimiter, // Handle auto delimiter: return explicitely specified delimiter or try auto detect
-  rowSplit: rowSplit, //Split a csv row to an array based on delimiter and quote
-  isToogleQuote: isToogleQuote, //returns if a segmenthas even number of quotes
-  twoDoubleQuote: twoDoubleQuote //converts two double quotes to one
-}
-var cachedRegExp = {};
-var defaulDelimiters=[",","|","\t",";",":"];
-function getDelimiter(rowStr,param) {
-  var checker;
-  if (param.delimiter==="auto"){
-    checker=defaulDelimiters;
-  }else if (param.delimiter instanceof Array){
-    checker=param.delimiter;
-  }else{
-    return param.delimiter;
-  }
-  var count=0;
-  var rtn=",";
-  checker.forEach(function(delim){
-    var delimCount=rowStr.split(delim).length;
-    if (delimCount>count){
-      rtn=delim;
-      count=delimCount;
-    }
-  });
-  return rtn;
-}
-function isQuoteOpen(str,param){
-  var quote=param.quote;
-  return str[0] === quote && (str[1]!==quote || str[1]===quote && (str[2] === quote || str.length ===2));
-}
-function isQuoteClose(str,param){
-  var quote=param.quote;
-  var count=0;
-  var idx=str.length-1;
-  while (str[idx] === quote){
-    idx--;
-    count++;
-  }
-  return count%2!==0;
-}
-function rowSplit(rowStr, param) {
+},{"./defaultParsers":8,"./parser.js":19}],21:[function(require,module,exports){
+var getDelimiter=require("./getDelimiter");
+/**
+ * Convert a line of string to csv columns according to its delimiter
+ * @param  {[type]} rowStr [description]
+ * @param  {[type]} param  [Converter param]
+ * @return {[type]}        {cols:["a","b","c"],closed:boolean} the closed field indicate if the row is a complete row
+ */
+module.exports=function rowSplit(rowStr, param) {
   if (rowStr ===""){
-    return [];
+    return {cols:[],closed:true};
   }
   var quote=param.quote;
   var trim=param.trim;
-  if (param.needCheckDelimiter===true){
+  var escape=param.escape;
+  if (param.delimiter instanceof Array || param.delimiter.toLowerCase()==="auto"){
       param.delimiter=getDelimiter(rowStr,param);
-      param.needCheckDelimiter=false;
   }
   var delimiter=param.delimiter;
   var rowArr = rowStr.split(delimiter);
   if (quote ==="off"){
-    return rowArr;
+    return {cols:rowArr,closed:true};
   }
   var row = [];
   var inquote = false;
@@ -1117,7 +1040,7 @@ function rowSplit(rowStr, param) {
           e=e.substr(1);
           if (isQuoteClose(e,param)){ //quote close
               e=e.substring(0,e.length-1);
-              e=twoDoubleQuote(e,quote);
+              e=_escapeQuote(e,quote,escape);;
               row.push(e);
               continue;
           }else{
@@ -1134,7 +1057,7 @@ function rowSplit(rowStr, param) {
         inquote=false;
         e=e.substr(0,len-1);
         quoteBuff+=delimiter+e;
-        quoteBuff=twoDoubleQuote(quoteBuff,quote);
+        quoteBuff=_escapeQuote(quoteBuff,quote,escape);
         if (trim){
           quoteBuff=quoteBuff.trimRight();
         }
@@ -1144,216 +1067,215 @@ function rowSplit(rowStr, param) {
         quoteBuff+=delimiter+e;
       }
     }
-
-
-    // if (isToogleQuote(e, quote)) { //if current col has odd quotes, switch quote status
-    //   if (inquote) { //if currently in open quote status, close it and output data
-    //     quoteBuff += delimiter;
-    //     quoteBuff += twoDoubleQuote(e.substr(0, e.length - 1), quote);
-    //     row.push(trim ? quoteBuff.trim() : quoteBuff);
-    //     quoteBuff = '';
-    //   } else { // currently not in open quote status, open it
-    //     quoteBuff += twoDoubleQuote(e.substring(1), quote);
-    //   }
-    //   inquote = !inquote;
-    // } else if (inquote) { // if current col has even quotes, do not switch quote status
-    //   //if current status is in quote, add to buffer wait to close
-    //   quoteBuff += delimiter + twoDoubleQuote(e, quote);
-    // } else { // if current status is not in quote, out put data
-    //   if (trim) {
-    //     e = e.trim();
-    //   }
-    //   if (e.indexOf(quote) === 0 && e[e.length - 1] === quote) { //if current col contain full quote segment,remove quote first
-    //     e = e.substring(1, e.length - 1);
-    //   }
-    //   row.push(twoDoubleQuote(e, quote));
-    // }
   }
-  return row;
+
+  return {cols:row,closed:!inquote};
+  // if (param.workerNum<=1){
+  // }else{
+  //   if (inquote && quoteBuff.length>0){//for multi core, quote will be closed at the end of line
+  //     quoteBuff=_escapeQuote(quoteBuff,quote,escape);;
+  //     if (trim){
+  //       quoteBuff=quoteBuff.trimRight();
+  //     }
+  //     row.push(quoteBuff);
+  //   }
+  //   return {cols:row,closed:true};
+  // }
+  
 }
 
-function _getRegExpObj(quote) {
-  if (cachedRegExp[quote]) {
-    return cachedRegExp[quote];
-  } else {
-    cachedRegExp[quote] = {
-      single: new RegExp(quote, 'g'),
-      double: new RegExp(quote + quote, 'g')
+function isQuoteOpen(str,param){
+  var quote=param.quote;
+  var escape=param.escape;
+  return str[0] === quote && (
+    str[1]!==quote || 
+    str[1]===escape && (str[2] === quote || str.length ===2));
+}
+function isQuoteClose(str,param){
+  var quote=param.quote;
+  var count=0;
+  var idx=str.length-1;
+  var escape=param.escape;
+  while (str[idx] === quote || str[idx]===escape){
+    idx--;
+    count++;
+  }
+  return count%2!==0;
+}
+function twoDoubleQuote(str,quote){
+  var twoQuote=quote+quote;
+  var curIndex=-1;
+  while((curIndex=str.indexOf(twoQuote,curIndex))>-1){
+    str=str.substring(0,curIndex)+str.substring(++curIndex);
+  }
+  return str;
+}
+var cachedRegExp = {}
+function _escapeQuote(segment, quote,escape) {
+  
+  var key="es|"+quote+"|"+escape;
+  if (cachedRegExp[key] === undefined){
+    if (escape ==="\\"){
+      escape="\\\\";
     }
-    return _getRegExpObj(quote);
+    cachedRegExp[key]=new RegExp(escape+quote,'g');
   }
-}
-
-function isToogleQuote(segment, quote) {
-  var reg = _getRegExpObj(quote).single;
-  var match = segment.match(reg);
-  return match && match.length % 2 !== 0;
-}
-
-function twoDoubleQuote(segment, quote) {
-  var regExp = _getRegExpObj(quote).double;
+  var regExp = cachedRegExp[key];
   return segment.replace(regExp, quote);
 }
 
-},{}],17:[function(require,module,exports){
-(function (process){
-var parserMgr = require("./parserMgr.js");
-var utils = require("./utils.js");
-var async = require("async");
-var Parser = require("./parser");
-if (process.env.child) {
-  var inst = init(JSON.parse(process.argv[2]));
+},{"./getDelimiter":15}],22:[function(require,module,exports){
+(function (process,__dirname){
+module.exports=workerMgr;
+var spawn=require("child_process").spawn;
+var eom="\x03"
+var eom1="\x0e"
+var eom2="\x0f"
+var CSVError=require('./CSVError')
+function workerMgr(){
 
-  process.on("message", function(m) {
-    var action = getAction(m.action);
-    inst[action](m, function(err, res) {
-      if (!res) {
-        res = {};
-      }
-      if (err) {
-        res.error = err;
-      }
-      res.action = m.action;
-      process.send(res);
+  var exports={
+    initWorker:initWorker,
+    sendWorker:sendWorker,
+    setParams:setParams,
+    drain:function(){},
+    isRunning:isRunning,
+    destroyWorker:destroyWorker
+
+  }
+  var workers=[];
+  var running=0;
+  var waiting=null;
+  function initWorker(num,params){
+    workers=[];
+    running=0;
+    waiting=null;
+    for (var i=0;i<num;i++){
+      workers.push(new Worker(params));
+    }
+    
+  }
+  function isRunning(){
+    return running>0;
+  }
+  function destroyWorker(){
+    workers.forEach(function(w){
+      w.destroy();
     });
-  });
-}
-
-function getAction(action) {
-  return action.split("_")[0];
-}
-
-function getConstParser(number,param) {
-  var inst= new Parser("field" + number, /.*/, function(params) {
-    var name = this.getName();
-    params.resultRow[name] = params.item;
-  }, true);
-  inst.setParam(param);
-  return inst;
-}
-
-function init(param) {
-  var headRow;
-  var parseRules = [];
-
-  function genConstHeadRow(msg, cb) {
-    var number = msg.number;
-    parseRules = [];
-    headRow = [];
-    while (number > 0) {
-      var p = getConstParser(number,param);
-      parseRules.unshift(p);
-      headRow.unshift(p.getName());
-      number--;
-    }
-    cb();
   }
 
-  function processHeadRow(msg, cb) {
-    // headRow = msg.row;
-    var row = [];
-    if (param.headers) {
-      row = param.headers;
-    } else if (msg.row.length > 0) {
-      row = utils.rowSplit(msg.row, param);
-    }
-    headRow = row;
-    if (row.length > 0) {
-      parseRules = parserMgr.initParsers(row, param);
-    }
-    cb(null, {});
-  }
-
-  function processRows(msg, cb) {
-    var csvRows = msg.csvRows;
-    var startIndex = msg.startIndex;
-    var res = {
-      data: []
-    };
-    var count = csvRows.length;
-    var _err = null;
-    for (var i = 0; i < csvRows.length; i++) {
-      msg.data = csvRows[i];
-      msg.index = startIndex++;
-      processRow(msg, function(err, r) {
-        if (err) {
-          _err = err;
-        } else {
-          if (r) {
-            res.data.push(r);
-          } else {
-            startIndex--;
-          }
+  function sendWorker(data,startIdx,transformCb,cbResult){
+    if (workers.length>0){
+      var worker=workers.shift();
+      running++;
+      worker.parse(data,startIdx,function(result){
+        // var arr=JSON.parse(result);
+        // arr.forEach(function(item){
+        //   console.log('idx',item.index)
+        // })
+        workers.push(worker)
+        cbResult(result,startIdx);
+        running--;
+        if (waiting === null && running===0){
+          exports.drain();
+        }else if (waiting){
+          sendWorker.apply(this,waiting)
+          waiting=null;
         }
-      })
-      if (_err) {
-        return cb(_err);
-      }
+      });
+      process.nextTick(transformCb)
+    }else{
+      waiting=[data,startIdx,transformCb,cbResult];
     }
-    cb(null, res);
   }
 
-  function processRow(msg, cb) {
-    var i, item, parser, head,
-      data = msg.data,
-      index = msg.index;
-    var row = utils.rowSplit(data, param);
-    if (param.checkColumn && row.length != parseRules.length) {
-      return cb("Error: column_mismatched. Data: " + data + ". Row index: " + index);
-    }
-    var resultRow = {};
-    var hasValue = false;
-    for (i = 0; i < row.length; i++) {
-      item = row[i];
-      if (param.ignoreEmpty && item === '') {
-        continue;
-      }
-      hasValue = true;
-      parser = parseRules[i];
-      if (!parser) {
-        parser = parseRules[i] = getConstParser(i + 1,param);
-      }
-      head = headRow[i];
-      if (!head || head === "") {
-        head = headRow[i] = "field" + (i + 1);
-        parser.initHead(head);
-      }
-      if (param.checkType){
-        item=parser.convertType(item);
-      }
-      parser.parse({
-        head: head,
-        item: item,
-        itemIndex: i,
-        rawRow: row,
-        resultRow: resultRow,
-        rowIndex: index,
-        config: param || {}
-      });
-    }
-    if (hasValue) {
-      cb(null, {
-        jsonRaw: JSON.stringify(resultRow),
-        row: row,
-        index: index
-      });
-    } else {
-      cb(null, null);
-    }
-
+  function setParams(params){
+    workers.forEach(function(w){
+      w.setParams(params);
+    });
   }
+  return exports;
+}
 
-  return {
-    processHeadRow: processHeadRow,
-    processRow: processRow,
-    genConstHeadRow: genConstHeadRow,
-    processRows: processRows
+function Worker(params){
+  this.cp=spawn(process.execPath,[__dirname+"/worker.js"],{
+    env:{
+      child:true
+    },
+    stdio:['pipe','pipe',2,'ipc']
+    // stdio:[0,1,2,'ipc']
+  });
+  this.setParams(params);
+  this.cp.on("message",this.onChildMsg.bind(this));
+  this.buffer="";
+  var self=this;
+  this.cp.stdout.on("data",function(d){
+    var str=d.toString("utf8");
+     var all=self.buffer+str;
+      var cmdArr=all.split(eom)
+      while (cmdArr.length >1){
+        self.onChildMsg(cmdArr.shift());
+      }
+      self.buffer=cmdArr[0];
+  })
+}
+
+Worker.prototype.setParams=function(params){
+  var msg="0"+JSON.stringify(params);
+  this.sendMsg(msg);
+}
+/**
+ * msg is like:
+ * <cmd><data>
+ * cmd is from 0-9
+ */
+Worker.prototype.onChildMsg=function(msg){
+  if (msg){
+  var cmd=msg[0];
+  var data=msg.substr(1);
+  switch (cmd){
+    case "0": //total line number of current chunk 
+      if (this.cbLine){
+        var sp=data.split("|");
+        var len=parseInt(sp[0]);
+        var partial=sp[1];
+        this.cbLine(len,partial);
+      }
+      break;
+    case "1": // json array of current chunk
+      if (this.cbResult){
+        var rows=data.split(eom1);
+        rows.pop();
+        var res=[];
+        rows.forEach(function(row){
+          var sp=row.split(eom2);
+          res.push({
+            index:sp[0],
+            row:sp[1],
+            err:sp[2]?CSVError.fromArray(JSON.parse(sp[2])):null,
+            json:sp[3]
+          }) 
+        })
+        this.cbResult(res);
+      }
+      break;
+  }
   }
 }
-module.exports = init;
-
-}).call(this,require('_process'))
-},{"./parser":14,"./parserMgr.js":15,"./utils.js":16,"_process":36,"async":24}],18:[function(require,module,exports){
+Worker.prototype.parse=function(data,startIdx,cbResult){
+  this.cbResult=cbResult;
+  var msg="1"+startIdx+"|"+data;
+  this.sendMsg(msg);
+}
+Worker.prototype.destroy=function(){
+  this.cp.kill();
+}
+Worker.prototype.sendMsg=function(msg){
+  this.cp.stdin.write(msg+eom,"utf8")
+  // this.cp.send(msg)
+}
+}).call(this,require('_process'),"/libs/core")
+},{"./CSVError":3,"_process":40,"child_process":29}],23:[function(require,module,exports){
 //deprecated but leave it for backword compatibility
 module.exports.core=require("./core");
 
@@ -1361,9 +1283,9 @@ module.exports.core=require("./core");
 module.exports=require("./core");
 module.exports.interfaces = require("./interfaces");
 
-},{"./core":13,"./interfaces":21}],19:[function(require,module,exports){
+},{"./core":17,"./interfaces":26}],24:[function(require,module,exports){
 module.exports = require("./main.js");
-},{"./main.js":20}],20:[function(require,module,exports){
+},{"./main.js":25}],25:[function(require,module,exports){
 (function (process){
 /**
  * Convert input to process stdout
@@ -1408,12 +1330,12 @@ function convertString(csvString){
 module.exports.convertFile = convertFile;
 module.exports.convertString = convertString;
 }).call(this,require('_process'))
-},{"../../core/Converter.js":3,"_process":36}],21:[function(require,module,exports){
+},{"../../core/Converter.js":4,"_process":40}],26:[function(require,module,exports){
 module.exports.web=require("./web");
 module.exports.cli=require("./cli");
-},{"./cli":19,"./web":22}],22:[function(require,module,exports){
+},{"./cli":24,"./web":27}],27:[function(require,module,exports){
 module.exports = require("./webServer.js");
-},{"./webServer.js":23}],23:[function(require,module,exports){
+},{"./webServer.js":28}],28:[function(require,module,exports){
 var http = require("http");
 var Converter = require("../../core/Converter.js");
 function startWebServer (args) {
@@ -1438,1206 +1360,11 @@ function startWebServer (args) {
 }
 module.exports.startWebServer = startWebServer;
 
-},{"../../core/Converter.js":3,"http":55}],24:[function(require,module,exports){
-(function (process,global){
-/*!
- * async
- * https://github.com/caolan/async
- *
- * Copyright 2010-2014 Caolan McMahon
- * Released under the MIT license
- */
-(function () {
-
-    var async = {};
-    function noop() {}
-
-    // global on the server, window in the browser
-    var root, previous_async;
-
-    if (typeof window == 'object' && this === window) {
-        root = window;
-    }
-    else if (typeof global == 'object' && this === global) {
-        root = global;
-    }
-    else {
-        root = this;
-    }
-
-    if (root != null) {
-      previous_async = root.async;
-    }
-
-    async.noConflict = function () {
-        root.async = previous_async;
-        return async;
-    };
-
-    function only_once(fn) {
-        var called = false;
-        return function() {
-            if (called) throw new Error("Callback was already called.");
-            called = true;
-            fn.apply(this, arguments);
-        };
-    }
-
-    function _once(fn) {
-        var called = false;
-        return function() {
-            if (called) return;
-            called = true;
-            fn.apply(this, arguments);
-        };
-    }
-
-    //// cross-browser compatiblity functions ////
-
-    var _toString = Object.prototype.toString;
-
-    var _isArray = Array.isArray || function (obj) {
-        return _toString.call(obj) === '[object Array]';
-    };
-
-    function _isArrayLike(arr) {
-        return _isArray(arr) || (
-            // has a positive integer length property
-            typeof arr.length === "number" &&
-            arr.length >= 0 &&
-            arr.length % 1 === 0
-        );
-    }
-
-    function _each(coll, iterator) {
-        return _isArrayLike(coll) ?
-            _arrayEach(coll, iterator) :
-            _forEachOf(coll, iterator);
-    }
-
-    function _arrayEach(arr, iterator) {
-      var index = -1,
-          length = arr.length;
-
-      while (++index < length) {
-        iterator(arr[index], index, arr);
-      }
-    }
-
-    function _map(arr, iterator) {
-      var index = -1,
-          length = arr.length,
-          result = Array(length);
-
-      while (++index < length) {
-        result[index] = iterator(arr[index], index, arr);
-      }
-      return result;
-    }
-
-    function _range(count) {
-        return _map(Array(count), function (v, i) { return i; });
-    }
-
-    function _reduce(arr, iterator, memo) {
-        _arrayEach(arr, function (x, i, a) {
-            memo = iterator(memo, x, i, a);
-        });
-        return memo;
-    }
-
-    function _forEachOf(object, iterator) {
-        _arrayEach(_keys(object), function (key) {
-            iterator(object[key], key);
-        });
-    }
-
-    var _keys = Object.keys || function (obj) {
-        var keys = [];
-        for (var k in obj) {
-            if (obj.hasOwnProperty(k)) {
-                keys.push(k);
-            }
-        }
-        return keys;
-    };
-
-    function _keyIterator(coll) {
-        var i = -1;
-        var len;
-        var keys;
-        if (_isArrayLike(coll)) {
-            len = coll.length;
-            return function next() {
-                i++;
-                return i < len ? i : null;
-            };
-        } else {
-            keys = _keys(coll);
-            len = keys.length;
-            return function next() {
-                i++;
-                return i < len ? keys[i] : null;
-            };
-        }
-    }
-
-    function _baseSlice(arr, start) {
-        start = start || 0;
-        var index = -1;
-        var length = arr.length;
-
-        if (start) {
-          length -= start;
-          length = length < 0 ? 0 : length;
-        }
-        var result = Array(length);
-
-        while (++index < length) {
-          result[index] = arr[index + start];
-        }
-        return result;
-    }
-
-    function _withoutIndex(iterator) {
-        return function (value, index, callback) {
-            return iterator(value, callback);
-        };
-    }
-
-    //// exported async module functions ////
-
-    //// nextTick implementation with browser-compatible fallback ////
-
-    // capture the global reference to guard against fakeTimer mocks
-    var _setImmediate;
-    if (typeof setImmediate === 'function') {
-        _setImmediate = setImmediate;
-    }
-
-    if (typeof process === 'undefined' || !(process.nextTick)) {
-        if (_setImmediate) {
-            async.nextTick = function (fn) {
-                // not a direct alias for IE10 compatibility
-                _setImmediate(fn);
-            };
-            async.setImmediate = async.nextTick;
-        }
-        else {
-            async.nextTick = function (fn) {
-                setTimeout(fn, 0);
-            };
-            async.setImmediate = async.nextTick;
-        }
-    }
-    else {
-        async.nextTick = process.nextTick;
-        if (_setImmediate) {
-            async.setImmediate = function (fn) {
-              // not a direct alias for IE10 compatibility
-              _setImmediate(fn);
-            };
-        }
-        else {
-            async.setImmediate = async.nextTick;
-        }
-    }
-
-    async.forEach =
-    async.each = function (arr, iterator, callback) {
-        return async.eachOf(arr, _withoutIndex(iterator), callback);
-    };
-
-    async.forEachSeries =
-    async.eachSeries = function (arr, iterator, callback) {
-        return async.eachOfSeries(arr, _withoutIndex(iterator), callback);
-    };
-
-
-    async.forEachLimit =
-    async.eachLimit = function (arr, limit, iterator, callback) {
-        return _eachOfLimit(limit)(arr, _withoutIndex(iterator), callback);
-    };
-
-    async.forEachOf =
-    async.eachOf = function (object, iterator, callback) {
-        callback = _once(callback || noop);
-        object = object || [];
-        var size = _isArrayLike(object) ? object.length : _keys(object).length;
-        var completed = 0;
-        if (!size) {
-            return callback(null);
-        }
-        _each(object, function (value, key) {
-            iterator(object[key], key, only_once(done));
-        });
-        function done(err) {
-          if (err) {
-              callback(err);
-          }
-          else {
-              completed += 1;
-              if (completed >= size) {
-                  callback(null);
-              }
-          }
-        }
-    };
-
-    async.forEachOfSeries =
-    async.eachOfSeries = function (obj, iterator, callback) {
-        callback = _once(callback || noop);
-        obj = obj || [];
-        var nextKey = _keyIterator(obj);
-        var key = nextKey();
-        function iterate() {
-            var sync = true;
-            if (key === null) {
-                return callback(null);
-            }
-            iterator(obj[key], key, only_once(function (err) {
-                if (err) {
-                    callback(err);
-                }
-                else {
-                    key = nextKey();
-                    if (key === null) {
-                        return callback(null);
-                    } else {
-                        if (sync) {
-                            async.nextTick(iterate);
-                        } else {
-                            iterate();
-                        }
-                    }
-                }
-            }));
-            sync = false;
-        }
-        iterate();
-    };
-
-
-
-    async.forEachOfLimit =
-    async.eachOfLimit = function (obj, limit, iterator, callback) {
-        _eachOfLimit(limit)(obj, iterator, callback);
-    };
-
-    function _eachOfLimit(limit) {
-
-        return function (obj, iterator, callback) {
-            callback = _once(callback || noop);
-            obj = obj || [];
-            var nextKey = _keyIterator(obj);
-            if (limit <= 0) {
-                return callback(null);
-            }
-            var done = false;
-            var running = 0;
-            var errored = false;
-
-            (function replenish () {
-                if (done && running <= 0) {
-                    return callback(null);
-                }
-
-                while (running < limit && !errored) {
-                    var key = nextKey();
-                    if (key === null) {
-                        done = true;
-                        if (running <= 0) {
-                            callback(null);
-                        }
-                        return;
-                    }
-                    running += 1;
-                    iterator(obj[key], key, only_once(function (err) {
-                        running -= 1;
-                        if (err) {
-                            callback(err);
-                            errored = true;
-                        }
-                        else {
-                            replenish();
-                        }
-                    }));
-                }
-            })();
-        };
-    }
-
-
-    function doParallel(fn) {
-        return function (obj, iterator, callback) {
-            return fn(async.eachOf, obj, iterator, callback);
-        };
-    }
-    function doParallelLimit(limit, fn) {
-        return function (obj, iterator, callback) {
-            return fn(_eachOfLimit(limit), obj, iterator, callback);
-        };
-    }
-    function doSeries(fn) {
-        return function (obj, iterator, callback) {
-            return fn(async.eachOfSeries, obj, iterator, callback);
-        };
-    }
-
-    function _asyncMap(eachfn, arr, iterator, callback) {
-        callback = _once(callback || noop);
-        var results = [];
-        eachfn(arr, function (value, index, callback) {
-            iterator(value, function (err, v) {
-                results[index] = v;
-                callback(err);
-            });
-        }, function (err) {
-            callback(err, results);
-        });
-    }
-
-    async.map = doParallel(_asyncMap);
-    async.mapSeries = doSeries(_asyncMap);
-    async.mapLimit = function (arr, limit, iterator, callback) {
-        return _mapLimit(limit)(arr, iterator, callback);
-    };
-
-    function _mapLimit(limit) {
-        return doParallelLimit(limit, _asyncMap);
-    }
-
-    // reduce only has a series version, as doing reduce in parallel won't
-    // work in many situations.
-    async.inject =
-    async.foldl =
-    async.reduce = function (arr, memo, iterator, callback) {
-        async.eachOfSeries(arr, function (x, i, callback) {
-            iterator(memo, x, function (err, v) {
-                memo = v;
-                callback(err);
-            });
-        }, function (err) {
-            callback(err || null, memo);
-        });
-    };
-
-    async.foldr =
-    async.reduceRight = function (arr, memo, iterator, callback) {
-        var reversed = _map(arr, function (x) {
-            return x;
-        }).reverse();
-        async.reduce(reversed, memo, iterator, callback);
-    };
-
-    function _filter(eachfn, arr, iterator, callback) {
-        var results = [];
-        arr = _map(arr, function (x, i) {
-            return {index: i, value: x};
-        });
-        eachfn(arr, function (x, index, callback) {
-            iterator(x.value, function (v) {
-                if (v) {
-                    results.push(x);
-                }
-                callback();
-            });
-        }, function () {
-            callback(_map(results.sort(function (a, b) {
-                return a.index - b.index;
-            }), function (x) {
-                return x.value;
-            }));
-        });
-    }
-
-    async.select =
-    async.filter = doParallel(_filter);
-
-    async.selectSeries =
-    async.filterSeries = doSeries(_filter);
-
-    function _reject(eachfn, arr, iterator, callback) {
-        var results = [];
-        arr = _map(arr, function (x, i) {
-            return {index: i, value: x};
-        });
-        eachfn(arr, function (x, index, callback) {
-            iterator(x.value, function (v) {
-                if (!v) {
-                    results.push(x);
-                }
-                callback();
-            });
-        }, function () {
-            callback(_map(results.sort(function (a, b) {
-                return a.index - b.index;
-            }), function (x) {
-                return x.value;
-            }));
-        });
-    }
-    async.reject = doParallel(_reject);
-    async.rejectSeries = doSeries(_reject);
-
-    function _detect(eachfn, arr, iterator, main_callback) {
-        eachfn(arr, function (x, index, callback) {
-            iterator(x, function (result) {
-                if (result) {
-                    main_callback(x);
-                    main_callback = noop;
-                }
-                else {
-                    callback();
-                }
-            });
-        }, function () {
-            main_callback();
-        });
-    }
-    async.detect = doParallel(_detect);
-    async.detectSeries = doSeries(_detect);
-
-    async.any =
-    async.some = function (arr, iterator, main_callback) {
-        async.eachOf(arr, function (x, _, callback) {
-            iterator(x, function (v) {
-                if (v) {
-                    main_callback(true);
-                    main_callback = noop;
-                }
-                callback();
-            });
-        }, function () {
-            main_callback(false);
-        });
-    };
-
-    async.all =
-    async.every = function (arr, iterator, main_callback) {
-        async.eachOf(arr, function (x, _, callback) {
-            iterator(x, function (v) {
-                if (!v) {
-                    main_callback(false);
-                    main_callback = noop;
-                }
-                callback();
-            });
-        }, function () {
-            main_callback(true);
-        });
-    };
-
-    async.sortBy = function (arr, iterator, callback) {
-        async.map(arr, function (x, callback) {
-            iterator(x, function (err, criteria) {
-                if (err) {
-                    callback(err);
-                }
-                else {
-                    callback(null, {value: x, criteria: criteria});
-                }
-            });
-        }, function (err, results) {
-            if (err) {
-                return callback(err);
-            }
-            else {
-                callback(null, _map(results.sort(comparator), function (x) {
-                    return x.value;
-                }));
-            }
-
-        });
-
-        function comparator(left, right) {
-            var a = left.criteria, b = right.criteria;
-            return a < b ? -1 : a > b ? 1 : 0;
-        }
-    };
-
-    async.auto = function (tasks, callback) {
-        callback = _once(callback || noop);
-        var keys = _keys(tasks);
-        var remainingTasks = keys.length;
-        if (!remainingTasks) {
-            return callback(null);
-        }
-
-        var results = {};
-
-        var listeners = [];
-        function addListener(fn) {
-            listeners.unshift(fn);
-        }
-        function removeListener(fn) {
-            for (var i = 0; i < listeners.length; i += 1) {
-                if (listeners[i] === fn) {
-                    listeners.splice(i, 1);
-                    return;
-                }
-            }
-        }
-        function taskComplete() {
-            remainingTasks--;
-            _arrayEach(listeners.slice(0), function (fn) {
-                fn();
-            });
-        }
-
-        addListener(function () {
-            if (!remainingTasks) {
-                callback(null, results);
-            }
-        });
-
-        _arrayEach(keys, function (k) {
-            var task = _isArray(tasks[k]) ? tasks[k]: [tasks[k]];
-            function taskCallback(err) {
-                var args = _baseSlice(arguments, 1);
-                if (args.length <= 1) {
-                    args = args[0];
-                }
-                if (err) {
-                    var safeResults = {};
-                    _arrayEach(_keys(results), function(rkey) {
-                        safeResults[rkey] = results[rkey];
-                    });
-                    safeResults[k] = args;
-                    callback(err, safeResults);
-                }
-                else {
-                    results[k] = args;
-                    async.setImmediate(taskComplete);
-                }
-            }
-            var requires = task.slice(0, Math.abs(task.length - 1)) || [];
-            // prevent dead-locks
-            var len = requires.length;
-            var dep;
-            while (len--) {
-                if (!(dep = tasks[requires[len]])) {
-                    throw new Error('Has inexistant dependency');
-                }
-                if (_isArray(dep) && !!~dep.indexOf(k)) {
-                    throw new Error('Has cyclic dependencies');
-                }
-            }
-            function ready() {
-                return _reduce(requires, function (a, x) {
-                    return (a && results.hasOwnProperty(x));
-                }, true) && !results.hasOwnProperty(k);
-            }
-            if (ready()) {
-                task[task.length - 1](taskCallback, results);
-            }
-            else {
-                addListener(listener);
-            }
-            function listener() {
-                if (ready()) {
-                    removeListener(listener);
-                    task[task.length - 1](taskCallback, results);
-                }
-            }
-        });
-    };
-
-    async.retry = function(times, task, callback) {
-        var DEFAULT_TIMES = 5;
-        var attempts = [];
-        // Use defaults if times not passed
-        if (typeof times === 'function') {
-            callback = task;
-            task = times;
-            times = DEFAULT_TIMES;
-        }
-        // Make sure times is a number
-        times = parseInt(times, 10) || DEFAULT_TIMES;
-
-        function wrappedTask(wrappedCallback, wrappedResults) {
-            function retryAttempt(task, finalAttempt) {
-                return function(seriesCallback) {
-                    task(function(err, result){
-                        seriesCallback(!err || finalAttempt, {err: err, result: result});
-                    }, wrappedResults);
-                };
-            }
-
-            while (times) {
-                attempts.push(retryAttempt(task, !(times-=1)));
-            }
-            async.series(attempts, function(done, data){
-                data = data[data.length - 1];
-                (wrappedCallback || callback)(data.err, data.result);
-            });
-        }
-
-        // If a callback is passed, run this as a controll flow
-        return callback ? wrappedTask() : wrappedTask;
-    };
-
-    async.waterfall = function (tasks, callback) {
-        callback = _once(callback || noop);
-        if (!_isArray(tasks)) {
-          var err = new Error('First argument to waterfall must be an array of functions');
-          return callback(err);
-        }
-        if (!tasks.length) {
-            return callback();
-        }
-        function wrapIterator(iterator) {
-            return function (err) {
-                if (err) {
-                    callback.apply(null, arguments);
-                }
-                else {
-                    var args = _baseSlice(arguments, 1);
-                    var next = iterator.next();
-                    if (next) {
-                        args.push(wrapIterator(next));
-                    }
-                    else {
-                        args.push(callback);
-                    }
-                    ensureAsync(iterator).apply(null, args);
-                }
-            };
-        }
-        wrapIterator(async.iterator(tasks))();
-    };
-
-    function _parallel(eachfn, tasks, callback) {
-        callback = callback || noop;
-        var results = _isArrayLike(tasks) ? [] : {};
-
-        eachfn(tasks, function (task, key, callback) {
-            task(function (err) {
-                var args = _baseSlice(arguments, 1);
-                if (args.length <= 1) {
-                    args = args[0];
-                }
-                results[key] = args;
-                callback(err);
-            });
-        }, function (err) {
-            callback(err, results);
-        });
-    }
-
-    async.parallel = function (tasks, callback) {
-        _parallel(async.eachOf, tasks, callback);
-    };
-
-    async.parallelLimit = function(tasks, limit, callback) {
-        _parallel(_eachOfLimit(limit), tasks, callback);
-    };
-
-    async.series = function (tasks, callback) {
-        callback = callback || noop;
-        var results = _isArrayLike(tasks) ? [] : {};
-
-        async.eachOfSeries(tasks, function (task, key, callback) {
-            task(function (err) {
-                var args = _baseSlice(arguments, 1);
-                if (args.length <= 1) {
-                    args = args[0];
-                }
-                results[key] = args;
-                callback(err);
-            });
-        }, function (err) {
-            callback(err, results);
-        });
-    };
-
-    async.iterator = function (tasks) {
-        function makeCallback(index) {
-            function fn() {
-                if (tasks.length) {
-                    tasks[index].apply(null, arguments);
-                }
-                return fn.next();
-            }
-            fn.next = function () {
-                return (index < tasks.length - 1) ? makeCallback(index + 1): null;
-            };
-            return fn;
-        }
-        return makeCallback(0);
-    };
-
-    async.apply = function (fn) {
-        var args = _baseSlice(arguments, 1);
-        return function () {
-            return fn.apply(
-                null, args.concat(_baseSlice(arguments))
-            );
-        };
-    };
-
-    function _concat(eachfn, arr, fn, callback) {
-        var result = [];
-        eachfn(arr, function (x, index, cb) {
-            fn(x, function (err, y) {
-                result = result.concat(y || []);
-                cb(err);
-            });
-        }, function (err) {
-            callback(err, result);
-        });
-    }
-    async.concat = doParallel(_concat);
-    async.concatSeries = doSeries(_concat);
-
-    async.whilst = function (test, iterator, callback) {
-        if (test()) {
-            iterator(function (err) {
-                if (err) {
-                    return callback(err);
-                }
-                async.whilst(test, iterator, callback);
-            });
-        }
-        else {
-            callback(null);
-        }
-    };
-
-    async.doWhilst = function (iterator, test, callback) {
-        iterator(function (err) {
-            if (err) {
-                return callback(err);
-            }
-            var args = _baseSlice(arguments, 1);
-            if (test.apply(null, args)) {
-                async.doWhilst(iterator, test, callback);
-            }
-            else {
-                callback(null);
-            }
-        });
-    };
-
-    async.until = function (test, iterator, callback) {
-        if (!test()) {
-            iterator(function (err) {
-                if (err) {
-                    return callback(err);
-                }
-                async.until(test, iterator, callback);
-            });
-        }
-        else {
-            callback(null);
-        }
-    };
-
-    async.doUntil = function (iterator, test, callback) {
-        iterator(function (err) {
-            if (err) {
-                return callback(err);
-            }
-            var args = _baseSlice(arguments, 1);
-            if (!test.apply(null, args)) {
-                async.doUntil(iterator, test, callback);
-            }
-            else {
-                callback(null);
-            }
-        });
-    };
-
-    function _queue(worker, concurrency, payload) {
-        if (concurrency == null) {
-            concurrency = 1;
-        }
-        else if(concurrency === 0) {
-            throw new Error('Concurrency must not be zero');
-        }
-        function _insert(q, data, pos, callback) {
-            if (callback != null && typeof callback !== "function") {
-                throw new Error("task callback must be a function");
-            }
-            q.started = true;
-            if (!_isArray(data)) {
-                data = [data];
-            }
-            if(data.length === 0 && q.idle()) {
-                // call drain immediately if there are no tasks
-                return async.setImmediate(function() {
-                   q.drain();
-                });
-            }
-            _arrayEach(data, function(task) {
-                var item = {
-                    data: task,
-                    callback: callback || noop
-                };
-
-                if (pos) {
-                  q.tasks.unshift(item);
-                } else {
-                  q.tasks.push(item);
-                }
-
-                if (q.tasks.length === q.concurrency) {
-                    q.saturated();
-                }
-            });
-            async.setImmediate(q.process);
-        }
-        function _next(q, tasks) {
-            return function(){
-                workers -= 1;
-                var args = arguments;
-                _arrayEach(tasks, function (task) {
-                    task.callback.apply(task, args);
-                });
-                if (q.tasks.length + workers === 0) {
-                    q.drain();
-                }
-                q.process();
-            };
-        }
-
-        var workers = 0;
-        var q = {
-            tasks: [],
-            concurrency: concurrency,
-            saturated: noop,
-            empty: noop,
-            drain: noop,
-            started: false,
-            paused: false,
-            push: function (data, callback) {
-                _insert(q, data, false, callback);
-            },
-            kill: function () {
-                q.drain = noop;
-                q.tasks = [];
-            },
-            unshift: function (data, callback) {
-                _insert(q, data, true, callback);
-            },
-            process: function () {
-                if (!q.paused && workers < q.concurrency && q.tasks.length) {
-                    while(workers < q.concurrency && q.tasks.length){
-                        var tasks = payload ?
-                            q.tasks.splice(0, payload) :
-                            q.tasks.splice(0, q.tasks.length);
-
-                        var data = _map(tasks, function (task) {
-                            return task.data;
-                        });
-
-                        if (q.tasks.length === 0) {
-                            q.empty();
-                        }
-                        workers += 1;
-                        var cb = only_once(_next(q, tasks));
-                        worker(data, cb);
-                    }
-                }
-            },
-            length: function () {
-                return q.tasks.length;
-            },
-            running: function () {
-                return workers;
-            },
-            idle: function() {
-                return q.tasks.length + workers === 0;
-            },
-            pause: function () {
-                q.paused = true;
-            },
-            resume: function () {
-                if (q.paused === false) { return; }
-                q.paused = false;
-                var resumeCount = Math.min(q.concurrency, q.tasks.length);
-                // Need to call q.process once per concurrent
-                // worker to preserve full concurrency after pause
-                for (var w = 1; w <= resumeCount; w++) {
-                    async.setImmediate(q.process);
-                }
-            }
-        };
-        return q;
-    }
-
-    async.queue = function (worker, concurrency) {
-        var q = _queue(function (items, cb) {
-            worker(items[0], cb);
-        }, concurrency, 1);
-
-        return q;
-    };
-
-    async.priorityQueue = function (worker, concurrency) {
-
-        function _compareTasks(a, b){
-            return a.priority - b.priority;
-        }
-
-        function _binarySearch(sequence, item, compare) {
-          var beg = -1,
-              end = sequence.length - 1;
-          while (beg < end) {
-              var mid = beg + ((end - beg + 1) >>> 1);
-              if (compare(item, sequence[mid]) >= 0) {
-                  beg = mid;
-              } else {
-                  end = mid - 1;
-              }
-          }
-          return beg;
-        }
-
-        function _insert(q, data, priority, callback) {
-            if (callback != null && typeof callback !== "function") {
-                throw new Error("task callback must be a function");
-            }
-            q.started = true;
-            if (!_isArray(data)) {
-                data = [data];
-            }
-            if(data.length === 0) {
-                // call drain immediately if there are no tasks
-                return async.setImmediate(function() {
-                    q.drain();
-                });
-            }
-            _arrayEach(data, function(task) {
-                var item = {
-                    data: task,
-                    priority: priority,
-                    callback: typeof callback === 'function' ? callback : noop
-                };
-
-                q.tasks.splice(_binarySearch(q.tasks, item, _compareTasks) + 1, 0, item);
-
-                if (q.tasks.length === q.concurrency) {
-                    q.saturated();
-                }
-                async.setImmediate(q.process);
-            });
-        }
-
-        // Start with a normal queue
-        var q = async.queue(worker, concurrency);
-
-        // Override push to accept second parameter representing priority
-        q.push = function (data, priority, callback) {
-            _insert(q, data, priority, callback);
-        };
-
-        // Remove unshift function
-        delete q.unshift;
-
-        return q;
-    };
-
-    async.cargo = function (worker, payload) {
-        return _queue(worker, 1, payload);
-    };
-
-    function _console_fn(name) {
-        return function (fn) {
-            var args = _baseSlice(arguments, 1);
-            fn.apply(null, args.concat([function (err) {
-                var args = _baseSlice(arguments, 1);
-                if (typeof console !== 'undefined') {
-                    if (err) {
-                        if (console.error) {
-                            console.error(err);
-                        }
-                    }
-                    else if (console[name]) {
-                        _arrayEach(args, function (x) {
-                            console[name](x);
-                        });
-                    }
-                }
-            }]));
-        };
-    }
-    async.log = _console_fn('log');
-    async.dir = _console_fn('dir');
-    /*async.info = _console_fn('info');
-    async.warn = _console_fn('warn');
-    async.error = _console_fn('error');*/
-
-    async.memoize = function (fn, hasher) {
-        var memo = {};
-        var queues = {};
-        hasher = hasher || function (x) {
-            return x;
-        };
-        function memoized() {
-            var args = _baseSlice(arguments);
-            var callback = args.pop();
-            var key = hasher.apply(null, args);
-            if (key in memo) {
-                async.nextTick(function () {
-                    callback.apply(null, memo[key]);
-                });
-            }
-            else if (key in queues) {
-                queues[key].push(callback);
-            }
-            else {
-                queues[key] = [callback];
-                fn.apply(null, args.concat([function () {
-                    memo[key] = _baseSlice(arguments);
-                    var q = queues[key];
-                    delete queues[key];
-                    for (var i = 0, l = q.length; i < l; i++) {
-                      q[i].apply(null, arguments);
-                    }
-                }]));
-            }
-        }
-        memoized.memo = memo;
-        memoized.unmemoized = fn;
-        return memoized;
-    };
-
-    async.unmemoize = function (fn) {
-      return function () {
-        return (fn.unmemoized || fn).apply(null, arguments);
-      };
-    };
-
-    function _times(mapper) {
-        return function (count, iterator, callback) {
-            mapper(_range(count), iterator, callback);
-        };
-    }
-
-    async.times = _times(async.map);
-    async.timesSeries = _times(async.mapSeries);
-    async.timesLimit = function (count, limit, iterator, callback) {
-        return async.mapLimit(_range(count), limit, iterator, callback);
-    };
-
-    async.seq = function (/* functions... */) {
-        var fns = arguments;
-        return function () {
-            var that = this;
-            var args = _baseSlice(arguments);
-
-            var callback = args.slice(-1)[0];
-            if (typeof callback == 'function') {
-                args.pop();
-            } else {
-                callback = noop;
-            }
-
-            async.reduce(fns, args, function (newargs, fn, cb) {
-                fn.apply(that, newargs.concat([function () {
-                    var err = arguments[0];
-                    var nextargs = _baseSlice(arguments, 1);
-                    cb(err, nextargs);
-                }]));
-            },
-            function (err, results) {
-                callback.apply(that, [err].concat(results));
-            });
-        };
-    };
-
-    async.compose = function (/* functions... */) {
-      return async.seq.apply(null, Array.prototype.reverse.call(arguments));
-    };
-
-
-    function _applyEach(eachfn, fns /*args...*/) {
-        function go() {
-            var that = this;
-            var args = _baseSlice(arguments);
-            var callback = args.pop();
-            return eachfn(fns, function (fn, _, cb) {
-                fn.apply(that, args.concat([cb]));
-            },
-            callback);
-        }
-        if (arguments.length > 2) {
-            var args = _baseSlice(arguments, 2);
-            return go.apply(this, args);
-        }
-        else {
-            return go;
-        }
-    }
-
-    async.applyEach = function (/*fns, args...*/) {
-        var args = _baseSlice(arguments);
-        return _applyEach.apply(null, [async.eachOf].concat(args));
-    };
-    async.applyEachSeries = function (/*fns, args...*/) {
-        var args = _baseSlice(arguments);
-        return _applyEach.apply(null, [async.eachOfSeries].concat(args));
-    };
-
-
-    async.forever = function (fn, callback) {
-        var done = only_once(callback || noop);
-        var task = ensureAsync(fn);
-        function next(err) {
-            if (err) {
-                return done(err);
-            }
-            task(next);
-        }
-        next();
-    };
-
-    function ensureAsync(fn) {
-        return function (/*...args, callback*/) {
-            var args = _baseSlice(arguments);
-            var callback = args.pop();
-            args.push(function () {
-                var innerArgs = arguments;
-                if (sync) {
-                    async.setImmediate(function () {
-                        callback.apply(null, innerArgs);
-                    });
-                } else {
-                    callback.apply(null, innerArgs);
-                }
-            });
-            var sync = true;
-            fn.apply(this, args);
-            sync = false;
-        };
-    }
-
-    async.ensureAsync = ensureAsync;
-
-    // Node.js
-    if (typeof module !== 'undefined' && module.exports) {
-        module.exports = async;
-    }
-    // AMD / RequireJS
-    else if (typeof define !== 'undefined' && define.amd) {
-        define([], function () {
-            return async;
-        });
-    }
-    // included directly via <script> tag
-    else {
-        root.async = async;
-    }
-
-}());
-
-}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"_process":36}],25:[function(require,module,exports){
-
-},{}],26:[function(require,module,exports){
-arguments[4][25][0].apply(exports,arguments)
-},{"dup":25}],27:[function(require,module,exports){
+},{"../../core/Converter.js":4,"http":59}],29:[function(require,module,exports){
+
+},{}],30:[function(require,module,exports){
+arguments[4][29][0].apply(exports,arguments)
+},{"dup":29}],31:[function(require,module,exports){
 (function (global){
 /*!
  * The buffer module from node.js, for the browser.
@@ -4189,7 +2916,7 @@ function blitBuffer (src, dst, offset, length) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"base64-js":28,"ieee754":29,"isarray":30}],28:[function(require,module,exports){
+},{"base64-js":32,"ieee754":33,"isarray":34}],32:[function(require,module,exports){
 var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
 ;(function (exports) {
@@ -4315,7 +3042,7 @@ var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 	exports.fromByteArray = uint8ToBase64
 }(typeof exports === 'undefined' ? (this.base64js = {}) : exports))
 
-},{}],29:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
   var eLen = nBytes * 8 - mLen - 1
@@ -4401,14 +3128,14 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],30:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 var toString = {}.toString;
 
 module.exports = Array.isArray || function (arr) {
   return toString.call(arr) == '[object Array]';
 };
 
-},{}],31:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -4711,7 +3438,7 @@ function isUndefined(arg) {
   return arg === void 0;
 }
 
-},{}],32:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -4736,7 +3463,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],33:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 /**
  * Determine if an object is Buffer
  *
@@ -4755,12 +3482,12 @@ module.exports = function (obj) {
     ))
 }
 
-},{}],34:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 module.exports = Array.isArray || function (arr) {
   return Object.prototype.toString.call(arr) == '[object Array]';
 };
 
-},{}],35:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 exports.endianness = function () { return 'LE' };
 
 exports.hostname = function () {
@@ -4807,7 +3534,7 @@ exports.tmpdir = exports.tmpDir = function () {
 
 exports.EOL = '\n';
 
-},{}],36:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -4900,7 +3627,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],37:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 (function (global){
 /*! https://mths.be/punycode v1.4.0 by @mathias */
 ;(function(root) {
@@ -5437,7 +4164,7 @@ process.umask = function() { return 0; };
 }(this));
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],38:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -5523,7 +4250,7 @@ var isArray = Array.isArray || function (xs) {
   return Object.prototype.toString.call(xs) === '[object Array]';
 };
 
-},{}],39:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -5610,16 +4337,16 @@ var objectKeys = Object.keys || function (obj) {
   return res;
 };
 
-},{}],40:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 'use strict';
 
 exports.decode = exports.parse = require('./decode');
 exports.encode = exports.stringify = require('./encode');
 
-},{"./decode":38,"./encode":39}],41:[function(require,module,exports){
+},{"./decode":42,"./encode":43}],45:[function(require,module,exports){
 module.exports = require("./lib/_stream_duplex.js")
 
-},{"./lib/_stream_duplex.js":42}],42:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":46}],46:[function(require,module,exports){
 // a duplex stream is just a stream that is both readable and writable.
 // Since JS doesn't have multiple prototypal inheritance, this class
 // prototypally inherits from Readable, and then parasitically from
@@ -5703,7 +4430,7 @@ function forEach (xs, f) {
   }
 }
 
-},{"./_stream_readable":44,"./_stream_writable":46,"core-util-is":47,"inherits":32,"process-nextick-args":48}],43:[function(require,module,exports){
+},{"./_stream_readable":48,"./_stream_writable":50,"core-util-is":51,"inherits":36,"process-nextick-args":52}],47:[function(require,module,exports){
 // a passthrough stream.
 // basically just the most minimal sort of Transform stream.
 // Every written chunk gets output as-is.
@@ -5732,7 +4459,7 @@ PassThrough.prototype._transform = function(chunk, encoding, cb) {
   cb(null, chunk);
 };
 
-},{"./_stream_transform":45,"core-util-is":47,"inherits":32}],44:[function(require,module,exports){
+},{"./_stream_transform":49,"core-util-is":51,"inherits":36}],48:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -6711,7 +5438,7 @@ function indexOf (xs, x) {
 }
 
 }).call(this,require('_process'))
-},{"./_stream_duplex":42,"_process":36,"buffer":27,"core-util-is":47,"events":31,"inherits":32,"isarray":34,"process-nextick-args":48,"string_decoder/":64,"util":26}],45:[function(require,module,exports){
+},{"./_stream_duplex":46,"_process":40,"buffer":31,"core-util-is":51,"events":35,"inherits":36,"isarray":38,"process-nextick-args":52,"string_decoder/":68,"util":30}],49:[function(require,module,exports){
 // a transform stream is a readable/writable stream where you do
 // something with the data.  Sometimes it's called a "filter",
 // but that's not a great name for it, since that implies a thing where
@@ -6910,7 +5637,7 @@ function done(stream, er) {
   return stream.push(null);
 }
 
-},{"./_stream_duplex":42,"core-util-is":47,"inherits":32}],46:[function(require,module,exports){
+},{"./_stream_duplex":46,"core-util-is":51,"inherits":36}],50:[function(require,module,exports){
 // A bit simpler than readable streams.
 // Implement an async ._write(chunk, encoding, cb), and it'll handle all
 // the drain event emission and buffering.
@@ -7441,7 +6168,7 @@ function endWritable(stream, state, cb) {
   state.ended = true;
 }
 
-},{"./_stream_duplex":42,"buffer":27,"core-util-is":47,"events":31,"inherits":32,"process-nextick-args":48,"util-deprecate":49}],47:[function(require,module,exports){
+},{"./_stream_duplex":46,"buffer":31,"core-util-is":51,"events":35,"inherits":36,"process-nextick-args":52,"util-deprecate":53}],51:[function(require,module,exports){
 (function (Buffer){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -7552,7 +6279,7 @@ function objectToString(o) {
 }
 
 }).call(this,{"isBuffer":require("../../../../insert-module-globals/node_modules/is-buffer/index.js")})
-},{"../../../../insert-module-globals/node_modules/is-buffer/index.js":33}],48:[function(require,module,exports){
+},{"../../../../insert-module-globals/node_modules/is-buffer/index.js":37}],52:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -7576,7 +6303,7 @@ function nextTick(fn) {
 }
 
 }).call(this,require('_process'))
-},{"_process":36}],49:[function(require,module,exports){
+},{"_process":40}],53:[function(require,module,exports){
 (function (global){
 
 /**
@@ -7647,10 +6374,10 @@ function config (name) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],50:[function(require,module,exports){
+},{}],54:[function(require,module,exports){
 module.exports = require("./lib/_stream_passthrough.js")
 
-},{"./lib/_stream_passthrough.js":43}],51:[function(require,module,exports){
+},{"./lib/_stream_passthrough.js":47}],55:[function(require,module,exports){
 var Stream = (function (){
   try {
     return require('st' + 'ream'); // hack to fix a circular dependency issue when used with browserify
@@ -7664,13 +6391,13 @@ exports.Duplex = require('./lib/_stream_duplex.js');
 exports.Transform = require('./lib/_stream_transform.js');
 exports.PassThrough = require('./lib/_stream_passthrough.js');
 
-},{"./lib/_stream_duplex.js":42,"./lib/_stream_passthrough.js":43,"./lib/_stream_readable.js":44,"./lib/_stream_transform.js":45,"./lib/_stream_writable.js":46}],52:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":46,"./lib/_stream_passthrough.js":47,"./lib/_stream_readable.js":48,"./lib/_stream_transform.js":49,"./lib/_stream_writable.js":50}],56:[function(require,module,exports){
 module.exports = require("./lib/_stream_transform.js")
 
-},{"./lib/_stream_transform.js":45}],53:[function(require,module,exports){
+},{"./lib/_stream_transform.js":49}],57:[function(require,module,exports){
 module.exports = require("./lib/_stream_writable.js")
 
-},{"./lib/_stream_writable.js":46}],54:[function(require,module,exports){
+},{"./lib/_stream_writable.js":50}],58:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -7799,7 +6526,7 @@ Stream.prototype.pipe = function(dest, options) {
   return dest;
 };
 
-},{"events":31,"inherits":32,"readable-stream/duplex.js":41,"readable-stream/passthrough.js":50,"readable-stream/readable.js":51,"readable-stream/transform.js":52,"readable-stream/writable.js":53}],55:[function(require,module,exports){
+},{"events":35,"inherits":36,"readable-stream/duplex.js":45,"readable-stream/passthrough.js":54,"readable-stream/readable.js":55,"readable-stream/transform.js":56,"readable-stream/writable.js":57}],59:[function(require,module,exports){
 var ClientRequest = require('./lib/request')
 var extend = require('xtend')
 var statusCodes = require('builtin-status-codes')
@@ -7874,7 +6601,7 @@ http.METHODS = [
 	'UNLOCK',
 	'UNSUBSCRIBE'
 ]
-},{"./lib/request":57,"builtin-status-codes":59,"url":65,"xtend":68}],56:[function(require,module,exports){
+},{"./lib/request":61,"builtin-status-codes":63,"url":69,"xtend":72}],60:[function(require,module,exports){
 (function (global){
 exports.fetch = isFunction(global.fetch) && isFunction(global.ReadableByteStream)
 
@@ -7918,7 +6645,7 @@ function isFunction (value) {
 xhr = null // Help gc
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],57:[function(require,module,exports){
+},{}],61:[function(require,module,exports){
 (function (process,global,Buffer){
 // var Base64 = require('Base64')
 var capability = require('./capability')
@@ -8200,7 +6927,7 @@ var unsafeHeaders = [
 ]
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer)
-},{"./capability":56,"./response":58,"_process":36,"buffer":27,"foreach":60,"indexof":61,"inherits":32,"object-keys":62,"stream":54}],58:[function(require,module,exports){
+},{"./capability":60,"./response":62,"_process":40,"buffer":31,"foreach":64,"indexof":65,"inherits":36,"object-keys":66,"stream":58}],62:[function(require,module,exports){
 (function (process,global,Buffer){
 var capability = require('./capability')
 var foreach = require('foreach')
@@ -8377,7 +7104,7 @@ IncomingMessage.prototype._onXHRProgress = function () {
 }
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer)
-},{"./capability":56,"_process":36,"buffer":27,"foreach":60,"inherits":32,"stream":54}],59:[function(require,module,exports){
+},{"./capability":60,"_process":40,"buffer":31,"foreach":64,"inherits":36,"stream":58}],63:[function(require,module,exports){
 module.exports = {
   "100": "Continue",
   "101": "Switching Protocols",
@@ -8438,7 +7165,7 @@ module.exports = {
   "511": "Network Authentication Required"
 }
 
-},{}],60:[function(require,module,exports){
+},{}],64:[function(require,module,exports){
 
 var hasOwn = Object.prototype.hasOwnProperty;
 var toString = Object.prototype.toString;
@@ -8462,7 +7189,7 @@ module.exports = function forEach (obj, fn, ctx) {
 };
 
 
-},{}],61:[function(require,module,exports){
+},{}],65:[function(require,module,exports){
 
 var indexOf = [].indexOf;
 
@@ -8473,7 +7200,7 @@ module.exports = function(arr, obj){
   }
   return -1;
 };
-},{}],62:[function(require,module,exports){
+},{}],66:[function(require,module,exports){
 'use strict';
 
 // modified from https://github.com/es-shims/es5-shim
@@ -8603,7 +7330,7 @@ keysShim.shim = function shimObjectKeys() {
 
 module.exports = keysShim;
 
-},{"./isArguments":63}],63:[function(require,module,exports){
+},{"./isArguments":67}],67:[function(require,module,exports){
 'use strict';
 
 var toStr = Object.prototype.toString;
@@ -8622,7 +7349,7 @@ module.exports = function isArguments(value) {
 	return isArgs;
 };
 
-},{}],64:[function(require,module,exports){
+},{}],68:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -8845,7 +7572,7 @@ function base64DetectIncompleteChar(buffer) {
   this.charLength = this.charReceived ? 3 : 0;
 }
 
-},{"buffer":27}],65:[function(require,module,exports){
+},{"buffer":31}],69:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -9554,14 +8281,14 @@ function isNullOrUndefined(arg) {
   return  arg == null;
 }
 
-},{"punycode":37,"querystring":40}],66:[function(require,module,exports){
+},{"punycode":41,"querystring":44}],70:[function(require,module,exports){
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
     && typeof arg.copy === 'function'
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],67:[function(require,module,exports){
+},{}],71:[function(require,module,exports){
 (function (process,global){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -10151,7 +8878,7 @@ function hasOwnProperty(obj, prop) {
 }
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":66,"_process":36,"inherits":32}],68:[function(require,module,exports){
+},{"./support/isBuffer":70,"_process":40,"inherits":36}],72:[function(require,module,exports){
 module.exports = extend
 
 var hasOwnProperty = Object.prototype.hasOwnProperty;
@@ -10172,7 +8899,7 @@ function extend() {
     return target
 }
 
-},{}],69:[function(require,module,exports){
+},{}],73:[function(require,module,exports){
 module.exports={
   "name": "csvtojson",
   "description": "A tool concentrating on converting csv data to JSON with customised parser supporting",
@@ -10193,7 +8920,7 @@ module.exports={
       "email": "t3dodson@gmail.com"
     }
   ],
-  "version": "1.0.1",
+  "version": "1.1.0",
   "keywords": [
     "csv",
     "csvtojson",
@@ -10226,11 +8953,12 @@ module.exports={
     "mocha": "^2.4.5"
   },
   "dependencies": {
-    "async": "^1.2.1",
     "minimist": "^1.2.0"
   },
   "scripts": {
-    "test": "mocha ./test -R spec"
+    "test": "mocha ./test -R spec",
+    "test-debug":"mocha debug ./test -R spec",
+    "test-all":"mocha debug ./test -R spec && CSV_WORKER=3 mocha ./test -R spec "
   }
 }
 
