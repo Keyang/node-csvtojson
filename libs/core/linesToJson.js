@@ -9,14 +9,31 @@ var CSVError=require("./CSVError");
  * @return {[type]}   [{err:null,json:obj,index:line,row:[csv row]}]
  */
 module.exports=function(lines,params,idx){
-  if (!params._headers){
-    params._headers=[];
+  if (params._needParseJson){
+    if (!params._headers){
+      params._headers=[];
+    }
+    if (!params.parseRules){
+      var row=params._headers;
+      params.parseRules=parserMgr.initParsers(row,params);
+    }
+    return processRows(lines,params,idx);
+  }else{
+    return justReturnRows(lines,params,idx);
   }
-  if (!params.parseRules){
-    var row=params._headers;
-    params.parseRules=parserMgr.initParsers(row,params);
+}
+
+function justReturnRows(lines,params,idx){
+  var rtn=[];
+  for (var i=0;i<lines.length;i++){
+    rtn.push({
+      err:null,
+      json:{},
+      index:idx++,
+      row:lines[i]
+    })
   }
-  return processRows(lines,params,idx);
+  return rtn;
 }
 function processRows(csvRows, params,startIndex) {
   var count = csvRows.length;

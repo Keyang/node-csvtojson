@@ -103,7 +103,7 @@ describe("CSV Converter", function () {
     var csvConverter = new Converter();
     //end_parsed will be emitted once parsing finished
     csvConverter.on("end_parsed", function (jsonObj) {
-      assert(jsonObj.length === 2);
+      assert.equal(jsonObj.length , 2);
     });
     csvConverter.fromString(data, function (err, jsonObj) {
       assert(jsonObj.length === 2);
@@ -272,7 +272,7 @@ describe("CSV Converter", function () {
     st.on("end",function (){
       var obj = JSON.parse(data);
       assert(obj.length === 2);
-      assert(obj[0].annee === 2015029);
+      assert.equal(obj[0].annee , 2015029);
       assert(obj[1].annee === 2015028);
       done();
     });

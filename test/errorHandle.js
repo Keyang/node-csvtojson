@@ -70,6 +70,7 @@ describe("Converter error handling", function() {
         done();
       }
     });
+    conv.on("json",function(){})
     rs.pipe(conv);
   });
 });

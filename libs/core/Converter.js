@@ -39,28 +39,41 @@ function Converter(params,options) {
   this._needJson=null;
   this._needEmitResult=null;
   this._needEmitFinalResult=null;
+  this._needEmitJson=null;
   this._needPush=null;
+  this._needEmitCsv=null;
+  this._csvTransf=null;
   this.finalResult=[];
   // this.on("data", function() {});
   this.on("error", function() {});
   this.initWorker();
+  process.nextTick(function(){
+    if (this._needEmitFinalResult === null){
+      this._needEmitFinalResult=this.listeners("end_parsed").length > 0
+    }
+    if (this._needEmitResult===null){
+      this._needEmitResult=this.listeners("record_parsed").length>0
+    }
+    if (this._needEmitJson === null){
+      this._needEmitJson=this.listeners("json").length>0
+    }
+    if (this._needEmitCsv === null){
+      this._needEmitCsv=this.listeners("csv").length>0
+    }
+    if (this._needJson === null){
+      this._needJson=this._needEmitJson || this._needEmitFinalResult || this._needEmitResult || this.transform || this._options.objectMode;
+    }
+    if (this._needPush === null){
+      this._needPush = this.listeners("data").length > 0 || this.listeners("readable").length>0
+      // this._needPush=false;
+    }
+    this.param._needParseJson=this._needJson || this._needPush; 
+
+  }.bind(this))
   return this;
 }
 util.inherits(Converter, Transform);
 Converter.prototype._transform = function(data, encoding, cb) {
-  if (this._needEmitFinalResult === null){
-    this._needEmitFinalResult=this.listeners("end_parsed").length > 0
-  }
-  if (this._needEmitResult===null){
-    this._needEmitResult=this.listeners("record_parsed").length>0
-  }
-  if (this._needJson === null){
-    this._needJson=this._needEmitFinalResult || this._needEmitResult || this.transform || this._options.objectMode;
-  }
-  if (this._needPush === null){
-    this._needPush = this.listeners("data").length > 0 || this.listeners("readable").length>0
-    // this._needPush=false;
-  }
   if (this.param.toArrayString && this.started === false) {
     this.started = true;
     if (this._needPush){
@@ -206,11 +219,21 @@ Converter.prototype.emitResult=function(r){
       row=JSON.parse(row)
     }
   }
-  if (this.param.constructResult && this._needEmitFinalResult){
-    this.finalResult.push(resultJson)
-  }
   if (this.transform && typeof this.transform==="function"){
     this.transform(resultJson,row,index);
+    resultStr=null;
+  }
+  if (this._needEmitJson){
+    this.emit("json",resultJson,index)
+  }
+  if (this._needEmitCsv){
+    if (typeof row ==="string"){
+      row=JSON.parse(row)
+    }
+    this.emit("csv",row,index)
+  }
+  if (this.param.constructResult && this._needEmitFinalResult){
+    this.finalResult.push(resultJson)
   }
   if (this._needEmitResult){
     this.emit("record_parsed", resultJson, row, index);
@@ -305,51 +328,65 @@ Converter.prototype.getEol = function(data) {
 };
 Converter.prototype.fromFile = function(filePath, cb) {
   var fs = require('fs');
+  var rs=null;
+  this.wrapCallback(cb, function() {
+    if (rs && rs.destroy){
+      rs.destroy();
+    }
+  });
   fs.exists(filePath, function(exist) {
     if (exist) {
-      var rs = fs.createReadStream(filePath);
+      rs = fs.createReadStream(filePath);
       rs.pipe(this);
-      this.wrapCallback(cb, function() {
-        rs.destroy();
-      });
     } else {
-      cb(new Error(filePath + " cannot be found."));
+      this.emit('error',new Error("File not exist"))
     }
   }.bind(this));
   return this;
 }
+Converter.prototype.fromStream=function(readStream,cb){
+  if (cb && typeof cb ==="function"){
+    this.wrapCallback(cb);
+  }
+  process.nextTick(function(){
+    readStream.pipe(this);
+  }.bind(this))
+  return this;
+}
+Converter.prototype.transf=function(func){
+  this.transform=func;
+  return this;
+}
 Converter.prototype.fromString = function(csvString, cb) {
-  var rs = new Readable();
-  var offset = 0;
   if (typeof csvString != "string") {
     return cb(new Error("Passed CSV Data is not a string."));
   }
-  rs._read = function(len) {
-    // console.log(offset,len,csvString.length);
-    var sub = csvString.substr(offset, len);
-    this.push(sub);
-    offset += len;
-    if (offset >= csvString.length) {
-      this.push(null);
-    }
-  };
-  rs.pipe(this);
   if (cb && typeof cb === "function") {
     this.wrapCallback(cb, function() {
-      rs.pause();
     });
   }
+  process.nextTick(function(){
+    this.end(csvString)
+  }.bind(this))
   return this;
 };
 Converter.prototype.wrapCallback = function(cb, clean) {
-  this.once("end_parsed", function(res) {
-    if (!this.hasError) {
-      cb(null, res);
-    }
-  }.bind(this));
+
+  if (clean === undefined){
+    clean=function(){}
+  }
+  if (cb && typeof cb ==="function"){
+    this.once("end_parsed", function(res) {
+      if (!this.hasError) {
+        cb(null, res);
+      }
+    }.bind(this));
+  }
   this.once("error", function(err) {
     this.hasError=true;
-    cb(err);
+    if (cb && typeof cb  ==="function"){
+      cb(err);
+    }
     clean();
   }.bind(this));
 }

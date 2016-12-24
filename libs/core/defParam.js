@@ -16,6 +16,9 @@ module.exports=function(params){
     checkColumn: false, //whether check column number of a row is the same as headers. If column number mismatched headers number, an error of "mismatched_column" will be emitted.. default: false
     escape:'"' //escape char for quoted column
   };
+  if (!params){
+    params={};
+  }
   for (var key in params) {
     if (params.hasOwnProperty(key)) {
       _param[key] = params[key];

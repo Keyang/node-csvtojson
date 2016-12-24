@@ -1,4 +1,5 @@
 var Converter = require("../libs/core/Converter.js");
+var csv=require("../");
 var assert = require("assert");
 var fs = require("fs");
 describe("CSV Converter", function() {
@@ -262,23 +263,59 @@ describe("CSV Converter", function() {
     }) 
     .on("end",done)
   })
-  // it ("should convert big csv",function(done){
-  //   // var rs=fs.createReadStream(__dirname+"/data/large-csv-sample.csv");
-  //   var rs=fs.createReadStream("/Users/kxiang/tmp/csvdata");
-  //   var conv=new Converter({fork:false,workerNum:3,"checkType":false});
-  //   rs.pipe(conv);
-  //   var count=0;
-  //   console.time("elapsed");
-  //   conv.on("record_parsed",function(data){
-  //     count++;
-  //     if (count % 10000 === 0){
-  //       console.log(count);
-  //       console.timeEnd("elapsed");
-  //       console.time("elapsed");
-  //     }
-  //   });
-  //   conv.on("end",function(){
-  //     done();
-  //   })
-  // });
+  it ("should parse from stream",function(done){
+    var testData = __dirname + "/data/complexJSONCSV";
+    var rs = fs.createReadStream(testData);
+    csv()
+    .fromStream(rs)
+    .on("end_parsed",function(res){
+      assert(res);
+      done();
+    })
+  })
+  it ("should emit json and csv event",function(done){
+    var testData = __dirname + "/data/complexJSONCSV";
+    var rs = fs.createReadStream(testData);
+    var numofrow=0;
+    var numofjson=0;
+    csv()
+    .fromStream(rs)
+    .on('csv',function(row){
+        numofrow++;
+    })
+    .on("json",function(res){
+      numofjson++;
+      assert.equal(typeof res,"object")
+    })
+    .on("end",function(){
+      assert.equal(numofjson,numofrow)
+      assert(numofrow!=0)
+      done();
+    })
+  })
+   it ("should transform with transf function",function(done){
+    var testData = __dirname + "/data/complexJSONCSV";
+    var rs = fs.createReadStream(testData);
+    var numofrow=0;
+    var numofjson=0;
+    csv()
+    .fromStream(rs)
+    .transf(function(json,row,idx){
+      json.a="test"; 
+    })
+    .on('csv',function(row){
+        numofrow++;
+    })
+    .on("json",function(res){
+      numofjson++;
+      assert.equal(typeof res,"object")
+      assert.equal(res.a,"test")
+    })
+    .on("end",function(){
+      assert.equal(numofjson,numofrow)
+      assert(numofrow!=0)
+      done();
+    })
+  })
+  
 });
