@@ -54,7 +54,8 @@
     "minimist": "^1.2.0"
   },
   "scripts": {
-    "test": "mocha ./test -R spec && CSV_WORKER=3 mocha ./test -R spec",
-    "test-debug":"mocha debug ./test -R spec"
+    "test": "mocha ./test -R spec",
+    "test-debug":"mocha debug ./test -R spec",
+    "test-all":"mocha debug ./test -R spec && CSV_WORKER=3 mocha ./test -R spec "
   }
 }
