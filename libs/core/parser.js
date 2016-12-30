@@ -16,7 +16,7 @@ function Parser(name, regExp, parser, processSafe) {
     this.parse = parser;
   }
 }
-var numReg = /^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$/;
+// var numReg = /^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$/;
 Parser.prototype.convertType = function(item) {
   var type=this.type;
   if (type === 'number') {
@@ -28,7 +28,10 @@ Parser.prototype.convertType = function(item) {
     }
   } else if (this.param && this.param.checkType && type === '') {
     var trimed = item.trim();
-    if (numReg.test(trimed)) {
+    if (trimed === ""){
+      return trimed;
+    }
+    if (!isNaN(trimed)) {
       return parseFloat(trimed);
     } else if (trimed.length === 5 && trimed.toLowerCase() === "false") {
       return false;

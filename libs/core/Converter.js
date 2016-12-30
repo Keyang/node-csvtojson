@@ -7,6 +7,7 @@ var defParam=require("./defParam");
 var csvline=require("./csvline");
 var fileline=require("./fileline");
 var dataToCSVLine=require("./dataToCSVLine");
+var fileLineToCSVLine=require("./fileLineToCSVLine");
 var linesToJson=require("./linesToJson");
 var CSVError=require("./CSVError");
 var workerMgr=require("./workerMgr");
@@ -41,7 +42,8 @@ function Converter(params,options) {
   this._csvTransf=null;
   this.finalResult=[];
   // this.on("data", function() {});
-  this.on("error", function() {});
+  this.on("error", emitDone(this));
+  this.on("end", emitDone(this));
   this.initWorker();
   process.nextTick(function(){
     if (this._needEmitFinalResult === null){
@@ -69,6 +71,13 @@ function Converter(params,options) {
   return this;
 }
 util.inherits(Converter, Transform);
+function emitDone(conv){
+  return function(err){
+    process.nextTick(function(){
+      conv.emit('done',err)
+    })
+  }
+}
 Converter.prototype._transform = function(data, encoding, cb) {
   if (this.param.toArrayString && this.started === false) {
     this.started = true;
@@ -94,11 +103,15 @@ Converter.prototype.setPartialData=function(d){
 }
 Converter.prototype.processData=function(data,cb){
   var params=this.param;
+  var fileLines=fileline(data,this.param)
+  if (this.preProcessLine && typeof this.preProcessLine === "function"){
+    fileLines.lines=this._preProcessLines(fileLines.lines,this.lastIndex)
+  }
   if (!params._headers){ //header is not inited. init header
-    this.processHead(data,cb);
+    this.processHead(fileLines,cb);
   }else{
     if (params.workerNum<=1){
-      var lines=dataToCSVLine(data,params);
+      var lines=fileLineToCSVLine(fileLines,params);
       this.setPartialData(lines.partial);
       var jsonArr=linesToJson(lines.lines,params,this.recordNum);
       this.processResult(jsonArr)
@@ -106,9 +119,22 @@ Converter.prototype.processData=function(data,cb){
       this.recordNum+=jsonArr.length;
       cb();
     }else{
-      this.workerProcess(data,cb);
+      this.workerProcess(fileLines,cb);
     }
   }
+}
+Converter.prototype._preProcessLines=function(lines,startIdx){
+  var rtn=[]
+  for (var i=0;i<lines.length;i++){
+    var result=this.preProcessLine(lines[i],startIdx+i+1)
+    if (typeof result ==="string"){
+      rtn.push(result)
+    }else{
+      rtn.push(lines[i])
+      this.emit("error",new Error("preProcessLine should return a string but got: "+JSON.stringify(result)))
+    }
+  }
+  return rtn
 }
 Converter.prototype.initWorker=function(){
   var workerNum=this.param.workerNum-1;
@@ -117,14 +143,22 @@ Converter.prototype.initWorker=function(){
     this.workerMgr.initWorker(workerNum,this.param);
   }
 }
+Converter.prototype.preRawData=function(func){
+  this.preProcessRaw=func;
+  return this;
+}
+Converter.prototype.preFileLine=function(func){
+  this.preProcessLine=func;
+  return this;
+}
 /**
  * workerpRocess does not support embeded multiple lines. 
  */
 
-Converter.prototype.workerProcess=function(data,cb){
+Converter.prototype.workerProcess=function(fileLine,cb){
   var self=this;
-  var line=fileline(data,this.param)
-  var eol=this.getEol(data)
+  var line=fileLine
+  var eol=this.getEol()
   this.setPartialData(line.partial)
   this.workerMgr.sendWorker(line.lines.join(eol)+eol,this.lastIndex,cb,function(results,lastIndex){
       var cur=self.sequenceBuffer[0];
@@ -154,10 +188,10 @@ Converter.prototype.workerProcess=function(data,cb){
   });
   this.lastIndex+=line.lines.length;
 }
-Converter.prototype.processHead=function(data,cb){
+Converter.prototype.processHead=function(fileLine,cb){
   var params=this.param;
   if (!params._headers){ //header is not inited. init header
-    var lines=dataToCSVLine(data,params);
+    var lines=fileLineToCSVLine(fileLine,params);
     this.setPartialData(lines.partial);
     if (params.noheader){
       if (params.headers){
@@ -198,6 +232,7 @@ Converter.prototype.processResult=function(result){
     // this.lastIndex+=result.length;
     // cb();
 }
+
 Converter.prototype.emitResult=function(r){
   var index=r.index;
   var row=r.row;
@@ -320,7 +355,7 @@ Converter.prototype.getEol = function(data) {
     this.param.eol=eol;
   }
 
-  return this.param.eol;
+  return this.param.eol || eol;
 };
 Converter.prototype.fromFile = function(filePath, cb) {
   var fs = require('fs');

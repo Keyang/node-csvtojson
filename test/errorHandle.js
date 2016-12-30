@@ -67,10 +67,14 @@ describe("Converter error handling", function() {
       if (tested === false) {
         assert(err.err === "column_mismatched");
         tested = true;
-        done();
+        // done();
       }
     });
     conv.on("json",function(){})
+    conv.on('done',function(){
+      assert(tested)
+      done();
+    })
     rs.pipe(conv);
   });
 });

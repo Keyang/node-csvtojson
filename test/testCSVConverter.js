@@ -13,7 +13,7 @@ describe("CSV Converter", function () {
     var obj = new Converter();
     var stream = fs.createReadStream(file);
     obj.on("end_parsed", function (obj) {
-      assert(obj.length === 2);
+      assert.equal(obj.length, 2);
       done();
     });
     stream.pipe(obj);
@@ -191,7 +191,7 @@ describe("CSV Converter", function () {
     csvConverter.on("record_parsed",function (d){
       assert(typeof d.column1 === "number");
       assert(typeof d.column2 === "string");
-      assert(d["date#!colume4"] === "someinvaliddate");
+      assert.equal(d["date#!colume4"] , "someinvaliddate");
       assert(d.column5.hello === "world");
       assert(d.column6 === '{"hello":"world"}');
       assert(d.column7 === "1234");
@@ -219,7 +219,7 @@ describe("CSV Converter", function () {
       assert( d["date#!column3"] === "2012-01-01");
       assert(d["date#!colume4"] === "someinvaliddate");
       assert(d.column5 === '{"hello":"world"}');
-      assert(d["column6"] === '{"hello":"world"}');
+      assert.equal(d["column6"] , '{"hello":"world"}');
       assert(d["column7"] === "1234");
       assert(d["column8"] === "abcd");
       assert(d.column9 === "true");
@@ -285,8 +285,8 @@ describe("CSV Converter", function () {
     st.on("end_parsed",function (res){
       var j = res[0];
       assert(res.length  === 3);
-      assert (j.col2.length === 1);
-      assert(j.col2[0] === "d3");
+      assert (j.col2.length === 2);
+      assert(j.col2[1] === "d3");
       assert(j.col4.col3 === undefined);
       assert(j.col4.col5 === "world");
       assert(res[1].col1==="d2");

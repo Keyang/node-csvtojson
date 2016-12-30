@@ -18,7 +18,7 @@
       "email": "t3dodson@gmail.com"
     }
   ],
-  "version": "1.1.0",
+  "version": "1.1.1",
   "keywords": [
     "csv",
     "csvtojson",
@@ -48,14 +48,15 @@
     "grunt-newer": "^1.1.0",
     "imgur": "^0.1.5",
     "load-grunt-tasks": "^3.4.0",
-    "mocha": "^2.4.5"
+    "mocha": "^2.4.5",
+    "minimist": "^1.2.0"
   },
   "dependencies": {
-    "minimist": "^1.2.0"
+    "lodash": "^4.17.3"
   },
   "scripts": {
     "test": "mocha ./test -R spec",
-    "test-debug":"mocha debug ./test -R spec",
-    "test-all":"mocha debug ./test -R spec && CSV_WORKER=3 mocha ./test -R spec "
+    "test-debug": "mocha debug ./test -R spec",
+    "test-all": "mocha  ./test -R spec && CSV_WORKER=3 mocha ./test -R spec "
   }
 }

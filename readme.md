@@ -53,39 +53,38 @@ npm i --save csvtojson
 ```js
 /**
 csvStr:
-a,b,c
 1,2,3
 4,5,6
+7,8,9
 */
 const csv=require('csvtojson')
-csv()
+csv({noheader:true})
 .fromString(csvStr)
-.on('json',(jsonObj)=>{
-	console.log(jsonObj.a) // 1 and 4
+.on('csv',(csvRow)=>{ // this func will be called 3 times
+	console.log(csvRow) // => [1,2,3] , [4,5,6]  , [7,8,9]
 })
-.on('csv',(csvRow)=>{
-	console.log(csvRow) // [1,2,3] and [4,5,6] . 
-	//use noheader param to access [a,b,c]. see params below
-})
-.on('end_parsed',(jsonArr)=>{
-	assert.equal(jsonArr.length ,2)
-	assert.equal(jsonArr[0].a,1)
+.on('done',()=>{
+	//parsing finished
 })
 ```
 
 ### From CSV File
 
 ```js
-
+/** csv file
+a,b,c
+1,2,3
+4,5,6
+*/
 const csvFilePath='<path to csv file>'
 const csv=require('csvtojson')
 csv()
 .fromFile(csvFilePath)
-.on('data',(data)=>{
-	const jsonString=data.toString("utf8")
-	// json String is stringified json object
+.on('json',(jsonObj)=>{
+	// combine csv header row and csv line to a json object
+	// jsonObj.a ==> 1 or 4
 })
-.on('end',()=>{
+.on('done',(error)=>{
 	console.log('end')
 })
 
@@ -100,36 +99,54 @@ const csv=require('csvtojson')
 csv()
 .fromStream(csvReadStream)
 .on('csv',(csvRow)=>{
+	// csvRow is an array
+})
+.on('done',(error)=>{
 
 })
-.on('end',()=>{
-
-})
-.on('error',(err)=>{
-	console.log(err)
-	csvReadStream.unpipe()
-})
-
 
 ```
 
-### Convert to CSV row arrays
+### Convert to CSV row arrays with csv header row
 
 ```js
 /**
 csvStr:
 a,b,c
-d,e,f
 1,2,3
+4,5,6
+*/
+
+const csv=require('csvtojson')
+csv()
+.fromString(csvStr)
+.on('csv',(csvRow)=>{ //this func will be called twice. Header row will not be populated
+	// csvRow =>  [1,2,3] and [4,5,6]
+})
+.on('done',()=>{
+	console.log('end')
+})
+```
+
+### Convert to JSON without csv header row
+
+```js
+/**
+csvStr:
+1,2,3
+4,5,6
+7,8,9
 */
 
 const csv=require('csvtojson')
 csv({noheader:true})
 .fromString(csvStr)
-.on('csv',(csvRow)=>{
-	//[a,b,c] [d,e,f] [1,2,3]
+.on('json',(json)=>{ //this func will be called 3 times
+	// json.field1 => 1,4,7
+	// json.field2 => 2,5,8
+	// json.field3 => 3,6,9
 })
-.on('end',()=>{
+.on('done',()=>{
 	console.log('end')
 })
 ```
@@ -187,7 +204,7 @@ In above, `converter` is an instance of Converter which is a subclass of node.js
 
 * [Parameters](#parameters)
 * [Events](#events)
-* [Transform](#transform)
+* [Hook / Transform](#hook-&-transform)
 * [Nested JSON Structure](#nested-json-structure)
 * [Header Row](#header-row)
 * [Multi CPU Core Support](#multi-cpu-core-support)
@@ -218,7 +235,6 @@ const converter=csv({
 ```
 Following parameters are supported:
 
-* **constructResult**: true/false. Whether to construct final json object in memory which will be populated in "end_parsed" event. Set to false if deal with huge csv data. default: true.
 * **delimiter**: delimiter used for seperating columns. Use "auto" if delimiter is unknown in advance, in this case, delimiter will be auto-detected (by best attempt). Use an array to give a list of potential delimiters e.g. [",","|","$"]. default: ","
 * **quote**: If a column contains delimiter, it is able to use quote character to surround the column content. e.g. "hello, world" wont be split into two columns while parsing. Set to "off" will ignore all quotes. default: " (double quote)
 * **trim**: Indicate if parser trim off spaces surrounding column content. e.g. "  content  " will be trimmed to "content". Default: true
@@ -256,7 +272,7 @@ csv()
 
 ### csv
 
-`csv` event is emitted for each parsed CSV line. It passes an array object which contains cells content of one csv row.
+`csv` event is emitted for each CSV line. It passes an array object which contains cells content of one csv row.
 
 ```js
 const csv=require('csvtojson')
@@ -266,6 +282,10 @@ csv()
 	//rowIndex=> number
 })
 ```
+
+`csvRow` is always an array of strings no matter `checkType` value.
+
+`csv` event is the fastest parse event while `json` and `data` event is about 2 times slower. Thus if `csv` is enough, for best performance, just use it without `json` and `data` event.
 
 ### data
 
@@ -291,6 +311,10 @@ csv()
 })
 ```
 
+Note that if `error` being emitted, the process will stop as node.js will automatically `unpipe()` upper-stream and chained down-stream<sup>1</sup>. This will cause `end` / `end_parsed` event never being emitted because `end` event is only emitted when all data being consumed <sup>2</sup>. 
+
+1. [Node.JS Readable Stream](https://github.com/nodejs/node/blob/master/lib/_stream_readable.js#L572-L583)
+2. [Writable end Event](https://nodejs.org/api/stream.html#stream_event_end)
 
 ### record_parsed
 
@@ -317,7 +341,58 @@ csv()
 })
 ```
 
-## Transform
+### done
+
+`done` event is emitted either after `end` or `error`. This indicates the processor has stopped.
+
+```js
+const csv=require('csvtojson')
+csv()
+.on('done',(error)=>{
+	//do some stuff
+})
+```
+
+if any error during parsing, it will be passed in callback.
+
+## Hook & Transform
+
+### Raw CSV Data Hook
+
+```js
+const csv=require('csvtojson')
+csv()
+.preRawData((csvRawData,cb)=>{
+	var newData=csvRawData.replace('some value','another value')
+	cb(newData);
+})
+.on('json',(jsonObj)=>{
+    
+});
+```
+
+the function in `preRawData` will be called directly with the string from upper stream.
+
+### CSV File Line Hook
+
+```js
+const csv=require('csvtojson')
+csv()
+.preFileLine((fileLineString, lineIdx)=>{
+	if (lineIdx === 2){
+		return fileLineString.replace('some value','another value')
+	}
+	return fileLineString
+})
+.on('json',(jsonObj)=>{
+    
+});
+```
+
+the function is called each time a file line being found in csv stream. the `lineIdx` is the file line number in the file. The function should return a string to processor.
+
+
+### Result transform
 
 ```js
 const csv=require('csvtojson')
@@ -335,6 +410,8 @@ csv()
 `Transform` will cause some performance panelties because it voids optimisation mechanism. Try to use Node.js `Transform` class as downstream for transformation instead.
 
 
+
+
 ## Nested JSON Structure
 
 One of the powerful feature of `csvtojson` is the ability to convert csv line to a nested JSON by correctly defining its csv header row. This is default out-of-box feature.
@@ -342,7 +419,7 @@ One of the powerful feature of `csvtojson` is the ability to convert csv line to
 Here is an example. Original CSV:
 
 ```csv
-fieldA.title, fieldA.children[0].name, fieldA.children[0].id,fieldA.children[1].name, fieldA.children[1].employee[].name,fieldA.children[1].employee[].name, fieldA.address[],fieldA.address[], description
+fieldA.title, fieldA.children.0.name, fieldA.children.0.id,fieldA.children.1.name, fieldA.children.1.employee.0.name,fieldA.children.1.employee.1.name, fieldA.address.0,fieldA.address.1, description
 Food Factory, Oscar, 0023, Tikka, Tim, Joe, 3 Lame Road, Grantstown, A fresh new food factory
 Kindom Garden, Ceil, 54, Pillow, Amst, Tom, 24 Shaker Street, HelloTown, Awesome castle
 
@@ -464,8 +541,22 @@ This will create 3 extra workers. Main process will only be used for delegating 
 
 See [here](https://github.com/Keyang/node-csvtojson/blob/develop/docs/performance.md#cpu-usage-leverage) for how `csvtojson` leverages CPU usage when using multi-cores.
 
+### Limitations
+
+There are some limitations when using multi-core feature:
+
+* Does not support if a column contains line break. 
 
 #Change Log
+
+## 1.1.1
+
+* Fix bugs: preProcessLine is not emitted
+* Changed array definition in nested json structure to follow [lodash set] (https://lodash.com/docs/4.17.2#set)
+* Only use first line of csv body for type inference
+* added `done` event
+* added `hooks` section
+* removed `parserMgr`
 
 ## 1.1.0
 

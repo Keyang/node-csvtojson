@@ -132,27 +132,7 @@ describe("ParserMgr", function() {
       assert(resultRow.myJSON.item1.arr.length === 3);
       assert(resultRow.myJSON.item1.arr[2].title === "item3");
     });
-    it("should parse a complex JSON's original CSV file", function (done) {
-      var converter = new Converter();
-      var r = fs.createReadStream(__dirname + "/data/complexJSONCSV");
-      converter.on("end_parsed", function (res) {
-        assert(res);
-        assert(res.length === 2);
-        assert(res[0].fieldA.title === "Food Factory");
-        assert(res[0].fieldA.children.length === 2);
-        assert(res[0].fieldA.children[0].name === "Oscar");
-        assert(res[0].fieldA.children[0].id === 23);
-        assert(res[0].fieldA.children[1].name === "Tikka");
-        assert(res[0].fieldA.children[1].employee.length === 2);
-        assert(res[0].fieldA.children[1].employee[0].name === "Tim", JSON.stringify(res[0].fieldA.children[1].employee[0]));
-        assert(res[0].fieldA.address.length === 2);
-        assert(res[0].fieldA.address[0] === "3 Lame Road");
-        assert(res[0].fieldA.address[1] === "Grantstown");
-        assert(res[0].description === "A fresh new food factory",res[0].description);
-        done();
-      });
-      r.pipe(converter);
-    });
+
     it("should parse as flat json keys containing dots and square brackets in 'flatKeys' mode", function() {
       var parser1 = parserMgr.getParser("*json*myJSON.item[0].foo");
       var parser2 = parserMgr.getParser("*json*myJSON.item[1].foo");
