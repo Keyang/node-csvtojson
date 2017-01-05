@@ -203,7 +203,7 @@ describe("CSV Converter", function () {
       }
       return line
     })
-    
+
     conv.on("end_parsed", function (res) {
       assert(res[0].Description.indexOf('THIN') > -1);
       done();
@@ -341,5 +341,15 @@ describe("CSV Converter", function () {
     });
     r.pipe(converter);
   })
-
+  it("should allow flatKey to change parse behaviour", function (done) {
+    var conv = new Converter({
+      flatKeys:true
+    });
+    conv.fromString("a.b,b.d,c.a\n1,2,3\n4,5,6").on("json", function (d) {
+      assert(d["a.b"])
+      assert(d["b.d"])
+      assert(d["c.a"])
+    })
+      .on("end", done)
+  })
 });

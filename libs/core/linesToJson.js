@@ -1,6 +1,7 @@
 var parserMgr = require("./parserMgr.js");
 var Parser = require("./parser");
 var CSVError = require("./CSVError");
+var numReg = /^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$/;
 /**
  * Convert lines of csv array into json
  * @param  {[type]} lines  [[col1,col2,col3]]
@@ -107,7 +108,7 @@ function convertRowToJson(row, headRow, param) {
       item = convertFunc(item)
     }
     var title = getTitle(head, i, param)
-    if (flag === 'flat') {
+    if (flag === 'flat' || param.flatKeys) {
       resultRow[title] = item
     } else {
       setPath(resultRow, title, item)
@@ -195,7 +196,7 @@ function dynamicType(item) {
   if (trimed === "") {
     return stringType;
   }
-  if (!isNaN(trimed)) {
+  if (numReg.test(trimed)) {
     return numberType
   } else if (trimed.length === 5 && trimed.toLowerCase() === "false" || trimed.length === 4 && trimed.toLowerCase() === "true") {
     return booleanType;
