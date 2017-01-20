@@ -195,7 +195,7 @@ describe("CSV Converter", function () {
       assert(d.column5.hello === "world");
       assert(d.column6 === '{"hello":"world"}');
       assert(d.column7 === "1234");
-      assert(d.column8 === 0);
+      assert(d.column8 === "abcd");
       assert(d.column9 === true);
       assert(d.column10[0]===23);
       assert(d.column10[1]===31);

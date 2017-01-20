@@ -77,7 +77,6 @@ function processRow(row, param, index) {
     return null;
   }
 }
-var _ = require('lodash')
 function convertRowToJson(row, headRow, param) {
   var hasValue = false;
   var resultRow = {};
@@ -132,11 +131,12 @@ function convertRowToJson(row, headRow, param) {
 }
 
 function setPath(json, path, value) {
+  var _set = require('lodash/set')
   var pathArr = path.split('.')
   if (pathArr.length === 1) {
     json[path] = value;
   } else {
-    _.set(json, path, value)
+    _set(json, path, value)
   }
 }
 function getFlag(head, i, param) {
