@@ -963,7 +963,7 @@ function checkType(item, head, headIdx, param) {
 function numberType(item) {
   var rtn = parseFloat(item)
   if (isNaN(rtn)) {
-    return 0;
+    return item;
   }
   return rtn;
 }
