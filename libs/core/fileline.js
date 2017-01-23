@@ -9,5 +9,13 @@ module.exports=function(data,param){
   var eol=getEol(data,param);
   var lines= data.split(eol);
   var partial=lines.pop();
-  return {lines:lines,partial:partial};
+  // if (param.ignoreEmpty){
+  //   var trimmedLines=[];
+  //   for (var i=0;i<lines.length;i++){
+  //     trimmedLines.push(lines[i].trim())
+  //   }
+  //   return {lines:trimmedLines,partial:partial};
+  // }else{
+    return {lines:lines,partial:partial};
+  // }
 }

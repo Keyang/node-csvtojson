@@ -1,4 +1,5 @@
 var Converter = require("../libs/core/Converter.js");
+var csv=require('../')
 var assert = require("assert");
 var fs = require("fs");
 var file = __dirname + "/data/testData";
@@ -281,7 +282,7 @@ describe("CSV Converter", function () {
   it ("be able to ignore empty columns",function (done){
     var testData = __dirname + "/data/dataIgnoreEmpty";
     var rs = fs.createReadStream(testData);
-    var st = rs.pipe(new Converter({ignoreEmpty:true}));
+    var st = rs.pipe(csv({ignoreEmpty:true}));
     st.on("end_parsed",function (res){
       var j = res[0];
       assert(res.length  === 3);

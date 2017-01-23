@@ -352,4 +352,19 @@ describe("CSV Converter", function () {
     })
       .on("end", done)
   })
+    it("should process long header", function (done) {
+    var testData = __dirname + "/data/longHeader";
+    var rs = fs.createReadStream(testData,{highWaterMark:100});
+    var numofrow = 0;
+    var numofjson = 0;
+    csv({},{highWaterMark:100})
+      .fromStream(rs)
+      .on("json", function (res) {
+        console.log(res)
+        assert.equal(res.Date,'8/26/16')
+      })
+      .on("end", function () {
+        done();
+      })
+  })
 });
