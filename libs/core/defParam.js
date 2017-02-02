@@ -2,6 +2,8 @@ module.exports=function(params){
   var _param = {
     constructResult: true, //set to false to not construct result in memory. suitable for big csv data
     delimiter: ',', // change the delimiter of csv columns. It is able to use an array to specify potencial delimiters. e.g. [",","|",";"]
+    ignoreColumns: [], // columns to ignore upon input.
+  	includeColumns: [], // columns to include upon input.
     quote: '"', //quote for a column containing delimiter.
     trim: true, //trim column's space charcters
     checkType: true, //whether check column type
