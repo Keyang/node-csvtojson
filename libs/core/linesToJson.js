@@ -172,7 +172,7 @@ function checkType(item, head, headIdx, param) {
     } else if (head.indexOf('string#!') > -1) {
       return param._headerType[headIdx] = stringType
     } else if (param.checkType) {
-      return param._headerType[headIdx] = dynamicType(item)
+      return param._headerType[headIdx] = dynamicType
     } else {
       return param._headerType[headIdx] = stringType
     }
@@ -194,17 +194,17 @@ function stringType(item) {
 function dynamicType(item) {
   var trimed = item.trim();
   if (trimed === "") {
-    return stringType;
+    return stringType(item);
   }
   if (numReg.test(trimed)) {
-    return numberType
+    return numberType(item)
   } else if (trimed.length === 5 && trimed.toLowerCase() === "false" || trimed.length === 4 && trimed.toLowerCase() === "true") {
-    return booleanType;
+    return booleanType(item);
   } else if (trimed[0] === "{" && trimed[trimed.length - 1] === "}" || trimed[0] === "[" && trimed[trimed.length - 1] === "]") {
-    return jsonType;
+    return jsonType(item);
 
   } else {
-    return stringType;
+    return stringType(item);
   }
 }
 

@@ -245,7 +245,8 @@ describe("CSV Converter", function () {
   });
   it("should process escape chars", function (done) {
     var test_converter = new Converter({
-      escape: "\\"
+      escape: "\\",
+      checkType:true
     });
 
     var testData = __dirname + "/data/dataWithSlashEscape";
@@ -321,7 +322,7 @@ describe("CSV Converter", function () {
       })
   })
   it("should parse a complex JSON", function (done) {
-    var converter = new Converter();
+    var converter = new Converter({checkType:true});
     var r = fs.createReadStream(__dirname + "/data/complexJSONCSV");
     converter.on("end_parsed", function (res) {
       assert(res);
@@ -360,11 +361,19 @@ describe("CSV Converter", function () {
     csv({},{highWaterMark:100})
       .fromStream(rs)
       .on("json", function (res) {
-        console.log(res)
         assert.equal(res.Date,'8/26/16')
       })
       .on("end", function () {
         done();
       })
+  })
+  it("should parse #139",function(done){
+    var rs=fs.createReadStream(__dirname+"/data/data#139")
+    csv()
+    .fromStream(rs)
+    .on("end_parsed",function(res){
+      assert.equal(res[1].field3,"9001009395 9001009990")
+      done();
+    })
   })
 });

@@ -62,7 +62,6 @@ module.exports=function rowSplit(rowStr, param) {
       }
     }
   }
-
   return {cols:row,closed:!inquote};
   // if (param.workerNum<=1){
   // }else{

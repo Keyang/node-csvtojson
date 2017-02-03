@@ -4,7 +4,7 @@ module.exports=function(params){
     delimiter: ',', // change the delimiter of csv columns. It is able to use an array to specify potencial delimiters. e.g. [",","|",";"]
     quote: '"', //quote for a column containing delimiter.
     trim: true, //trim column's space charcters
-    checkType: true, //whether check column type
+    checkType: false, //whether check column type
     toArrayString: false, //stream down stringified json array instead of string of json. (useful if downstream is file writer etc)
     ignoreEmpty: false, //Ignore empty value while parsing. if a value of the column is empty, it will be skipped parsing.
     workerNum: getEnv("CSV_WORKER",1), //number of parallel workers. If multi-core CPU available, increase the number will get better performance for large csv data.
