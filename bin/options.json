@@ -64,6 +64,14 @@
         "--escape":{
             "desc":"escape character used in quoted column. Default is double quote (\") according to RFC4108. Change to back slash (\\) or other chars for your own case.",
             "type":"string"
+        },
+        "--ignoreColumns": {
+            "desc": "Columns to ignore on input. e.g. --ignoreColumns=# --ignoreColumns='[0,4,5]' ",
+            "type": "~object"
+        },
+        "--includeColumns": {
+            "desc": "Columns to include on input. e.g. --includeColumns=# --includeColumns='[0,4,5]' ",
+            "type": "~object"
         }
     },
     "examples": [
