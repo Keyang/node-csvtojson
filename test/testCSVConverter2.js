@@ -376,4 +376,41 @@ describe("CSV Converter", function () {
       done();
     })
   })
+   it("should ignore column",function(done){
+    var rs=fs.createReadStream(__dirname+"/data/dataWithQoutes")
+    csv({
+     ignoreColumns:[0]
+    })
+    .fromStream(rs)
+    .on("csv",function(row,idx){
+      if (idx ===1){
+        assert.equal(row[0],"n")
+      }
+    })
+    .on("json",function(j,idx){
+        assert(!j.TIMESTAMP)
+    })
+    .on("end",function(){
+      done();
+    })
+  })
+  
+   it("should include column",function(done){
+    var rs=fs.createReadStream(__dirname+"/data/dataWithQoutes")
+    csv({
+     includeColumns:[0]
+    })
+    .fromStream(rs)
+    .on("csv",function(row,idx){
+      assert.equal(row.length, 1);
+    })
+    .on("json",function(j,idx){
+      if (idx === 1){
+        assert.equal(j.TIMESTAMP, "abc, def, ccc");
+      }
+    })
+    .on("end",function(){
+      done();
+    })
+  })
 });

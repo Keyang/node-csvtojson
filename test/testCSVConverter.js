@@ -155,6 +155,7 @@ describe("CSV Converter", function () {
       assert.equal(jsonObj[0].data, "xyabcde");
       assert.equal(jsonObj[0].uuid, "fejal\"eifa");
       assert.equal(jsonObj[0].fieldA, "bnej\"\"falkfe");
+      assert.equal(jsonObj[0].fieldB, "\"eisjfes\"");
       done();
     });
   });

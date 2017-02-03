@@ -67,6 +67,7 @@ function Converter(params, options) {
     }
     this.param._needParseJson = this._needJson || this._needPush;
 
+
   }.bind(this))
   return this;
 }
@@ -103,8 +104,8 @@ Converter.prototype.setPartialData = function (d) {
 }
 Converter.prototype.processData = function (data, cb) {
   var params = this.param;
-  if (params.ignoreEmpty && !params._headers){
-    data=data.trimLeft(); 
+  if (params.ignoreEmpty && !params._headers) {
+    data = data.trimLeft();
   }
   var fileLines = fileline(data, this.param)
   if (fileLines.lines.length > 0) {
@@ -126,7 +127,7 @@ Converter.prototype.processData = function (data, cb) {
         this.workerProcess(fileLines, cb);
       }
     }
-  }else{
+  } else {
     this.setPartialData(fileLines.partial)
     cb();
   }

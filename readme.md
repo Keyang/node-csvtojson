@@ -14,10 +14,12 @@ Nodejs csv to json converter. Fully featured:
 * Streaming data / low memory usage on large CSV data source
 
 
+Thanks all the [contributors](https://github.com/Keyang/node-csvtojson/graphs/contributors)
+
 
 ## Major update v1.1.0
 
-Version 1.1.0 has added new features and optimised lib performance. It also introduced simpler APIs to use. Thus readme is re-written to adapt the preferred new APIs. The lib will support old APIs. To review the old readme please [click here](https://github.com/Keyang/node-csvtojson/blob/develop/readme-old.md). 
+Version 1.1.0 has added new features and optimised lib performance. It also introduced simpler APIs to use. Thus readme is re-written to adapt the preferred new APIs. The lib will support old APIs. To review the old readme please [click here](https://github.com/Keyang/node-csvtojson/blob/develop/readme-old.md).
 
 * [Performance Optimisation](https://github.com/Keyang/node-csvtojson/blob/develop/docs/performance.md#performance-optimisation): V1.1.0 is 30%-50% faster
 * Better error tolerance
@@ -34,6 +36,8 @@ All changes are backward compatible.
 
 * [Quick Start](#quick-start)
 * [API](#api)
+* [Contribution](#contribution)
+* [Change Logs](#change-log)
 
 # Quick Start
 
@@ -174,7 +178,7 @@ Convert csv file and save result to json file:
 $ csvtojson source.csv > converted.json
 ```
 
-Use multiple cpu-cores: 
+Use multiple cpu-cores:
 
 ```
 $ csvtojson --workerNum=4 source.csv > converted.json
@@ -200,7 +204,7 @@ const converter=csv(params) //params see below Parameters section
 
 ```
 
-In above, `converter` is an instance of Converter which is a subclass of node.js `Transform` class. 
+In above, `converter` is an instance of Converter which is a subclass of node.js `Transform` class.
 
 * [Parameters](#parameters)
 * [Events](#events)
@@ -219,8 +223,8 @@ In above, `converter` is an instance of Converter which is a subclass of node.js
 
 ```js
 const csv=require('csvtojson')
-const converter=csv(parserParameters, streamOptions) 
-``` 
+const converter=csv(parserParameters, streamOptions)
+```
 Both arguments are optional.
 
 For `Stream Options` please read [Stream Option](https://nodejs.org/api/stream.html#stream_new_stream_transform_options) from Node.JS
@@ -231,14 +235,14 @@ For `Stream Options` please read [Stream Option](https://nodejs.org/api/stream.h
 const converter=csv({
 	noheader:true,
 	trim:true,
-}) 
+})
 ```
 Following parameters are supported:
 
 * **delimiter**: delimiter used for seperating columns. Use "auto" if delimiter is unknown in advance, in this case, delimiter will be auto-detected (by best attempt). Use an array to give a list of potential delimiters e.g. [",","|","$"]. default: ","
 * **quote**: If a column contains delimiter, it is able to use quote character to surround the column content. e.g. "hello, world" wont be split into two columns while parsing. Set to "off" will ignore all quotes. default: " (double quote)
 * **trim**: Indicate if parser trim off spaces surrounding column content. e.g. "  content  " will be trimmed to "content". Default: true
-* **checkType**: This parameter turns on and off whether check field type. default is false.
+* **checkType**: This parameter turns on and off whether check field type. default is true.
 * **toArrayString**: Stringify the stream output to JSON array. This is useful when pipe output to a file which expects stringified JSON array. default is false and only stringified JSON (without []) will be pushed to downstream.
 * **ignoreEmpty**: Ignore the empty value in CSV columns. If a column value is not giving, set this to true to skip them. Defalut: false.
 * **workerNum**: Number of worker processes. The worker process will use multi-cores to help process CSV data. Set to number of Core to improve the performance of processing large csv file. Keep 1 for small csv files. Default 1.
@@ -249,6 +253,8 @@ Following parameters are supported:
 * **checkColumn**: whether check column number of a row is the same as headers. If column number mismatched headers number, an error of "mismatched_column" will be emitted.. default: false
 * **eol**: End of line character. If omitted, parser will attempt retrieve it from first chunk of CSV data. If no valid eol found, then operation system eol will be used.
 * **escape**: escape character used in quoted column. Default is double quote (") according to RFC4108. Change to back slash (\\) or other chars for your own case.
+* **includeColumns**: This parameter instructs the parser to include only those columns as specified by an array of column indexes.  Example: [0,2,3] will parse and include only columns 0, 2, and 3 in the JSON output.
+* **ignoreColumns**: This parameter instructs the parser to ignore columns as specified by an array of column indexes.  Example: [1,3,5] will ignore columns 1, 3, and 5 and will not return them in the JSON output.
 
 All parameters can be used in Command Line tool.
 
@@ -311,7 +317,7 @@ csv()
 })
 ```
 
-Note that if `error` being emitted, the process will stop as node.js will automatically `unpipe()` upper-stream and chained down-stream<sup>1</sup>. This will cause `end` / `end_parsed` event never being emitted because `end` event is only emitted when all data being consumed <sup>2</sup>. 
+Note that if `error` being emitted, the process will stop as node.js will automatically `unpipe()` upper-stream and chained down-stream<sup>1</sup>. This will cause `end` / `end_parsed` event never being emitted because `end` event is only emitted when all data being consumed <sup>2</sup>.
 
 1. [Node.JS Readable Stream](https://github.com/nodejs/node/blob/master/lib/_stream_readable.js#L572-L583)
 2. [Writable end Event](https://nodejs.org/api/stream.html#stream_event_end)
@@ -367,7 +373,7 @@ csv()
 	cb(newData);
 })
 .on('json',(jsonObj)=>{
-    
+
 });
 ```
 
@@ -385,7 +391,7 @@ csv()
 	return fileLineString
 })
 .on('json',(jsonObj)=>{
-    
+
 });
 ```
 
@@ -464,7 +470,7 @@ Using csvtojson to convert, the result would be like:
     },
     "description": "Awesome castle"
 }]
-``` 
+```
 
 ### No nested JSON
 
@@ -490,7 +496,7 @@ csv({flatKeys:true})
 
 1. First row of csv source. Use first row of csv source as header row. This is default.
 2. If first row of csv source is header row but it is incorrect and need to be replaced. Use `headers:[]` and `noheader:false` parameters.
-3. If original csv source has no header row but the header definition can be defined. Use `headers:[]` and `noheader:true` parameters. 
+3. If original csv source has no header row but the header definition can be defined. Use `headers:[]` and `noheader:true` parameters.
 4. If original csv source has no header row and the header definition is unknow. Use `noheader:true`. This will automatically add `fieldN` header to csv cells
 
 
@@ -545,14 +551,27 @@ See [here](https://github.com/Keyang/node-csvtojson/blob/develop/docs/performanc
 
 There are some limitations when using multi-core feature:
 
-* Does not support if a column contains line break. 
+* Does not support if a column contains line break.
+
+
+#Contribution 
+
+`csvtojson` follows github convention for contributions. Here are some steps:
+
+1. Fork the repo to your github account
+2. Checkout code from your github repo to your local machine.
+3. Make code changes and dont forget add related tests.
+4. Run `npm test` locally before pushing code back.
+5. Create a [Pull Request](https://help.github.com/articles/creating-a-pull-request/) on github.
+6. Code review and merge
+7. Changes will be published to NPM within next version.
 
 #Change Log
 
 
 ## 1.1.4
 
-* default value of `checkType` is now false as it causes problems on some csv docs.
+* [Breaking Change!!] default value of `checkType` is now false as it causes problems on some csv docs.
 * Added ignoreColumns and includeColumns features. #138
 
 ## 1.1.1
@@ -647,5 +666,3 @@ There are some limitations when using multi-core feature:
 * Deprecated applyWebServer
 * Added construct parameter for Converter Class
 * Converter Class now works as a proper stream object
-
-
