@@ -111,6 +111,23 @@ csv()
 
 ```
 
+### From CSV Url
+
+```js
+const request=require('request')
+const csv=require('csvtojson')
+
+csv()
+.fromStream(request.get('http://mywebsite.com/mycsvfile.csv'))
+.on('csv',(csvRow)=>{
+	// csvRow is an array
+})
+.on('done',(error)=>{
+
+})
+
+```
+
 ### Convert to CSV row arrays with csv header row
 
 ```js
