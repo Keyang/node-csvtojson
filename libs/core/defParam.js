@@ -32,15 +32,14 @@ module.exports = function (params) {
     if (params.hasOwnProperty(key)) {
       _param[key] = params[key];
     }
-  };
-  if (_param.ignoreColumns.length || _param.includeColumns.length){
-    _param._needFilterRow=true;
+  }
+  if (_param.ignoreColumns.length || _param.includeColumns.length) {
+    _param._needFilterRow = true;
     _param.ignoreColumns.sort(function (a, b) { return b - a; });
   }
-  
-  return _param;
-}
 
+  return _param;
+};
 
 function getEnv(key, def) {
   if (process.env[key]) {
