@@ -261,7 +261,7 @@ Following parameters are supported:
 * **trim**: Indicate if parser trim off spaces surrounding column content. e.g. "  content  " will be trimmed to "content". Default: true
 * **checkType**: This parameter turns on and off whether check field type. default is true.
 * **toArrayString**: Stringify the stream output to JSON array. This is useful when pipe output to a file which expects stringified JSON array. default is false and only stringified JSON (without []) will be pushed to downstream.
-* **ignoreEmpty**: Ignore the empty value in CSV columns. If a column value is not giving, set this to true to skip them. Default: false.
+* **ignoreEmpty**: Ignore the empty value in CSV columns. If a column value is not given, set this to true to skip them. Default: false.
 * **workerNum**: Number of worker processes. The worker process will use multi-cores to help process CSV data. Set to number of Core to improve the performance of processing large csv file. Keep 1 for small csv files. Default 1.
 * **noheader**:Indicating csv data has no header row and first row is data row. Default is false. See [header row](#header-row)
 * **headers**: An array to specify the headers of CSV data. If --noheader is false, this value will override CSV header row. Default: null. Example: ["my field","name"]. See [header row](#header-row)
