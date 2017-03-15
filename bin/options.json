@@ -17,7 +17,7 @@
             "type": "boolean"
         },
         "--checkType": {
-            "desc": "This parameter turns on and off whether check field type. default is true.",
+            "desc": "This parameter turns on and off whether check field type. default is false.",
             "type": "boolean"
 
         },
