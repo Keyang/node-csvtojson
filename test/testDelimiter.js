@@ -10,14 +10,12 @@ describe("Test delimiters", function () {
   });
 
   it("should return the autodetected delimiter if 'auto' specified", function() {
-    var delimiter = "auto";
     var rowStr = "a;b;c";
-    var returnedDelimiter = getDelimiter(rowStr, {delimiter:"auto"});
+    var returnedDelimiter = getDelimiter(rowStr, {delimiter: "auto"});
     assert(returnedDelimiter === ";");
   });
 
   it("should return the ',' delimiter if delimiter cannot be specified, in case of 'auto'", function() {
-    var delimiter = "auto";
     var rowStr = "abc";
     var returnedDelimiter = getDelimiter(rowStr, {delimiter: "auto"});
     assert(returnedDelimiter === ",");

@@ -23,13 +23,17 @@ describe("CSV Converter", function () {
       eol: "\n"
     });
     var count = 0;
-    conv.on("record_parsed", function (rec) {
+    conv.on("record_parsed", function (resultJson, row, index) {
       count++;
+      assert(resultJson);
+      assert(row.length === 2);
+      assert(index >= 0);
     });
     conv.on("error", function () {
       console.log(arguments);
     });
-    conv.on("end_parsed", function () {
+    conv.on("end_parsed", function (result) {
+      assert(result);
       assert(count === 5290);
       done();
     });
@@ -126,10 +130,13 @@ describe("CSV Converter", function () {
     conv.transform = function (json, row, index) {
       json.rowNum = index;
     };
-    conv.on("record_parsed", function (j) {
-      assert(j.rowNum >= 0);
+    conv.on("record_parsed", function (resultJson, row, index) {
+      assert(resultJson.rowNum >= 0);
+      assert(row.length === 9);
+      assert(index >= 0);
     });
     conv.on("end_parsed", function (res) {
+      assert(res.length === 2);
       assert(res[0].rowNum === 0);
       assert(res[1].rowNum === 1);
       done();
@@ -154,7 +161,6 @@ describe("CSV Converter", function () {
     var rs = fs.createReadStream(testData);
     var conv = new Converter({ trim: true });
     conv.on("end_parsed", function (res) {
-      // console.log(res);
       assert.equal(res[0]["Column 1"], "Column1Row1");
       assert.equal(res[0]["Column 2"], "Column2Row1");
       done();
@@ -295,21 +301,24 @@ describe("CSV Converter", function () {
   it("should emit json and csv and finish event", function (done) {
     var testData = __dirname + "/data/complexJSONCSV";
     var rs = fs.createReadStream(testData);
-    var numofrow = 0;
-    var numofjson = 0;
+    var numOfRow = 0;
+    var numOfJson = 0;
     csv()
       .fromStream(rs)
-      .on('csv', function (row) {
-        numofrow++;
+      .on('csv', function (row, idx) {
+        numOfRow++;
+        assert(row);
+        assert(idx >= 0);
       })
-      .on("json", function (res) {
-        numofjson++;
+      .on("json", function (res, idx) {
+        numOfJson++;
         assert.equal(typeof res, "object");
+        assert(idx >= 0);
       })
       .on("done", function (error) {
         assert(!error);
-        assert.equal(numofjson, numofrow);
-        assert(numofrow !== 0);
+        assert.equal(numOfJson, numOfRow);
+        assert(numOfRow !== 0);
         done();
       });
   });
@@ -317,24 +326,29 @@ describe("CSV Converter", function () {
   it("should transform with transf function", function (done) {
     var testData = __dirname + "/data/complexJSONCSV";
     var rs = fs.createReadStream(testData);
-    var numofrow = 0;
-    var numofjson = 0;
+    var numOfRow = 0;
+    var numOfJson = 0;
     csv()
       .fromStream(rs)
       .transf(function (json, row, idx) {
         json.a = "test";
+        assert(row);
+        assert(idx >= 0);
       })
-      .on('csv', function (row) {
-        numofrow++;
+      .on('csv', function (row, idx) {
+        numOfRow++;
+        assert(row);
+        assert(idx >= 0);
       })
-      .on("json", function (res) {
-        numofjson++;
+      .on("json", function (res, idx) {
+        numOfJson++;
         assert.equal(typeof res, "object");
         assert.equal(res.a, "test");
+        assert(idx >= 0);
       })
       .on("end", function () {
-        assert.equal(numofjson, numofrow);
-        assert(numofrow !== 0);
+        assert.equal(numOfJson, numOfRow);
+        assert(numOfRow !== 0);
         done();
       });
   });
@@ -376,62 +390,74 @@ describe("CSV Converter", function () {
   it("should process long header", function (done) {
     var testData = __dirname + "/data/longHeader";
     var rs = fs.createReadStream(testData,{highWaterMark: 100});
-    var numofrow = 0;
-    var numofjson = 0;
+    var numOfRow = 0;
+    var numOfJson = 0;
     csv({},{highWaterMark:100})
       .fromStream(rs)
-      .on("json", function (res) {
+      .on('csv', function (row, idx) {
+        numOfRow++;
+        assert(idx >= 0);
+      })
+      .on("json", function (res, idx) {
+        numOfJson++;
         assert.equal(res.Date, '8/26/16');
+        assert(idx >= 0);
       })
       .on("end", function () {
+        assert.equal(numOfJson, numOfRow);
+        assert(numOfJson === 1);
         done();
       });
   });
 
-  it("should parse #139",function(done){
+  it("should parse #139", function(done) {
     var rs = fs.createReadStream(__dirname + "/data/data#139");
     csv()
-    .fromStream(rs)
-    .on("end_parsed",function(res){
-      assert.equal(res[1].field3, "9001009395 9001009990");
-      done();
-    });
+      .fromStream(rs)
+      .on("end_parsed", function(res) {
+        assert.equal(res[1].field3, "9001009395 9001009990");
+        done();
+      });
   });
 
-  it("should ignore column",function(done){
+  it("should ignore column", function(done) {
     var rs = fs.createReadStream(__dirname + "/data/dataWithQoutes");
     csv({
      ignoreColumns:[0]
     })
     .fromStream(rs)
-    .on("csv",function(row,idx){
+    .on("csv", function(row, idx) {
+      assert(idx >= 0);
       if (idx ===1){
         assert.equal(row[0],"n");
       }
     })
-    .on("json",function(j,idx){
-        assert(!j.TIMESTAMP);
+    .on("json", function(j, idx) {
+      assert(!j.TIMESTAMP);
+      assert(idx >= 0);
     })
-    .on("end",function(){
+    .on("end", function() {
       done();
     });
   });
 
-  it("should include column",function(done){
+  it("should include column",function(done) {
     var rs = fs.createReadStream(__dirname + "/data/dataWithQoutes");
     csv({
      includeColumns:[0]
     })
     .fromStream(rs)
-    .on("csv",function(row,idx){
+    .on("csv", function(row, idx) {
+      assert(idx >= 0);
       assert.equal(row.length, 1);
     })
-    .on("json",function(j,idx){
+    .on("json", function(j, idx) {
+      assert(idx >= 0);
       if (idx === 1){
         assert.equal(j.TIMESTAMP, "abc, def, ccc");
       }
     })
-    .on("end",function(){
+    .on("end", function() {
       done();
     });
   });
