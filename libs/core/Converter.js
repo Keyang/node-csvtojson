@@ -176,26 +176,26 @@ Converter.prototype.workerProcess = function (fileLine, cb) {
   var eol = this.getEol();
   this.setPartialData(line.partial);
   this.workerMgr.sendWorker(line.lines.join(eol) + eol, this.lastIndex, cb, function (results, lastIndex) {
+    var buf;
     var cur = self.sequenceBuffer[0];
     if (cur.idx === lastIndex) {
       cur.result = results;
       var records = [];
       while (self.sequenceBuffer[0] && self.sequenceBuffer[0].result) {
-        var buf = self.sequenceBuffer.shift();
+        buf = self.sequenceBuffer.shift();
         records = records.concat(buf.result);
       }
       self.processResult(records);
       self.recordNum += records.length;
     } else {
-      for (var i = 0; i < self.sequenceBuffer.length; i++) {
-        var buf = self.sequenceBuffer[i];
+      for (var i = 0, len = self.sequenceBuffer.length; i < len; i++) {
+        buf = self.sequenceBuffer[i];
         if (buf.idx === lastIndex) {
           buf.result = results;
           break;
         }
       }
     }
-    // self.processResult(JSON.parse(results),function(){},true);
   });
   this.sequenceBuffer.push({
     idx: this.lastIndex,
@@ -206,38 +206,38 @@ Converter.prototype.workerProcess = function (fileLine, cb) {
 
 Converter.prototype.processHead = function (fileLine, cb) {
   var params = this.param;
-  if (!params._headers) { //header is not inited. init header
-    var lines = fileLineToCSVLine(fileLine, params);
-    this.setPartialData(lines.partial);
-    if (params.noheader) {
-      if (params.headers) {
-        params._headers = params.headers;
-      } else {
-        params._headers = [];
-      }
-    } else {
-      var headerRow = lines.lines.shift();
-      if (params.headers) {
-        params._headers = params.headers;
-      } else {
-        params._headers = headerRow;
-      }
-    }
-    if (this.param.workerNum > 1) {
-      this.workerMgr.setParams(params);
-    }
-    var res = linesToJson(lines.lines, params, 0);
-    this.processResult(res);
-    this.lastIndex += res.length;
-    this.recordNum += res.length;
-    cb();
-  } else {
-    cb();
+  if (params._headers) {
+    return cb();
   }
+
+  // if header is not inited. init header
+  var lines = fileLineToCSVLine(fileLine, params);
+  this.setPartialData(lines.partial);
+  if (params.noheader) {
+    if (params.headers) {
+      params._headers = params.headers;
+    } else {
+      params._headers = [];
+    }
+  } else {
+    var headerRow = lines.lines.shift();
+    if (params.headers) {
+      params._headers = params.headers;
+    } else {
+      params._headers = headerRow;
+    }
+  }
+  if (this.param.workerNum > 1) {
+    this.workerMgr.setParams(params);
+  }
+  var res = linesToJson(lines.lines, params, 0);
+  this.processResult(res);
+  this.lastIndex += res.length;
+  this.recordNum += res.length;
+  cb();
 };
 
 Converter.prototype.processResult = function (result) {
-
   for (var i = 0, len = result.length; i < len; i++) {
     var r = result[i];
     if (r.err) {
@@ -246,8 +246,6 @@ Converter.prototype.processResult = function (result) {
       this.emitResult(r);
     }
   }
-  // this.lastIndex+=result.length;
-  // cb();
 };
 
 Converter.prototype.emitResult = function (r) {
@@ -305,6 +303,7 @@ Converter.prototype.preProcessRaw = function (data, cb) {
   cb(data);
 };
 
+// FIXME: lineNumber is not used.
 Converter.prototype.preProcessLine = function (line, lineNumber) {
   return line;
 };
@@ -322,8 +321,9 @@ Converter.prototype._flush = function (cb) {
     }
   };
   if (this._csvLineBuffer.length > 0) {
-    if (this._csvLineBuffer[this._csvLineBuffer.length - 1] != this.getEol()) {
-      this._csvLineBuffer += this.getEol();
+    var eol = this.getEol();
+    if (this._csvLineBuffer[this._csvLineBuffer.length - 1] !== eol) {
+      this._csvLineBuffer += eol;
     }
     this.processData(this._csvLineBuffer, function () {
       this.checkAndFlush();
@@ -333,13 +333,7 @@ Converter.prototype._flush = function (cb) {
   }
   return;
 };
-// Converter.prototype._transformFork = function(data, encoding, cb) {
-//   this.child.stdin.write(data, encoding, cb);
-// }
-// Converter.prototype._flushFork = function(cb) {
-//   this.child.stdin.end();
-//   this.child.on("exit", cb);
-// }
+
 Converter.prototype.checkAndFlush = function () {
   if (this._csvLineBuffer.length !== 0) {
     this.emit("error", CSVError.unclosed_quote(this.recordNum, this._csvLineBuffer), this._csvLineBuffer);
@@ -410,7 +404,7 @@ Converter.prototype.transf = function (func) {
 };
 
 Converter.prototype.fromString = function (csvString, cb) {
-  if (typeof csvString != "string") {
+  if (typeof csvString !== "string") {
     return cb(new Error("Passed CSV Data is not a string."));
   }
   if (cb && typeof cb === "function") {

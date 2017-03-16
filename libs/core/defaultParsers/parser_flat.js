@@ -1,10 +1,10 @@
 module.exports = {
   "name": "flat",
-  "processSafe":true,
+  "processSafe": true,
   "regExp": /^\*flat\*/,
   "parserFunc": function parser_flat (params) {
-     var key=this.getHeadStr();
-     var val=params.item;
-     params.resultRow[key]=val;
+     var key = this.getHeadStr();
+     var val = params.item;
+     params.resultRow[key] = val;
   }
 };

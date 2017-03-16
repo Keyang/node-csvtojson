@@ -107,7 +107,6 @@ Parser.prototype.clone = function() {
     newParser[key] = obj[key];
   }
   return newParser;
-  //return new Parser(this.name, this.regExp, this.parse, this.processSafe);
 };
 
 Parser.prototype.getName = function() {
