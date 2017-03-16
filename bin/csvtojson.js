@@ -68,7 +68,7 @@ function csvtojson() {
         }
       }
       process.exit(1);
-    })
+    });
     is.pipe(conv).pipe(process.stdout);
     // is.pipe(conv);
   }

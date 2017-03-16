@@ -8,13 +8,14 @@ function registerParser (parser) {
     registeredParsers.push(parser); // TODO indexOf doesn't work with object references
   }
 }
-function getParser (columnTitle, param) {
+
+function getParser(columnTitle, param) {
   var inst, parser;
-  function getParserByName (parserName) {
+  function getParserByName(parserName) {
     var parser;
     registeredParsers.forEach(function(p){
       if (p.getName() === parserName){
-        parser=p;
+        parser = p;
       }
     });
     if (parser) {
@@ -24,8 +25,8 @@ function getParser (columnTitle, param) {
     return new Parser(); //TODO remove new
   }
   columnTitle = columnTitle ? columnTitle : '';
-  registeredParsers.forEach(function(p){
-    if (p.test(columnTitle)){
+  registeredParsers.forEach(function(p) {
+    if (p.test(columnTitle)) {
       parser=p;
     }
   });
@@ -39,24 +40,27 @@ function getParser (columnTitle, param) {
   inst.initHead(columnTitle);
   return inst;
 }
-function addParser (name, regExp, parseFunc) {
+
+function addParser(name, regExp, parseFunc) {
   var parser = new Parser(name, regExp, parseFunc,false); //TODO remove new
   registerParser(parser);
 }
-function addSafeParser(parserPath){
+
+function addSafeParser(parserPath) {
   //TODO impl
 }
 
-function initParsers (row, param) {
+function initParsers(row, param) {
   var parsers = [];
   row.forEach(function (columnTitle) {
     parsers.push(getParser(columnTitle, param));
   });
   return parsers;
 }
+
 defaultParser.forEach(function (parserCfg){
   //TODO refactor this
-  addParser(parserCfg.name, parserCfg.regExp, parserCfg.parserFunc,parserCfg.processSafe);
+  addParser(parserCfg.name, parserCfg.regExp, parserCfg.parserFunc, parserCfg.processSafe);
 });
 
 //module interfaces

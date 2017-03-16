@@ -24,7 +24,7 @@ module.exports = function(grunt) {
       client: {
         options: {
           mangle: true,
-          banner:"/*Automatically Generated. Do not modify.*/\n"
+          banner: "/*Automatically Generated. Do not modify.*/\n"
         },
         src: "./dist/csvtojson.js",
         dest: "./dist/csvtojson.min.js",

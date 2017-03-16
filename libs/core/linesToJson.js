@@ -22,24 +22,24 @@ module.exports = function (lines, params, idx) {
   } else {
     return justReturnRows(lines, params, idx);
   }
-}
+};
 
 function justReturnRows(lines, params, idx) {
   var rtn = [];
-  for (var i = 0; i < lines.length; i++) {
+  for (var i = 0, len = lines.length; i < len; i++) {
     rtn.push({
       err: null,
       json: {},
       index: idx++,
       row: lines[i]
-    })
+    });
   }
   return rtn;
 }
+
 function processRows(csvRows, params, startIndex) {
-  var count = csvRows.length;
   var res = [];
-  for (var i = 0; i < csvRows.length; i++) {
+  for (var i = 0, len = csvRows.length; i < len; i++) {
     var r = processRow(csvRows[i], params, startIndex++);
     if (r) {
       res.push(r);
@@ -47,6 +47,7 @@ function processRows(csvRows, params, startIndex) {
   }
   return res;
 }
+
 function getConstParser(number, param) {
   var inst = new Parser("field" + number, /.*/, function (params) {
     var name = this.getName();
@@ -55,15 +56,14 @@ function getConstParser(number, param) {
   inst.setParam(param);
   return inst;
 }
+
 function processRow(row, param, index) {
-  var i, item, parser, head;
   var parseRules = param.parseRules;
   if (param.checkColumn && row.length != parseRules.length) {
     return {
       err: CSVError.column_mismatched(index)
-    }
+    };
   }
-
 
   var headRow = param._headers;
   var resultRow = convertRowToJson(row, headRow, param);
@@ -77,11 +77,13 @@ function processRow(row, param, index) {
     return null;
   }
 }
+
 function convertRowToJson(row, headRow, param) {
   var hasValue = false;
   var resultRow = {};
-  for (i = 0; i < row.length; i++) {
 
+  for (var i = 0, len = row.length; i < len; i++) {
+    var convertFunc, head, item;
     item = row[i];
 
     if (param.ignoreEmpty && item === '') {
@@ -98,19 +100,19 @@ function convertRowToJson(row, headRow, param) {
       head = headRow[i] = "field" + (i + 1);
       // parser.initHead(head);
     }
-    var flag = getFlag(head, i, param)
+    var flag = getFlag(head, i, param);
     if (flag === 'omit') {
-      continue
+      continue;
     }
     if (param.checkType) {
-      convertFunc = checkType(item, head, i, param)
-      item = convertFunc(item)
+      convertFunc = checkType(item, head, i, param);
+      item = convertFunc(item);
     }
-    var title = getTitle(head, i, param)
+    var title = getTitle(head, i, param);
     if (flag === 'flat' || param.flatKeys) {
-      resultRow[title] = item
+      resultRow[title] = item;
     } else {
-      setPath(resultRow, title, item)
+      setPath(resultRow, title, item);
     }
     // _.set(resultRow,head,item)
     // parser.parse({
@@ -124,63 +126,65 @@ function convertRowToJson(row, headRow, param) {
     // });
   }
   if (hasValue) {
-    return resultRow
+    return resultRow;
   } else {
-    return false
+    return false;
   }
 }
 
 function setPath(json, path, value) {
-  var _set = require('lodash/set')
-  var pathArr = path.split('.')
+  var _set = require('lodash/set');
+  var pathArr = path.split('.');
   if (pathArr.length === 1) {
     json[path] = value;
   } else {
-    _set(json, path, value)
+    _set(json, path, value);
   }
 }
+
 function getFlag(head, i, param) {
   if (typeof param._headerFlag[i] === "string") {
-    return param._headerFlag[i]
+    return param._headerFlag[i];
   } else {
     if (head.indexOf('*omit*') > -1) {
-      return param._headerFlag[i] = 'omit'
+      return param._headerFlag[i] = 'omit';
     } else if (head.indexOf('*flat*') > -1) {
-      return param._headerFlag[i] = 'flat'
+      return param._headerFlag[i] = 'flat';
     } else {
-      return param._headerFlag[i] = ''
+      return param._headerFlag[i] = '';
     }
   }
 }
+
 function getTitle(head, i, param) {
   if (param._headerTitle[i]) {
-    return param._headerTitle[i]
+    return param._headerTitle[i];
   } else {
-    var flag = getFlag(head, i, param)
-    var str = head.replace(flag, '')
-    str = str.replace('string#!', '').replace('number#!', '')
-    return param._headerTitle[i] = str
+    var flag = getFlag(head, i, param);
+    var str = head.replace(flag, '');
+    str = str.replace('string#!', '').replace('number#!', '');
+    return param._headerTitle[i] = str;
   }
 }
 
 function checkType(item, head, headIdx, param) {
   if (param._headerType[headIdx]) {
-    return param._headerType[headIdx]
+    return param._headerType[headIdx];
   } else {
     if (head.indexOf('number#!') > -1) {
-      return param._headerType[headIdx] = numberType
+      return param._headerType[headIdx] = numberType;
     } else if (head.indexOf('string#!') > -1) {
-      return param._headerType[headIdx] = stringType
+      return param._headerType[headIdx] = stringType;
     } else if (param.checkType) {
-      return param._headerType[headIdx] = dynamicType
+      return param._headerType[headIdx] = dynamicType;
     } else {
-      return param._headerType[headIdx] = stringType
+      return param._headerType[headIdx] = stringType;
     }
   }
 }
 
 function numberType(item) {
-  var rtn = parseFloat(item)
+  var rtn = parseFloat(item);
   if (isNaN(rtn)) {
     return item;
   }
@@ -197,7 +201,7 @@ function dynamicType(item) {
     return stringType(item);
   }
   if (numReg.test(trimed)) {
-    return numberType(item)
+    return numberType(item);
   } else if (trimed.length === 5 && trimed.toLowerCase() === "false" || trimed.length === 4 && trimed.toLowerCase() === "true") {
     return booleanType(item);
   } else if (trimed[0] === "{" && trimed[trimed.length - 1] === "}" || trimed[0] === "[" && trimed[trimed.length - 1] === "]") {

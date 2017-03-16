@@ -1,5 +1,5 @@
 var Converter = require("../libs/core/Converter.js");
-var csv = require('../')
+var csv = require('../');
 var assert = require("assert");
 var fs = require("fs");
 var file = __dirname + "/data/testData";
@@ -59,6 +59,7 @@ describe("CSV Converter", function () {
     });
     stream.pipe(obj);
   });
+
   it("should handle comma in column which is surrounded by qoutes", function (done) {
     var testData = __dirname + "/data/dataWithComma";
     var rs = fs.createReadStream(testData);
@@ -98,6 +99,7 @@ describe("CSV Converter", function () {
     });
     rs.pipe(csvConverter);
   });
+
   it("should be able to convert csv string directly", function (done) {
     var testData = __dirname + "/data/testData";
     var data = fs.readFileSync(testData).toString();
@@ -111,6 +113,7 @@ describe("CSV Converter", function () {
       done();
     });
   });
+
   it("should be able to convert csv string with error", function (done) {
     var testData = __dirname + "/data/dataWithUnclosedQuotes";
     var data = fs.readFileSync(testData).toString();
@@ -121,6 +124,7 @@ describe("CSV Converter", function () {
       done();
     });
   });
+
   it("should be able to convert csv string without callback provided", function (done) {
     var testData = __dirname + "/data/testData";
     var data = fs.readFileSync(testData).toString();
@@ -132,6 +136,7 @@ describe("CSV Converter", function () {
     });
     csvConverter.fromString(data);
   });
+
   it("should be able to handle columns with double quotes", function (done) {
     var testData = __dirname + "/data/dataWithQoutes";
     var data = fs.readFileSync(testData).toString();
@@ -159,6 +164,7 @@ describe("CSV Converter", function () {
       done();
     });
   });
+
   it("should handle empty csv file", function (done) {
     var testData = __dirname + "/data/emptyFile";
     var rs = fs.createReadStream(testData);
@@ -169,6 +175,7 @@ describe("CSV Converter", function () {
     });
     rs.pipe(csvConverter);
   });
+
   it("should parse large csv file", function (done) {
     var testData = __dirname + "/data/large-csv-sample.csv";
     var rs = fs.createReadStream(testData);
@@ -186,6 +193,7 @@ describe("CSV Converter", function () {
     });
     rs.pipe(csvConverter);
   });
+
   it("should parse data and covert to specific types", function (done) {
     var testData = __dirname + "/data/dataWithType";
     var rs = fs.createReadStream(testData);
@@ -209,6 +217,7 @@ describe("CSV Converter", function () {
     });
     rs.pipe(csvConverter);
   });
+
   it("should turn off field type check", function (done) {
     var testData = __dirname + "/data/dataWithType";
     var rs = fs.createReadStream(testData);
@@ -234,6 +243,7 @@ describe("CSV Converter", function () {
     });
     rs.pipe(csvConverter);
   });
+
   it("should emit data event correctly", function (done) {
     var testData = __dirname + "/data/large-csv-sample.csv";
     var rs = fs.createReadStream(testData);
@@ -250,6 +260,7 @@ describe("CSV Converter", function () {
     });
     rs.pipe(csvConverter);
   });
+
   it("should process column with linebreaks", function (done) {
     var testData = __dirname + "/data/lineBreak";
     var rs = fs.createReadStream(testData);
@@ -264,12 +275,13 @@ describe("CSV Converter", function () {
     });
     rs.pipe(csvConverter);
   });
+
   it("should stream to array string", function (done) {
     var testData = __dirname + "/data/dataDiffDelimiter";
     var rs = fs.createReadStream(testData);
     var data = "";
-    var st = rs.pipe(new Converter({ 
-      constructResult: false, delimiter: ';', trim: true, toArrayString: true, checkType:true 
+    var st = rs.pipe(new Converter({
+      constructResult: false, delimiter: ';', trim: true, toArrayString: true, checkType:true
     }));
     st.on("data", function (d) {
       data += d.toString("utf8");
@@ -281,8 +293,8 @@ describe("CSV Converter", function () {
       assert(obj[1].annee === 2015028);
       done();
     });
-
   });
+
   it("be able to ignore empty columns", function (done) {
     var testData = __dirname + "/data/dataIgnoreEmpty";
     var rs = fs.createReadStream(testData);
@@ -298,8 +310,8 @@ describe("CSV Converter", function () {
       assert(res[2].col1 === "d4");
       done();
     });
-
   });
+
   it("should allow no header", function (done) {
     var testData = __dirname + "/data/noheadercsv";
     var rs = fs.createReadStream(testData);
@@ -311,7 +323,8 @@ describe("CSV Converter", function () {
       assert(j.field2 === "eClass_5.1.3");
       done();
     });
-  })
+  });
+
   it("should allow customised header", function (done) {
     var testData = __dirname + "/data/noheadercsv";
     var rs = fs.createReadStream(testData);
@@ -327,7 +340,8 @@ describe("CSV Converter", function () {
       assert(j.field3 === "10/3/2014");
       done();
     });
-  })
+  });
+
   it("should allow customised header to override existing header", function (done) {
     var testData = __dirname + "/data/complexJSONCSV";
     var rs = fs.createReadStream(testData);
@@ -341,7 +355,8 @@ describe("CSV Converter", function () {
       assert(j.field2 === "Oscar");
       done();
     });
-  })
+  });
+
   it("should handle when there is an empty string", function (done) {
     var testData = __dirname + "/data/dataWithEmptyString";
     var rs = fs.createReadStream(testData);
@@ -359,5 +374,5 @@ describe("CSV Converter", function () {
       assert.equal(j.c, "");
       done();
     });
-  })
+  });
 });

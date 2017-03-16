@@ -16,7 +16,6 @@ describe("CSV Converter", function () {
   });
 
   it("should set eol ", function (done) {
-
     var rs = fs.createReadStream(__dirname + "/data/large-csv-sample.csv");
     var conv = new Converter({
       workerNum: 1,
@@ -36,6 +35,7 @@ describe("CSV Converter", function () {
     });
     rs.pipe(conv);
   });
+
   it("should convert tsv String", function (done) {
     var tsv = __dirname + "/data/dataTsv";
     var csvStr = fs.readFileSync(tsv, "utf8");
@@ -45,6 +45,7 @@ describe("CSV Converter", function () {
       done();
     });
   });
+
   it("should allow customised header with nohead csv string.", function (done) {
     var testData = __dirname + "/data/noheadercsv";
     var rs = fs.readFileSync(testData, "utf8");
@@ -58,6 +59,7 @@ describe("CSV Converter", function () {
       done();
     });
   });
+
   it("should parse fromFile", function (done) {
     var csvFile = __dirname + "/data/large-csv-sample.csv";
     var conv = new Converter({
@@ -69,6 +71,7 @@ describe("CSV Converter", function () {
       done();
     });
   });
+
   it("should fromFile should emit error", function (done) {
     var csvFile = __dirname + "/data/dataWithUnclosedQuotes";
     var conv = new Converter({
@@ -79,6 +82,7 @@ describe("CSV Converter", function () {
       done();
     });
   });
+
   it("should parse no header with dynamic column number", function (done) {
     var testData = __dirname + "/data/noheaderWithVaryColumnNum";
     var rs = fs.readFileSync(testData, "utf8");
@@ -91,6 +95,7 @@ describe("CSV Converter", function () {
       done();
     });
   });
+
   it("should parse tabsv data with dynamic columns", function (done) {
     var testData = __dirname + "/data/tabsv";
     var rs = fs.readFileSync(testData, "utf8");
@@ -102,6 +107,7 @@ describe("CSV Converter", function () {
       done();
     });
   });
+
   it("should use first line break as eol", function (done) {
     var testData = __dirname + "/data/testEol";
     var conv = new Converter({
@@ -111,14 +117,15 @@ describe("CSV Converter", function () {
       assert(!err);
       done();
     });
-  })
+  });
+
   it("should use sync transform", function (done) {
     var testData = __dirname + "/data/complexJSONCSV";
     var rs = fs.createReadStream(testData);
     var conv = new Converter({});
     conv.transform = function (json, row, index) {
       json.rowNum = index;
-    }
+    };
     conv.on("record_parsed", function (j) {
       assert(j.rowNum >= 0);
     });
@@ -129,6 +136,7 @@ describe("CSV Converter", function () {
     });
     rs.pipe(conv);
   });
+
   it("should detect delimiter ", function (done) {
     var testData = __dirname + "/data/dataWithAutoDelimiter";
     var rs = fs.createReadStream(testData);
@@ -139,8 +147,8 @@ describe("CSV Converter", function () {
       done();
     });
     rs.pipe(conv);
-
   });
+
   it("should stripe out whitespaces if trim is true", function (done) {
     var testData = __dirname + "/data/dataWithWhiteSpace";
     var rs = fs.createReadStream(testData);
@@ -152,8 +160,8 @@ describe("CSV Converter", function () {
       done();
     });
     rs.pipe(conv);
-
   });
+
   it("should convert triple quotes correctly", function (done) {
     var testData = __dirname + "/data/dataWithTripleQoutes";
     var rs = fs.createReadStream(testData);
@@ -165,8 +173,8 @@ describe("CSV Converter", function () {
       done();
     });
     rs.pipe(conv);
-
   });
+
   // it ("should auto flat header if header is not valid nested json keys",function(done){
   //   var testData = __dirname + "/data/invalidHeader";
   //   var rs = fs.createReadStream(testData);
@@ -179,6 +187,7 @@ describe("CSV Converter", function () {
   //   });
   //   rs.pipe(conv);
   // })
+
   it("should pre process raw data in the line", function (done) {
     var testData = __dirname + "/data/quoteTolerant";
     var rs = fs.createReadStream(testData);
@@ -186,13 +195,14 @@ describe("CSV Converter", function () {
     conv.preRawData(function (d, cb) {
       d = d.replace('THICK', 'THIN');
       cb(d);
-    })
+    });
     conv.on("end_parsed", function (res) {
       assert(res[0].Description.indexOf('THIN') > -1);
       done();
     });
     rs.pipe(conv);
-  })
+  });
+
   it("should pre process by line in the line", function (done) {
     var testData = __dirname + "/data/quoteTolerant";
     var rs = fs.createReadStream(testData);
@@ -201,15 +211,16 @@ describe("CSV Converter", function () {
       if (lineNumber === 2) {
         line = line.replace('THICK', 'THIN');
       }
-      return line
-    })
+      return line;
+    });
 
     conv.on("end_parsed", function (res) {
       assert(res[0].Description.indexOf('THIN') > -1);
       done();
     });
     rs.pipe(conv);
-  })
+  });
+
   it("should support object mode", function (done) {
     var testData = __dirname + "/data/complexJSONCSV";
     var rs = fs.createReadStream(testData);
@@ -223,9 +234,10 @@ describe("CSV Converter", function () {
       assert(res);
       assert(res.length > 0);
       done();
-    })
+    });
     rs.pipe(conv);
-  })
+  });
+
   it("should get delimiter automatically if there is no header", function (done) {
     var test_converter = new Converter({
       delimiter: 'auto',
@@ -243,6 +255,7 @@ describe("CSV Converter", function () {
       done();
     });
   });
+
   it("should process escape chars", function (done) {
     var test_converter = new Converter({
       escape: "\\",
@@ -258,14 +271,16 @@ describe("CSV Converter", function () {
     });
     rs.pipe(test_converter);
   });
+
   it("should output ndjson format", function (done) {
     var conv = new Converter();
     conv.fromString("a,b,c\n1,2,3\n4,5,6").on("data", function (d) {
       d = d.toString();
-      assert.equal(d[d.length - 1], "\n")
+      assert.equal(d[d.length - 1], "\n");
     })
-      .on("end", done)
-  })
+      .on("end", done);
+  });
+
   it("should parse from stream", function (done) {
     var testData = __dirname + "/data/complexJSONCSV";
     var rs = fs.createReadStream(testData);
@@ -274,8 +289,9 @@ describe("CSV Converter", function () {
       .on("end_parsed", function (res) {
         assert(res);
         done();
-      })
-  })
+      });
+  });
+
   it("should emit json and csv and finish event", function (done) {
     var testData = __dirname + "/data/complexJSONCSV";
     var rs = fs.createReadStream(testData);
@@ -288,15 +304,16 @@ describe("CSV Converter", function () {
       })
       .on("json", function (res) {
         numofjson++;
-        assert.equal(typeof res, "object")
+        assert.equal(typeof res, "object");
       })
       .on("done", function (error) {
-        assert(!error)
-        assert.equal(numofjson, numofrow)
-        assert(numofrow != 0)
+        assert(!error);
+        assert.equal(numofjson, numofrow);
+        assert(numofrow !== 0);
         done();
-      })
-  })
+      });
+  });
+
   it("should transform with transf function", function (done) {
     var testData = __dirname + "/data/complexJSONCSV";
     var rs = fs.createReadStream(testData);
@@ -312,15 +329,16 @@ describe("CSV Converter", function () {
       })
       .on("json", function (res) {
         numofjson++;
-        assert.equal(typeof res, "object")
-        assert.equal(res.a, "test")
+        assert.equal(typeof res, "object");
+        assert.equal(res.a, "test");
       })
       .on("end", function () {
-        assert.equal(numofjson, numofrow)
-        assert(numofrow != 0)
+        assert.equal(numofjson, numofrow);
+        assert(numofrow !== 0);
         done();
-      })
-  })
+      });
+  });
+
   it("should parse a complex JSON", function (done) {
     var converter = new Converter({checkType:true});
     var r = fs.createReadStream(__dirname + "/data/complexJSONCSV");
@@ -341,62 +359,66 @@ describe("CSV Converter", function () {
       done();
     });
     r.pipe(converter);
-  })
+  });
+
   it("should allow flatKey to change parse behaviour", function (done) {
     var conv = new Converter({
       flatKeys:true
     });
     conv.fromString("a.b,b.d,c.a\n1,2,3\n4,5,6").on("json", function (d) {
-      assert(d["a.b"])
-      assert(d["b.d"])
-      assert(d["c.a"])
+      assert(d["a.b"]);
+      assert(d["b.d"]);
+      assert(d["c.a"]);
     })
-      .on("end", done)
-  })
-    it("should process long header", function (done) {
+      .on("end", done);
+  });
+
+  it("should process long header", function (done) {
     var testData = __dirname + "/data/longHeader";
-    var rs = fs.createReadStream(testData,{highWaterMark:100});
+    var rs = fs.createReadStream(testData,{highWaterMark: 100});
     var numofrow = 0;
     var numofjson = 0;
     csv({},{highWaterMark:100})
       .fromStream(rs)
       .on("json", function (res) {
-        assert.equal(res.Date,'8/26/16')
+        assert.equal(res.Date, '8/26/16');
       })
       .on("end", function () {
         done();
-      })
-  })
+      });
+  });
+
   it("should parse #139",function(done){
-    var rs=fs.createReadStream(__dirname+"/data/data#139")
+    var rs = fs.createReadStream(__dirname + "/data/data#139");
     csv()
     .fromStream(rs)
     .on("end_parsed",function(res){
-      assert.equal(res[1].field3,"9001009395 9001009990")
+      assert.equal(res[1].field3, "9001009395 9001009990");
       done();
-    })
-  })
-   it("should ignore column",function(done){
-    var rs=fs.createReadStream(__dirname+"/data/dataWithQoutes")
+    });
+  });
+
+  it("should ignore column",function(done){
+    var rs = fs.createReadStream(__dirname + "/data/dataWithQoutes");
     csv({
      ignoreColumns:[0]
     })
     .fromStream(rs)
     .on("csv",function(row,idx){
       if (idx ===1){
-        assert.equal(row[0],"n")
+        assert.equal(row[0],"n");
       }
     })
     .on("json",function(j,idx){
-        assert(!j.TIMESTAMP)
+        assert(!j.TIMESTAMP);
     })
     .on("end",function(){
       done();
-    })
-  })
-  
-   it("should include column",function(done){
-    var rs=fs.createReadStream(__dirname+"/data/dataWithQoutes")
+    });
+  });
+
+  it("should include column",function(done){
+    var rs = fs.createReadStream(__dirname + "/data/dataWithQoutes");
     csv({
      includeColumns:[0]
     })
@@ -411,6 +433,6 @@ describe("CSV Converter", function () {
     })
     .on("end",function(){
       done();
-    })
-  })
+    });
+  });
 });

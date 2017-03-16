@@ -9,7 +9,7 @@ describe("Converter error handling", function() {
     conv.on("error", function(err) {
       assert(err.err === "unclosed_quote");
       done();
-    })
+    });
     rs.pipe(conv);
   });
   // it("should handle quote not closed in a forked process", function(done) {
@@ -56,7 +56,7 @@ describe("Converter error handling", function() {
   //   rs.pipe(conv);
   // });
 
-  it ("should handle column number mismatched error",function(done){
+  it ("should handle column number mismatched error", function(done) {
     var rs = fs.createReadStream(__dirname + "/data/dataWithMismatchedColumn");
     var conv = new Converter({
       checkColumn:true,
@@ -70,11 +70,11 @@ describe("Converter error handling", function() {
         // done();
       }
     });
-    conv.on("json",function(){})
-    conv.on('done',function(){
-      assert(tested)
+    conv.on("json",function() {});
+    conv.on('done',function() {
+      assert(tested);
       done();
-    })
+    });
     rs.pipe(conv);
   });
 });
