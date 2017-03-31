@@ -2,7 +2,7 @@
   "name": "csvtojson",
   "description": "A tool concentrating on converting csv data to JSON with customised parser supporting",
   "author": "Keyang Xiang <keyang.xiang@gmail.com>",
-  "homepage": "http://keyangxiang.com/blog/csv2json/",
+  "homepage": "https://github.com/Keyang/node-csvtojson",
   "bugs": "https://github.com/Keyang/node-csvtojson/issues",
   "repository": {
     "type": "git",

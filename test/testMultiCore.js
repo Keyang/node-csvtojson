@@ -1,6 +1,6 @@
 var assert = require("assert");
-var fs=require("fs");
-var Converter=require("../libs/core/Converter");
+var fs = require("fs");
+var Converter = require("../libs/core/Converter");
 describe("csvtojson multi core", function () {
   it("should run on test data", function (done) {
     var obj = new Converter({
@@ -12,5 +12,5 @@ describe("csvtojson multi core", function () {
       done();
     });
     stream.pipe(obj);
-  })
-})
+  });
+});

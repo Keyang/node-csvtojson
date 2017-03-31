@@ -1,11 +1,10 @@
 var assert = require("assert");
 var parserMgr = require("../libs/core/parserMgr.js");
-var Converter = require("../libs/core/Converter.js");
-var fs = require("fs");
 describe("ParserMgr", function() {
   it("should add a correct parser", function() {
     parserMgr.addParser("myparserName", /myParser.+/, function() {});
   });
+
   it("should  add a parser if regular expression is a string", function() {
     parserMgr.addParser("myparserName", "hello regexp", function() {});
   });
@@ -33,6 +32,7 @@ describe("ParserMgr", function() {
       assert(resultRow.myArray[1] === "item2");
     });
   });
+
   describe("json parser", function() {
     it("should return an json parser with specific column title", function() {
       var parser = parserMgr.getParser("*json*myJSON.item1");
@@ -54,6 +54,7 @@ describe("ParserMgr", function() {
       assert(resultRow.myJSON.item1 === "item1");
       assert(resultRow.myJSON.item2 === "item2");
     });
+
     it("should parse a json containing array", function() {
       var parser1 = parserMgr.getParser("*json*myJSON.item1[0]");
       var parser2 = parserMgr.getParser("*json*myJSON.item1[1]");
@@ -69,6 +70,7 @@ describe("ParserMgr", function() {
       assert(resultRow.myJSON.item1);
       assert(resultRow.myJSON.item1.length === 2);
     });
+
     it("should parse a json containing child json with array", function() {
       var parser1 = parserMgr.getParser("*json*myJSON.item1.arr[0]");
       var parser2 = parserMgr.getParser("*json*myJSON.item1.arr[1]");
@@ -90,6 +92,7 @@ describe("ParserMgr", function() {
       assert(resultRow.myJSON.item1.arr.length === 2);
       assert(resultRow.myJSON.item1.title === "mytitle");
     });
+
     it("should parse a json containing child json with array containing child json", function() {
       var parser1 = parserMgr.getParser("*json*myJSON.item1.arr[0].title");
       var parser2 = parserMgr.getParser("*json*myJSON.item1.arr[1].title");
@@ -111,6 +114,7 @@ describe("ParserMgr", function() {
       assert(resultRow.myJSON.item1.arr.length === 3);
       assert(resultRow.myJSON.item1.arr[0].title === "item1");
     });
+
     it("should parse a json containing child json with dynamic array containing child json", function() {
       var parser1 = parserMgr.getParser("*json*myJSON.item1.arr[].title");
       var parser2 = parserMgr.getParser("*json*myJSON.item1.arr[].title");
@@ -150,6 +154,7 @@ describe("ParserMgr", function() {
       assert(resultRow[ "myJSON.item[0].foo" ] === "item1");
       assert(resultRow[ "myJSON.item[1].foo" ] === "item2");
     });
+
     it("should parse as flat json if a column is markd as 'flat'", function() {
       var parser1 = parserMgr.getParser("*flat*myJSON1.item[0].foo");
       var parser2 = parserMgr.getParser("myJSON.item[1].foo");
@@ -166,6 +171,7 @@ describe("ParserMgr", function() {
       assert(resultRow.myJSON.item[1].foo=== "item2");
     });
   });
+
   describe("json array parser", function () {
     it("should return an json array parser with specific column title", function () {
       var parser = parserMgr.getParser("*jsonarray*myJSON.item");
@@ -190,6 +196,7 @@ describe("ParserMgr", function() {
       assert(resultRow.myJSON.item[1] === "item2");
     });
   });
+
   describe("*omit* parser", function() {
     it("should return an omit parser with specific column title", function() {
       var parser = parserMgr.getParser("*omit*item");

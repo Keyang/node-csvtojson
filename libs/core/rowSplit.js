@@ -23,7 +23,7 @@ module.exports = function rowSplit(rowStr, param) {
   var row = [];
   var inquote = false;
   var quoteBuff = '';
-  for (var i = 0; i < rowArr.length; i++) {
+  for (var i = 0, rowLen = rowArr.length; i < rowLen; i++) {
     var e = rowArr[i];
     if (!inquote && trim) {
       e = e.trim();
@@ -34,7 +34,7 @@ module.exports = function rowSplit(rowStr, param) {
         e = e.substr(1);
         if (isQuoteClose(e, param)) { //quote close
           e = e.substring(0, e.length - 1);
-          e = _escapeQuote(e, quote, escape);;
+          e = _escapeQuote(e, quote, escape);
           row.push(e);
           continue;
         } else {
@@ -80,26 +80,28 @@ module.exports = function rowSplit(rowStr, param) {
   //   return {cols:row,closed:true};
   // }
 
-}
+};
+
 function filterRow(row, param) {
   if (param.ignoreColumns instanceof Array && param.ignoreColumns.length > 0) {
-    for (var irow = 0; irow < param.ignoreColumns.length; irow++) {
-      if (param.ignoreColumns[irow] >= 0) {
-        row.splice(param.ignoreColumns[irow], 1);
+    for (var igRow = 0, igColLen = param.ignoreColumns.length; igRow < igColLen; igRow++) {
+      if (param.ignoreColumns[igRow] >= 0) {
+        row.splice(param.ignoreColumns[igRow], 1);
       }
     }
   }
   if (param.includeColumns instanceof Array && param.includeColumns.length > 0) {
     var cleanRowArr = [];
-    for (var irow = 0; irow < param.includeColumns.length; irow++) {
-      if (param.includeColumns[irow] >= 0) {
-        cleanRowArr.push(row[param.includeColumns[irow]]);
+    for (var inRow = 0, inColLen = param.includeColumns.length; inRow < inColLen; inRow++) {
+      if (param.includeColumns[inRow] >= 0) {
+        cleanRowArr.push(row[param.includeColumns[inRow]]);
       }
     }
     row = cleanRowArr;
   }
   return row;
 }
+
 function isQuoteOpen(str, param) {
   var quote = param.quote;
   var escape = param.escape;
@@ -118,6 +120,7 @@ function isQuoteClose(str, param) {
   }
   return count % 2 !== 0;
 }
+
 function twoDoubleQuote(str, quote) {
   var twoQuote = quote + quote;
   var curIndex = -1;
@@ -126,7 +129,8 @@ function twoDoubleQuote(str, quote) {
   }
   return str;
 }
-var cachedRegExp = {}
+
+var cachedRegExp = {};
 function _escapeQuote(segment, quote, escape) {
 
   var key = "es|" + quote + "|" + escape;

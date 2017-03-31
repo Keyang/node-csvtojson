@@ -36,7 +36,7 @@ module.exports = {
   "parserFunc": function parser_json(params) {
     var fieldStr = this.getHeadStr();
     var headArr = (params.config && params.config.flatKeys) ? [fieldStr] : fieldStr.split('.');
-    var match, index, key, pointer;
+    var match, index, key;
     //now the pointer is pointing the position to add a key/value pair.
     var pointer = processHead(params.resultRow, headArr, arrReg, params.config && params.config.flatKeys);
     key = headArr.shift();
@@ -60,7 +60,7 @@ module.exports = {
         params.resultRow[fieldStr] = params.item;
       }
     } else {
-      if (typeof pointer=== "string"){
+      if (typeof pointer === "string"){
         params.resultRow[fieldStr] = params.item;
       }else{
         pointer[key] = params.item;

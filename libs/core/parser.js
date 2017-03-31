@@ -48,17 +48,20 @@ Parser.prototype.convertType = function(item) {
     }
   }
   return item;
+};
 
-}
 Parser.prototype.setParam = function(param) {
   this.param = param;
-}
+};
+
 Parser.prototype.test = function(str) {
   return this.regExp && this.regExp.test(str);
 };
+
 Parser.prototype.parse = function(params) {
   params.resultRow[params.head] = params.item;
 };
+
 Parser.prototype.getHeadStr = function() {
   if (this.headStr) {
     return this.headStr;
@@ -71,9 +74,11 @@ Parser.prototype.getHeadStr = function() {
     return this.getHeadStr();
   }
 };
+
 Parser.prototype.getHead = function() {
   return this.head;
 };
+
 Parser.prototype.initHead = function(columnTitle) {
   this.head = columnTitle;
   var wholeHead = columnTitle.replace(this.regExp, '');
@@ -93,8 +98,8 @@ Parser.prototype.initHead = function(columnTitle) {
   if (!this.headStr) {
     this.headStr = wholeHead ? wholeHead : "Unknown Head";
   }
+};
 
-}
 Parser.prototype.clone = function() {
   var obj = Object.create(this);
   var newParser = new Parser();
@@ -102,9 +107,10 @@ Parser.prototype.clone = function() {
     newParser[key] = obj[key];
   }
   return newParser;
-  //return new Parser(this.name, this.regExp, this.parse, this.processSafe);
 };
+
 Parser.prototype.getName = function() {
   return this.name;
 };
+
 module.exports = Parser;
