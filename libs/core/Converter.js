@@ -13,9 +13,8 @@ var CSVError = require("./CSVError");
 var workerMgr = require("./workerMgr");
 function Converter(params, options) {
   Transform.call(this, options);
-  _param = defParam(params);
   this._options = options || {};
-  this.param = _param;
+  this.param = defParam(params);
   this.param._options = this._options;
   // this.resultObject = new Result(this);
   // this.pipe(this.resultObject); // it is important to have downstream for a transform otherwise it will stuck
