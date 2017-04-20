@@ -71,10 +71,13 @@ function Converter(params, options) {
 util.inherits(Converter, Transform);
 function emitDone(conv) {
   return function (err) {
-    process.nextTick(function () {
-      conv.emit('done', err);
-    });
-  };
+    if (!conv._hasDone) {
+      conv._hasDone = true;
+      process.nextTick(function () {
+        conv.emit('done', err);
+      });
+    };
+  }
 }
 
 Converter.prototype._transform = function (data, encoding, cb) {
@@ -418,7 +421,7 @@ Converter.prototype.fromString = function (csvString, cb) {
 
 Converter.prototype.wrapCallback = function (cb, clean) {
   if (clean === undefined) {
-    clean = function () {};
+    clean = function () { };
   }
   if (cb && typeof cb === "function") {
     this.once("end_parsed", function (res) {

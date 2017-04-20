@@ -461,4 +461,16 @@ describe("CSV Converter", function () {
       done();
     });
   });
+  it ("should only call done once",function(done){
+    var counter=0;
+    csv()
+    .fromString('"a","b", "c""')
+    .on('done',function(){
+      counter++;
+    });
+    setTimeout(function(){
+      assert.equal(counter,1);
+      done();
+    },100);
+  })
 });
