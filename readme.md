@@ -94,6 +94,8 @@ csv()
 
 ```
 
+Note that `.fromFile(filePath[ ,cb ,options])` takes an `options` parameter which will be passed to `fs.createReadStream()`. See [here](https://nodejs.org/dist/latest-v6.x/docs/api/fs.html#fs_fs_createreadstream_path_options) for docs.
+
 ### From CSV Stream
 
 ```js
@@ -270,8 +272,8 @@ Following parameters are supported:
 * **checkColumn**: whether check column number of a row is the same as headers. If column number mismatched headers number, an error of "mismatched_column" will be emitted.. default: false
 * **eol**: End of line character. If omitted, parser will attempt retrieve it from first chunk of CSV data. If no valid eol found, then operation system eol will be used.
 * **escape**: escape character used in quoted column. Default is double quote (") according to RFC4108. Change to back slash (\\) or other chars for your own case.
-* **includeColumns**: This parameter instructs the parser to include only those columns as specified by an array of column indexes.  Example: [0,2,3] will parse and include only columns 0, 2, and 3 in the JSON output.
-* **ignoreColumns**: This parameter instructs the parser to ignore columns as specified by an array of column indexes.  Example: [1,3,5] will ignore columns 1, 3, and 5 and will not return them in the JSON output.
+* **includeColumns**: This parameter instructs the parser to include only those columns as specified by an array of column indexes or header names.  Example: [0,2,3,"name"] will parse and include only columns 0, 2, 3, and column with header "name" in the JSON output.
+* **ignoreColumns**: This parameter instructs the parser to ignore columns as specified by an array of column indexes or header names.  Example: [1,3,5,"title","age"] will ignore columns 1, 3, 5, title column and age column and will not return them in the JSON output.
 
 All parameters can be used in Command Line tool.
 
@@ -585,6 +587,11 @@ There are some limitations when using multi-core feature:
 
 #Change Log
 
+## 1.1.5
+
+* `ignoreColumns` and `includeColumns` now allow put in header names and indecies.
+* only include `child_process` when multi worker is needed.
+* allow `fs.createReadStream` options being passed in through `fromFile` function
 
 ## 1.1.4
 

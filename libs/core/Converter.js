@@ -431,9 +431,13 @@ Converter.prototype.getEol = function (data) {
   return this.param.eol || eol;
 };
 
-Converter.prototype.fromFile = function (filePath, cb) {
+Converter.prototype.fromFile = function (filePath, cb, options) {
   var fs = require('fs');
   var rs = null;
+  if (typeof cb ==="object" && typeof options === "undefined"){
+    options=cb;
+    cb=null;
+  }
   this.wrapCallback(cb, function () {
     if (rs && rs.destroy) {
       rs.destroy();
@@ -441,7 +445,7 @@ Converter.prototype.fromFile = function (filePath, cb) {
   });
   fs.exists(filePath, function (exist) {
     if (exist) {
-      rs = fs.createReadStream(filePath);
+      rs = fs.createReadStream(filePath,options);
       rs.pipe(this);
     } else {
       this.emit('error', new Error("File not exists"));

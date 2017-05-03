@@ -66,11 +66,11 @@
             "type":"string"
         },
         "--ignoreColumns": {
-            "desc": "Columns to ignore on input. e.g. --ignoreColumns=# --ignoreColumns='[0,4,5]' ",
+            "desc": "Columns to ignore on input. e.g. --ignoreColumns='[0,4,5, \"name\"]' ",
             "type": "~object"
         },
         "--includeColumns": {
-            "desc": "Columns to include on input. e.g. --includeColumns=# --includeColumns='[0,4,5]' ",
+            "desc": "Columns to include on input. e.g. --includeColumns='[0,4,5, \"title\"]' ",
             "type": "~object"
         }
     },
