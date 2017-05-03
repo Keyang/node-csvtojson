@@ -8,7 +8,7 @@ var fileline = require("./fileline");
 var fileLineToCSVLine = require("./fileLineToCSVLine");
 var linesToJson = require("./linesToJson");
 var CSVError = require("./CSVError");
-var workerMgr = require("./workerMgr");
+var workerMgr = null;
 function Converter(params, options) {
   Transform.call(this, options);
   this._options = options || {};
@@ -154,6 +154,7 @@ Converter.prototype._preProcessLines = function (lines, startIdx) {
 Converter.prototype.initWorker = function () {
   var workerNum = this.param.workerNum - 1;
   if (workerNum > 0) {
+    workerMgr = require("./workerMgr");
     this.workerMgr = workerMgr();
     this.workerMgr.initWorker(workerNum, this.param);
   }
