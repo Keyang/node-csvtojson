@@ -9,6 +9,8 @@ var fileLineToCSVLine = require("./fileLineToCSVLine");
 var linesToJson = require("./linesToJson");
 var CSVError = require("./CSVError");
 var workerMgr = null;
+var _ = require('lodash');
+var rowSplit = require("./rowSplit");
 function Converter(params, options) {
   Transform.call(this, options);
   this._options = options || {};
@@ -212,10 +214,30 @@ Converter.prototype.processHead = function (fileLine, cb) {
   if (params._headers) {
     return cb();
   }
-
+  //dirty hack
+  params._needFilterRow = false;
   // if header is not inited. init header
-  var lines = fileLineToCSVLine(fileLine, params);
-  this.setPartialData(lines.partial);
+  var lines = fileLine.lines;
+  var left = "";
+  var headerRow = [];
+  if (!params.noheader) {
+    while (lines.length) {
+      var line = left + lines.shift();
+      var row = rowSplit(line, params);
+      if (row.closed) {
+        headerRow = row.cols;
+        left = "";
+        break;
+      } else {
+        left = line + this.getEol();
+      }
+    }
+  }
+  params._needFilterRow = true;
+  if (!params.noheader && headerRow.length === 0) { //if one chunk of data does not complete header row.
+    this.setPartialData(left);
+    return cb();
+  }
   if (params.noheader) {
     if (params.headers) {
       params._headers = params.headers;
@@ -223,13 +245,16 @@ Converter.prototype.processHead = function (fileLine, cb) {
       params._headers = [];
     }
   } else {
-    var headerRow = lines.lines.shift();
     if (params.headers) {
       params._headers = params.headers;
     } else {
       params._headers = headerRow;
     }
   }
+  configIgnoreIncludeColumns(params);
+  params._headers = require("./filterRow")(params._headers, params);
+  var lines = fileLineToCSVLine(fileLine, params);
+  this.setPartialData(lines.partial);
   if (this.param.workerNum > 1) {
     this.workerMgr.setParams(params);
   }
@@ -237,8 +262,40 @@ Converter.prototype.processHead = function (fileLine, cb) {
   this.processResult(res);
   this.lastIndex += res.length;
   this.recordNum += res.length;
+
   cb();
 };
+function configIgnoreIncludeColumns(params) {
+  if (params._postIgnoreColumns) {
+    for (var i = 0; i < params.ignoreColumns.length; i++) {
+      var ignoreCol = params.ignoreColumns[i];
+      if (typeof ignoreCol === "string") {
+        var idx = params._headers.indexOf(ignoreCol);
+        if (idx > -1) {
+          params.ignoreColumns[i] = idx;
+        } else {
+          params.ignoreColumns[i] = -1;
+        }
+      }
+    }
+    params.ignoreColumns.sort(function (a, b) { return b - a; });
+  }
+  if (params._postIncludeColumns) {
+    for (var i = 0; i < params.includeColumns.length; i++) {
+      var includeCol = params.includeColumns[i];
+      if (typeof includeCol === "string") {
+        var idx = params._headers.indexOf(includeCol);
+        if (idx > -1) {
+          params.includeColumns[i] = idx;
+        } else {
+          params.includeColumns[i] = -1;
+        }
+      }
+    }
+  }
+  params.ignoreColumns = _.uniq(params.ignoreColumns);
+  params.includeColumns = _.uniq(params.includeColumns);
+}
 
 Converter.prototype.processResult = function (result) {
   for (var i = 0, len = result.length; i < len; i++) {

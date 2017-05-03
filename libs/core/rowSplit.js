@@ -1,6 +1,8 @@
 var getDelimiter = require("./getDelimiter");
+var filterRow=require("./filterRow");
 /**
  * Convert a line of string to csv columns according to its delimiter
+ * the param._header may not be ready when this is called.
  * @param  {[type]} rowStr [description]
  * @param  {[type]} param  [Converter param]
  * @return {[type]}        {cols:["a","b","c"],closed:boolean} the closed field indicate if the row is a complete row
@@ -82,25 +84,7 @@ module.exports = function rowSplit(rowStr, param) {
 
 };
 
-function filterRow(row, param) {
-  if (param.ignoreColumns instanceof Array && param.ignoreColumns.length > 0) {
-    for (var igRow = 0, igColLen = param.ignoreColumns.length; igRow < igColLen; igRow++) {
-      if (param.ignoreColumns[igRow] >= 0) {
-        row.splice(param.ignoreColumns[igRow], 1);
-      }
-    }
-  }
-  if (param.includeColumns instanceof Array && param.includeColumns.length > 0) {
-    var cleanRowArr = [];
-    for (var inRow = 0, inColLen = param.includeColumns.length; inRow < inColLen; inRow++) {
-      if (param.includeColumns[inRow] >= 0) {
-        cleanRowArr.push(row[param.includeColumns[inRow]]);
-      }
-    }
-    row = cleanRowArr;
-  }
-  return row;
-}
+
 
 function isQuoteOpen(str, param) {
   var quote = param.quote;

@@ -1,3 +1,4 @@
+var numExp = /^[0-9]+$/;
 module.exports = function (params) {
   var _param = {
     constructResult: true, //set to false to not construct result in memory. suitable for big csv data
@@ -23,7 +24,7 @@ module.exports = function (params) {
     _headerTitle: [],
     _headerFlag: [],
     _headers: null,
-    _needFilterRow:false
+    _needFilterRow: false
   };
   if (!params) {
     params = {};
@@ -33,10 +34,20 @@ module.exports = function (params) {
       _param[key] = params[key];
     }
   }
+  if (_param.ignoreColumns.length > 0 && !numExp.test(_param.ignoreColumns.join(""))) {
+    _param._postIgnoreColumns = true;
+  }
+  if (_param.includeColumns.length > 0 && !numExp.test(_param.includeColumns.join(""))) {
+    _param._postIncludeColumns = true;
+  }
+
   if (_param.ignoreColumns.length || _param.includeColumns.length) {
     _param._needFilterRow = true;
-    _param.ignoreColumns.sort(function (a, b) { return b - a; });
+    if (!_param._postIgnoreColumns){
+      _param.ignoreColumns.sort(function (a, b) { return b-a;});
+    }
   }
+
 
   return _param;
 };
