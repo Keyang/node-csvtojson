@@ -1,6 +1,7 @@
 var util = require("util");
 var Transform = require("stream").Transform;
 var os = require("os");
+var stripBom = require('strip-bom');
 var eol = os.EOL;
 // var Processor = require("./Processor.js");
 var defParam = require("./defParam");
@@ -360,7 +361,7 @@ Converter.prototype.emitResult = function (r) {
 };
 
 Converter.prototype.preProcessRaw = function (data, cb) {
-  cb(data);
+  cb(stripBom(data));
 };
 
 // FIXME: lineNumber is not used.
