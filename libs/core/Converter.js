@@ -1,6 +1,7 @@
 var util = require("util");
 var Transform = require("stream").Transform;
 var os = require("os");
+var stripBom = require('strip-bom');
 var eol = os.EOL;
 // var Processor = require("./Processor.js");
 var defParam = require("./defParam");
@@ -83,13 +84,16 @@ function emitDone(conv) {
 }
 
 Converter.prototype._transform = function (data, encoding, cb) {
-  if (this.param.toArrayString && this.started === false) {
+  data = data.toString("utf8");
+  if (this.started === false) {
     this.started = true;
-    if (this._needPush) {
-      this.push("[" + eol, "utf8");
+    data = stripBom(data);
+    if (this.param.toArrayString) {
+      if (this._needPush) {
+        this.push("[" + eol, "utf8");
+      }
     }
   }
-  data = data.toString("utf8");
   var self = this;
   this.preProcessRaw(data, function (d) {
     if (d && d.length > 0) {

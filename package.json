@@ -226,7 +226,8 @@
     "minimist": "^1.2.0"
   },
   "dependencies": {
-    "lodash": "^4.17.3"
+    "lodash": "^4.17.3",
+    "strip-bom": "1.0.0"
   },
   "scripts": {
     "test": "mocha ./test -R spec",

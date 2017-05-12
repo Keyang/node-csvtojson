@@ -409,4 +409,20 @@ describe("CSV Converter", function () {
       done();
     });
   });
+
+  it("should remove the Byte Order Mark (BOM) from input", function (done) {
+    var testData = __dirname + "/data/dataNoTrimBOM";
+    var rs = fs.createReadStream(testData);
+    var st = rs.pipe(new Converter({
+      trim: false
+    }));
+    st.on("end_parsed", function (res) {
+      var j = res[0];
+
+      assert(res.length===2);
+      assert(j.name === "joe");
+      assert(j.age === "20");
+      done();
+    });
+  });
 });
