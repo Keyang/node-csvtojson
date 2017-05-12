@@ -84,13 +84,16 @@ function emitDone(conv) {
 }
 
 Converter.prototype._transform = function (data, encoding, cb) {
-  if (this.param.toArrayString && this.started === false) {
+  data = data.toString("utf8");
+  if (this.started === false) {
     this.started = true;
-    if (this._needPush) {
-      this.push("[" + eol, "utf8");
+    data = stripBom(data);
+    if (this.param.toArrayString) {
+      if (this._needPush) {
+        this.push("[" + eol, "utf8");
+      }
     }
   }
-  data = data.toString("utf8");
   var self = this;
   this.preProcessRaw(data, function (d) {
     if (d && d.length > 0) {
@@ -361,7 +364,7 @@ Converter.prototype.emitResult = function (r) {
 };
 
 Converter.prototype.preProcessRaw = function (data, cb) {
-  cb(stripBom(data));
+  cb(data);
 };
 
 // FIXME: lineNumber is not used.
