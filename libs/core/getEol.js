@@ -6,7 +6,7 @@ module.exports = function(data, param) {
       if (data[i] === "\r") {
         if (data[i + 1] === "\n") {
           param.eol = "\r\n";
-        } else {
+        } else if (data[i + 1]) {
           param.eol = "\r";
         }
         return param.eol;
@@ -15,7 +15,6 @@ module.exports = function(data, param) {
         return param.eol;
       }
     }
-    param.eol = eol;
   }
   return param.eol;
 };

@@ -375,4 +375,38 @@ describe("CSV Converter", function () {
       done();
     });
   });
+
+  it("should detect eol correctly when first chunk is smaller than header row length", function (done) {
+    var testData = __dirname + "/data/dataNoTrimCRLF";
+    var rs = fs.createReadStream(testData, {highWaterMark: 3});
+
+    var st = rs.pipe(new Converter({
+      trim: false
+    }));
+    st.on("end_parsed", function (res) {
+      var j = res[0];
+
+      assert(res.length===2);
+      assert(j.name === "joe");
+      assert(j.age === "20");
+      done();
+    });
+  });
+
+  it("should detect eol correctly when first chunk ends in middle of CRLF line break", function (done) {
+    var testData = __dirname + "/data/dataNoTrimCRLF";
+    var rs = fs.createReadStream(testData, {highWaterMark: 9});
+
+    var st = rs.pipe(new Converter({
+      trim: false
+    }));
+    st.on("end_parsed", function (res) {
+      var j = res[0];
+
+      assert(res.length===2);
+      assert(j.name === "joe");
+      assert(j.age === "20");
+      done();
+    });
+  });
 });

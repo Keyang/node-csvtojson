@@ -16,7 +16,7 @@ module.exports = function(lines, param) {
       csvLines.push(row.cols);
       left = "";
     } else {
-      left = line + getEol(line, param);
+      left = line + (getEol(line, param) || "\n"); // if unable to getEol from data, assume "\n"
     }
   }
   return {lines: csvLines, partial: left};
