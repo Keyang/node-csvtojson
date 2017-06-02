@@ -1,7 +1,7 @@
 var util = require("util");
 var Transform = require("stream").Transform;
 var os = require("os");
-var stripBom = require('strip-bom');
+var stripBomBuf = require('strip-bom-buf');
 var eol = os.EOL;
 // var Processor = require("./Processor.js");
 var defParam = require("./defParam");
@@ -83,14 +83,23 @@ function emitDone(conv) {
   }
 }
 
+
+function linesAsUtf8(lines) {
+  return lines.map(function(line) {  
+    return line.map(function(field) {
+      return Buffer.from(field, "binary").toString("utf8");
+    });
+  });
+}
+
+
 Converter.prototype._transform = function (data, encoding, cb) {
-  data = data.toString("utf8");
+  data = stripBomBuf(data).toString("binary");
   if (this.started === false) {
     this.started = true;
-    data = stripBom(data);
     if (this.param.toArrayString) {
       if (this._needPush) {
-        this.push("[" + eol, "utf8");
+        this.push("[" + eol, "binary");
       }
     }
   }
@@ -128,7 +137,7 @@ Converter.prototype.processData = function (data, cb) {
       if (params.workerNum <= 1) {
         var lines = fileLineToCSVLine(fileLines, params);
         this.setPartialData(lines.partial);
-        var jsonArr = linesToJson(lines.lines, params, this.recordNum);
+        var jsonArr = linesToJson(linesAsUtf8(lines.lines), params, this.recordNum);
         this.processResult(jsonArr);
         this.lastIndex += jsonArr.length;
         this.recordNum += jsonArr.length;
@@ -262,7 +271,7 @@ Converter.prototype.processHead = function (fileLine, cb) {
   if (this.param.workerNum > 1) {
     this.workerMgr.setParams(params);
   }
-  var res = linesToJson(lines.lines, params, 0);
+  var res = linesToJson(linesAsUtf8(lines.lines), params, 0);
   this.processResult(res);
   this.lastIndex += res.length;
   this.recordNum += res.length;

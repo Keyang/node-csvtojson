@@ -227,7 +227,7 @@
   },
   "dependencies": {
     "lodash": "^4.17.3",
-    "strip-bom": "1.0.0"
+    "strip-bom-buf": "1.0.0"
   },
   "scripts": {
     "test": "mocha ./test -R spec",
