@@ -194,6 +194,27 @@ describe("CSV Converter", function () {
     rs.pipe(csvConverter);
   });
 
+  it("should parse large csv file with UTF-8 without spliting characters", function (done) {
+    var testData = __dirname + "/data/large-utf8.csv";
+    var rs = fs.createReadStream(testData);
+    var csvConverter = new Converter({
+      constructResult: false
+    });
+    var count = 0;
+    csvConverter.preRawData((csvRawData,cb)=>{
+      assert(csvRawData.charCodeAt(0) < 2000);
+      cb(csvRawData);
+    })
+    csvConverter.on("record_parsed", function () {
+      count++;
+    });
+    csvConverter.on("end_parsed", function () {
+      assert(count === 5290);
+      done();
+    });
+    rs.pipe(csvConverter);
+  });
+
   it("should parse data and covert to specific types", function (done) {
     var testData = __dirname + "/data/dataWithType";
     var rs = fs.createReadStream(testData);
