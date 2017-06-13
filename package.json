@@ -190,7 +190,7 @@
       "hireable": true
     }
   ],
-  "version": "1.1.5",
+  "version": "1.1.6",
   "keywords": [
     "csv",
     "csv parser",
@@ -222,12 +222,14 @@
     "grunt-newer": "^1.1.0",
     "imgur": "^0.1.5",
     "load-grunt-tasks": "^3.4.0",
+    "minimist": "^1.2.0",
     "mocha": "^2.4.5",
-    "minimist": "^1.2.0"
+    "request": "^2.81.0"
   },
   "dependencies": {
     "lodash": "^4.17.3",
-    "strip-bom": "1.0.0"
+    "strip-bom": "1.0.0",
+    "strip-bom-buf": "^1.0.0"
   },
   "scripts": {
     "test": "mocha ./test -R spec",

@@ -82,8 +82,33 @@ function emitDone(conv) {
     };
   }
 }
-
+function bufFromString(str){
+  return Buffer.from?Buffer.from(str,"utf8"):new Buffer(str,"utf8");
+}
 Converter.prototype._transform = function (data, encoding, cb) {
+  data=this.prepareData(data);
+  var idx =data.length-1;
+  var left=null;
+  if ((data[idx] & 1<<7) !=0){
+    while ((data[idx] & 3<<6) === 128){
+      idx--;
+    }
+    idx--;
+  }
+  if (idx !=data.length-1){
+    left=data.slice(idx+1);
+    data=data.slice(0,idx+1)
+    var _cb=cb;
+    var self=this;
+    cb=function(){
+      if (self._csvLineBuffer){
+        self._csvLineBuffer=Buffer.concat([bufFromString(self._csvLineBuffer,"utf8"),left]);
+      }else{
+        self._csvLineBuffer=left;
+      }
+      _cb();
+    }
+  }
   data = data.toString("utf8");
   if (this.started === false) {
     this.started = true;
@@ -97,7 +122,7 @@ Converter.prototype._transform = function (data, encoding, cb) {
   var self = this;
   this.preProcessRaw(data, function (d) {
     if (d && d.length > 0) {
-      self.processData(self.prepareData(d), cb);
+      self.processData(d, cb);
     } else {
       cb();
     }
@@ -105,7 +130,15 @@ Converter.prototype._transform = function (data, encoding, cb) {
 };
 
 Converter.prototype.prepareData = function (data) {
-  return this._csvLineBuffer + data;
+  if (this._csvLineBuffer && this._csvLineBuffer.length>0){
+    if (typeof this._csvLineBuffer === "string"){
+      this._csvLineBuffer=bufFromString(this._csvLineBuffer);
+    }
+    return Buffer.concat([this._csvLineBuffer,data]);
+  }else{
+    return data;
+  }
+  // return this._csvLineBuffer + data;
 };
 
 Converter.prototype.setPartialData = function (d) {
