@@ -227,7 +227,7 @@ In above, `converter` is an instance of Converter which is a subclass of node.js
 
 * [Parameters](#parameters)
 * [Events](#events)
-* [Hook / Transform](#hook-&-transform)
+* [Hook / Transform](#hook--transform)
 * [Nested JSON Structure](#nested-json-structure)
 * [Header Row](#header-row)
 * [Multi CPU Core Support](#multi-cpu-core-support)
