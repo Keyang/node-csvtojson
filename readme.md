@@ -1,7 +1,7 @@
 [![Build Status](https://travis-ci.org/Keyang/node-csvtojson.svg?branch=master)](https://travis-ci.org/Keyang/node-csvtojson)
 
 
-#CSVTOJSON
+# CSVTOJSON
 
 Nodejs csv to json converter. Fully featured:
 
@@ -12,6 +12,11 @@ Nodejs csv to json converter. Fully featured:
 * Non-blocking parsing / multi core support
 * [Extremely fast](https://github.com/Keyang/node-csvtojson/blob/develop/docs/performance.md): **4 - 6 times faster** than other csv parsers on node.js
 * Streaming data / low memory usage on large CSV data source
+
+
+# csvtojson online 
+
+[Here](http://keyangxiang.com/csvtojson/) is a free online csv to json convert service utilizing latest `csvtojson` module.
 
 
 Thanks all the [contributors](https://github.com/Keyang/node-csvtojson/graphs/contributors)
@@ -26,10 +31,6 @@ Version 1.1.0 has added new features and optimised lib performance. It also intr
 * Simplified API (see below)
 
 All changes are backward compatible.
-
-# Demo
-
-[Here](http://keyangxiang.com/csvtojson/) is a free online csv to json service ultilising latest csvtojson module.
 
 
 # Menu
@@ -573,7 +574,7 @@ There are some limitations when using multi-core feature:
 * Does not support if a column contains line break.
 
 
-#Contribution 
+# Contribution 
 
 `csvtojson` follows github convention for contributions. Here are some steps:
 
@@ -585,7 +586,7 @@ There are some limitations when using multi-core feature:
 6. Code review and merge
 7. Changes will be published to NPM within next version.
 
-#Change Log
+# Change Log
 
 ## 1.1.5
 
