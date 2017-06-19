@@ -19,7 +19,6 @@ Nodejs csv to json converter. Fully featured:
 [Here](http://keyangxiang.com/csvtojson/) is a free online csv to json convert service utilizing latest `csvtojson` module.
 
 
-Thanks all the [contributors](https://github.com/Keyang/node-csvtojson/graphs/contributors)
 
 
 ## Major update v1.1.0
@@ -585,6 +584,8 @@ There are some limitations when using multi-core feature:
 5. Create a [Pull Request](https://help.github.com/articles/creating-a-pull-request/) on github.
 6. Code review and merge
 7. Changes will be published to NPM within next version.
+
+Thanks all the [contributors](https://github.com/Keyang/node-csvtojson/graphs/contributors)
 
 # Change Log
 
