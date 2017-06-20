@@ -36,7 +36,7 @@ describe("CSV Converter", function () {
       constructResult: false
     });
     var count = 0;
-    csvConverter.preRawData(function(csvRawData, cb)  {
+    csvConverter.preRawData(function (csvRawData, cb) {
       assert(csvRawData.charCodeAt(0) < 2000);
       cb(csvRawData);
     })
@@ -49,4 +49,28 @@ describe("CSV Converter", function () {
     });
     rs.pipe(csvConverter);
   });
+  it("should setup customise type convert function", function (done) {
+    csv({ 
+      checkType:true,
+      colParser:{
+        "column1":"string",
+        "column5":function(item,head,resultRow,row,i){
+          assert.equal(item,'{"hello":"world"}');
+          assert.equal(head,"column5"),
+          assert(resultRow);
+          assert(row);
+          assert.equal(i,5);
+          return "hello world";
+        }
+      }
+    })
+      .fromFile(__dirname + "/data/dataWithType")
+      .on('json', function (json) {
+        assert.equal(typeof json.column1,"string");
+        assert.equal(json.column5,"hello world");
+      })
+      .on('done', function () {
+        done()
+      });
+  })
 });

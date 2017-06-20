@@ -386,6 +386,14 @@ describe("CSV Converter", function () {
     })
       .on("end", done);
   });
+  it("should allow flat mods to change parse behaviour", function (done) {
+    var conv = new Converter({
+    });
+    conv.fromString("*flat*a.b,b.d,c.a\n1,2,3\n4,5,6").on("json", function (d) {
+      assert(d["a.b"]);
+    })
+      .on("end", done);
+  });
 
   it("should process long header", function (done) {
     var testData = __dirname + "/data/longHeader";

@@ -18,8 +18,10 @@ module.exports = function (params) {
     maxRowLength: 0, //the max character a csv row could have. 0 means infinite. If max number exceeded, parser will emit "error" of "row_exceed". if a possibly corrupted csv data provided, give it a number like 65535 so the parser wont consume memory. default: 0
     checkColumn: false, //whether check column number of a row is the same as headers. If column number mismatched headers number, an error of "mismatched_column" will be emitted.. default: false
     escape: '"', //escape char for quoted column
+    colParser:{}, //flags on columns to alter field processing.
 
     /**below are internal params */
+    _columnConv:[],
     _headerType: [],
     _headerTitle: [],
     _headerFlag: [],

@@ -72,6 +72,10 @@
         "--includeColumns": {
             "desc": "Columns to include on input. e.g. --includeColumns='[0,4,5, \"title\"]' ",
             "type": "~object"
+        },
+        "--colParser": {
+            "desc": "Specific parser for columns. e.g. --colParser='{\"col1\":\"number\",\"col2\",\"string\"}'",
+            "type": "~object"
         }
     },
     "examples": [

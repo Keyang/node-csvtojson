@@ -218,7 +218,8 @@ In above, `converter` is an instance of Converter which is a subclass of node.js
 * [Hook / Transform](#hook--transform)
 * [Nested JSON Structure](#nested-json-structure)
 * [Header Row](#header-row)
-* [Multi CPU Core Support](#multi-cpu-core-support)
+* [Multi CPU Core Support(experimental) ](#multi-cpu-core-support)
+* [Column Parser](#column-parser)
 
 
 ## Parameters
@@ -262,6 +263,7 @@ Following parameters are supported:
 * **escape**: escape character used in quoted column. Default is double quote (") according to RFC4108. Change to back slash (\\) or other chars for your own case.
 * **includeColumns**: This parameter instructs the parser to include only those columns as specified by an array of column indexes or header names.  Example: [0,2,3,"name"] will parse and include only columns 0, 2, 3, and column with header "name" in the JSON output.
 * **ignoreColumns**: This parameter instructs the parser to ignore columns as specified by an array of column indexes or header names.  Example: [1,3,5,"title","age"] will ignore columns 1, 3, 5, title column and age column and will not return them in the JSON output.
+* **colParser**: Allows override parsing logic for a specific column. It accepts a JSON object with fields like: `headName: <String | Function>` . e.g. {field1:'number'} will use built-in number parser to convert value of the `field1` column to number. Another example {"name":nameProcessFunc} will use specified function to parse the value. See [details below](#column-parser)
 
 All parameters can be used in Command Line tool.
 
@@ -531,6 +533,8 @@ csv({
 
 ## Multi CPU Core Support
 
+This is an experimental feature.
+
 `csvtojson` has built-in workers to allow CSV parsing happening on another process and leave Main Process non-blocked. This is very useful when dealing with large csv data on a webserver so that parsing CSV will not block the entire server due to node.js being single threaded.
 
 It is also useful when dealing with tons of CSV data on command line. Multi-CPU core support will dramatically reduce the time needed.
@@ -559,7 +563,72 @@ See [here](https://github.com/Keyang/node-csvtojson/blob/develop/docs/performanc
 There are some limitations when using multi-core feature:
 
 * Does not support if a column contains line break.
+* Cannot use `function` in `colParser` parameter as worker process wont be able to access the function.
 
+## Column Parser
+
+Although `csvtojson` has a bunch of built in parameters, it will not cover all the edge cases. `Column Parser` allows developers using speicified parser for a specified column. 
+
+Differ from `transform` which works on output json of the parser, `colParser` will override existing parsing logic of your own to construct json result (which may be `transform` after that). 
+
+### Built-in parsers
+
+There are currently following built-in parser:
+
+* string: Convert value to string
+* number: Convert value to number
+* omit: omit the whole column
+
+This will override types infered from `checkType:true` parameter. More built-in parsers will be added as requested in [issues page](https://github.com/Keyang/node-csvtojson/issues).
+
+Example:
+
+```js
+/*csv string
+column1,column2
+hello,1234
+*/
+csv({
+	colParser:{
+		"column1":"omit",
+		"column2":"string",
+	},
+	checkType:true
+})
+.fromString(csvString)
+.on("json",(jsonObj)=>{
+	//jsonObj: {column2:"1234"}
+})
+```
+
+### Custom parsers
+
+Sometimes, developers need to define custom parser. It is able to pass a function to specific column in `colParser`.
+
+Example:
+
+```js
+/*csv data
+name, birthday
+Joe, 1970-01-01
+*/
+csv({
+	colParser:{
+		"birthday":function(item, head, resultRow, row , colIdx){
+			/*
+				item - "1970-01-01"
+				head - "birthday"
+				resultRow - {name:"Joe"}
+				row - ["Joe","1970-01-01"]
+				colIdx - 1
+			*/
+			return new Date(item);
+		}
+	}
+})
+```
+
+Above example will convert `birthday` column into a js `Date` object.
 
 # Contribution 
 

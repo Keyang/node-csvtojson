@@ -85,19 +85,27 @@ function convertRowToJson(row, headRow, param) {
     if (!head || head === "") {
       head = headRow[i] = "field" + (i + 1);
     }
-    var flag = getFlag(head, i, param);
-    if (flag === 'omit') {
-      continue;
-    }
-    if (param.checkType) {
-      convertFunc = checkType(item, head, i, param);
-      item = convertFunc(item);
-    }
-    var title = getTitle(head, i, param);
-    if (flag === 'flat' || param.flatKeys) {
-      resultRow[title] = item;
+    var convFunc = getConvFunc(head, i, param);
+    if (convFunc) {
+      var convRes = convFunc(item, head, resultRow,row,i);
+      if (convRes !== undefined) {
+        setPath(resultRow, head, convRes);
+      }
     } else {
-      setPath(resultRow, title, item);
+      var flag = getFlag(head, i, param);
+      if (flag === 'omit') {
+        continue;
+      }
+      if (param.checkType) {
+        convertFunc = checkType(item, head, i, param);
+        item = convertFunc(item);
+      }
+      var title = getTitle(head, i, param);
+      if (flag === 'flat' || param.flatKeys) {
+        resultRow[title] = item;
+      } else {
+        setPath(resultRow, title, item);
+      }
     }
   }
   if (hasValue) {
@@ -107,6 +115,34 @@ function convertRowToJson(row, headRow, param) {
   }
 }
 
+var builtInConv={
+  "string":stringType,
+  "number":numberType,
+  "omit":function(){}
+}
+function getConvFunc(head,i,param){
+  if (param._columnConv[i] !== undefined){
+    return param._columnConv[i];
+  }else{
+    var flag=param.colParser[head];
+    if (flag === undefined){
+      return param._columnConv[i]=false;
+    }
+    if (typeof flag ==="string"){
+      flag=flag.trim().toLowerCase();
+      var builtInFunc=builtInConv[flag];
+      if (builtInFunc){
+        return param._columnConv[i]=builtInFunc;
+      }else{
+        return param._columnConv[i]=false;  
+      }
+    }else if (typeof flag ==="function"){
+      return param._columnConv[i]=flag;
+    }else{
+      return param._columnConv[i]=false;
+    }
+  }
+}
 function setPath(json, path, value) {
   var _set = require('lodash/set');
   var pathArr = path.split('.');
@@ -135,8 +171,7 @@ function getTitle(head, i, param) {
   }
 
   var flag = getFlag(head, i, param);
-  var str = head.replace(flag, '');
-  str = str.replace('string#!', '').replace('number#!', '');
+  var str = head.replace('*flat*', '').replace('string#!', '').replace('number#!', '');
   return param._headerTitle[i] = str;
 }
 
