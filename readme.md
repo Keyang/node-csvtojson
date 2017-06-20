@@ -13,6 +13,7 @@
 * Error catching
 * Non-blocking parsing
 * [Extremely fast](https://github.com/Keyang/node-csvtojson/blob/develop/docs/performance.md): **4 - 6 times faster** than other csv parsers on node.js
+* Support node.js 0.10 + to latest
 
 
 # csvtojson online 
