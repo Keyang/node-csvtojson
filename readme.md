@@ -3,34 +3,21 @@
 
 # CSVTOJSON
 
-Nodejs csv to json converter. Fully featured:
+`csvtojson` module is a comprehensive nodejs csv parser to convert csv to json or column arrays. It can be used as node.js library / command line tool / or in browser with help of `browserify` or `webpack`. Below are some features:
 
-* Pipe in / Pipe out
-* Use as Command Line tool or a Node.js lib
-* Parse CSV to JSON or CSV column arrays
-* Support all types of CSV
-* Non-blocking parsing / multi core support
+* Large csv file parsing with low memory (stream support)
+* Easy to use yet abundant API / parameters
+* Commandline support
+* Multiple output format support 
+* Multiple input source support
+* Error catching
+* Non-blocking parsing
 * [Extremely fast](https://github.com/Keyang/node-csvtojson/blob/develop/docs/performance.md): **4 - 6 times faster** than other csv parsers on node.js
-* Streaming data / low memory usage on large CSV data source
 
 
 # csvtojson online 
 
 [Here](http://keyangxiang.com/csvtojson/) is a free online csv to json convert service utilizing latest `csvtojson` module.
-
-
-
-
-## Major update v1.1.0
-
-Version 1.1.0 has added new features and optimised lib performance. It also introduced simpler APIs to use. Thus readme is re-written to adapt the preferred new APIs. The lib will support old APIs. To review the old readme please [click here](https://github.com/Keyang/node-csvtojson/blob/develop/readme-old.md).
-
-* [Performance Optimisation](https://github.com/Keyang/node-csvtojson/blob/develop/docs/performance.md#performance-optimisation): V1.1.0 is 30%-50% faster
-* Better error tolerance
-* Simplified API (see below)
-
-All changes are backward compatible.
-
 
 # Menu
 
@@ -609,11 +596,20 @@ Thanks all the [contributors](https://github.com/Keyang/node-csvtojson/graphs/co
 * added `hooks` section
 * removed `parserMgr`
 
+
 ## 1.1.0
 
 * Remove support of `new Converter(true)`
 * Optimised Performance
 * Added new APIs
+
+Version 1.1.0 has added new features and optimised lib performance. It also introduced simpler APIs to use. Thus readme is re-written to adapt the preferred new APIs. The lib will support old APIs. To review the old readme please [click here](https://github.com/Keyang/node-csvtojson/blob/develop/readme-old.md).
+
+* [Performance Optimisation](https://github.com/Keyang/node-csvtojson/blob/develop/docs/performance.md#performance-optimisation): V1.1.0 is 30%-50% faster
+* Better error tolerance
+* Simplified API (see below)
+
+All changes are backward compatible.
 
 ## 1.0.2
 * supported ndjson format as per #113 and #87
