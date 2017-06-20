@@ -630,6 +630,27 @@ csv({
 
 Above example will convert `birthday` column into a js `Date` object.
 
+the returned value will be used in result JSON object. returning `undefined` will not change result JSON object. You can do following:
+
+```js
+/*csv data
+user.name, birthday
+Joe, 1970-01-01
+*/
+csv({
+	colParser:{
+		"user.name":function(item, head, resultRow, row , colIdx){
+			resultRow[head]=item;
+		}
+	}
+})
+
+```
+
+without the parser the json is like {user:{name:Joe}}, with the parser the json is like {"user.name":Joe}
+
+
+
 # Contribution 
 
 `csvtojson` follows github convention for contributions. Here are some steps:
