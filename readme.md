@@ -667,6 +667,11 @@ Thanks all the [contributors](https://github.com/Keyang/node-csvtojson/graphs/co
 
 # Change Log
 
+## 1.1.7
+
+* add `colParser` parameter
+* fix bug that could cause utf-8 character broken
+
 ## 1.1.5
 
 * `ignoreColumns` and `includeColumns` now allow put in header names and indecies.
