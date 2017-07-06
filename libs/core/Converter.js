@@ -85,7 +85,7 @@ function emitDone(conv) {
 
 
 function bufFromString(str) {
-  var buffer = Buffer.allocUnsafe(str.length)
+  var buffer = Buffer.alloc(str.length)
   buffer.write(str)
   return buffer
 }
