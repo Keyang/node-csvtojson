@@ -272,6 +272,22 @@ All parameters can be used in Command Line tool.
 
 `Converter` class defined a series of events.
 
+### header
+
+`header` event is emitted for each CSV file. It passes an array object which contains the names of the header row.
+
+```js
+const csv=require('csvtojson')
+csv()
+.on('header',(header)=>{
+	//header=> [header1, header2, header3]
+})
+```
+
+`header` is always an array of strings without types.
+
+`header` event will be emitted regardless of the `noHeaders` parameter setting.
+
 ### json
 
 `json` event is emitted for each parsed CSV line. It passes JSON object and the row number of the CSV line in its callback function.

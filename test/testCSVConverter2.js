@@ -434,6 +434,10 @@ describe("CSV Converter", function () {
      ignoreColumns:[0]
     })
     .fromStream(rs)
+    .on("header", function(header) {
+      assert.equal(header.indexOf("TIMESTAMP"), -1);
+      assert.equal(header.indexOf("UPDATE"), 0);
+    })
     .on("csv", function(row, idx) {
       assert(idx >= 0);
       if (idx ===1){
@@ -455,6 +459,11 @@ describe("CSV Converter", function () {
      includeColumns:[0]
     })
     .fromStream(rs)
+    .on("header", function(header) {
+      assert.equal(header.indexOf("TIMESTAMP"), 0);
+      assert.equal(header.indexOf("UPDATE"), -1);
+      assert.equal(header.length, 1);
+    })
     .on("csv", function(row, idx) {
       assert(idx >= 0);
       assert.equal(row.length, 1);

@@ -36,6 +36,7 @@ function Converter(params, options) {
   this._needJson = null;
   this._needEmitResult = null;
   this._needEmitFinalResult = null;
+  this._needEmitHeader = null;
   this._needEmitJson = null;
   this._needPush = null;
   this._needEmitCsv = null;
@@ -54,6 +55,9 @@ function Converter(params, options) {
     }
     if (this._needEmitJson === null) {
       this._needEmitJson = this.listeners("json").length > 0;
+    }
+    if (this._needEmitHeader === null) {
+      this._needEmitHeader = this.listeners("header").length > 0;
     }
     if (this._needEmitCsv === null) {
       this._needEmitCsv = this.listeners("csv").length > 0;
@@ -297,6 +301,8 @@ Converter.prototype.processHead = function (fileLine, cb) {
     this.workerMgr.setParams(params);
   }
   var res = linesToJson(lines.lines, params, 0);
+  // Put the header with the first row
+  if(res.length > 0) res[0].header = params._headers;
   this.processResult(res);
   this.lastIndex += res.length;
   this.recordNum += res.length;
@@ -348,6 +354,7 @@ Converter.prototype.processResult = function (result) {
 
 Converter.prototype.emitResult = function (r) {
   var index = r.index;
+  var header = r.header;
   var row = r.row;
   var result = r.json;
   var resultJson = null;
@@ -366,6 +373,9 @@ Converter.prototype.emitResult = function (r) {
   if (this.transform && typeof this.transform === "function") {
     this.transform(resultJson, row, index);
     resultStr = null;
+  }
+  if (this._needEmitHeader && header) {
+    this.emit("header", header);
   }
   if (this._needEmitJson) {
     this.emit("json", resultJson, index);
