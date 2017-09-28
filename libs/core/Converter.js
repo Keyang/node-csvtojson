@@ -85,9 +85,11 @@ function emitDone(conv) {
 
 
 function bufFromString(str) {
-  var buffer = Buffer.alloc(str.length)
-  buffer.write(str)
-  return buffer
+  var buffer = Buffer.allocUnsafe
+    ? Buffer.allocUnsafe(str.length)
+    : new Buffer(str.length);
+  buffer.write(str);
+  return buffer;
 }
 
 Converter.prototype._transform = function (data, encoding, cb) {
