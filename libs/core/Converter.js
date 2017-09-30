@@ -86,10 +86,16 @@ function emitDone(conv) {
     };
   }
 }
-var useBufferFrom=process.versions.node.split(".")[0]>=6;
-function bufFromString(str){
-  return useBufferFrom?Buffer.from(str,"utf8"):new Buffer(str,"utf8");
+
+
+function bufFromString(str) {
+  var buffer = Buffer.allocUnsafe
+    ? Buffer.allocUnsafe(str.length)
+    : new Buffer(str.length);
+  buffer.write(str);
+  return buffer;
 }
+
 Converter.prototype._transform = function (data, encoding, cb) {
   data=this.prepareData(data);
   var idx =data.length-1;
