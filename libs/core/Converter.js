@@ -100,6 +100,12 @@ Converter.prototype._transform = function (data, encoding, cb) {
   data=this.prepareData(data);
   var idx =data.length-1;
   var left=null;
+  /**
+   * From Keyang:
+   * The code below is to check if a single utf8 char (which could be multiple bytes) being split.
+   * If the char being split, the buffer from two chunk needs to be concat
+   * check how utf8 being encoded to understand the code below. 
+   */
   if ((data[idx] & 1<<7) !=0){
     while ((data[idx] & 3<<6) === 128){
       idx--;
