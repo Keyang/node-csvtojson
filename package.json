@@ -10,8 +10,62 @@
   },
   "contributors": [
     {
+      "name": "Dane Petersen",
+      "email": null,
+      "url": "https://github.com/thegreatsunra",
+      "contributions": 1,
+      "additions": 18920,
+      "deletions": 8429,
+      "hireable": null
+    },
+    {
+      "name": "Jessica Good",
+      "email": null,
+      "url": "https://github.com/jessicagood",
+      "contributions": 1,
+      "additions": 8,
+      "deletions": 5,
+      "hireable": null
+    },
+    {
+      "name": null,
+      "email": null,
+      "url": "https://github.com/nbelakovski",
+      "contributions": 2,
+      "additions": 2,
+      "deletions": 2,
+      "hireable": null
+    },
+    {
+      "name": "Robert Porter",
+      "email": null,
+      "url": "https://github.com/colarob",
+      "contributions": 1,
+      "additions": 64,
+      "deletions": 21,
+      "hireable": null
+    },
+    {
+      "name": "Dimitri Kennedy",
+      "email": null,
+      "url": "https://github.com/roodboi",
+      "contributions": 2,
+      "additions": 3,
+      "deletions": 3,
+      "hireable": null
+    },
+    {
+      "name": "José Expósito",
+      "email": null,
+      "url": "https://github.com/JoseExposito",
+      "contributions": 1,
+      "additions": 9,
+      "deletions": 3,
+      "hireable": null
+    },
+    {
       "name": "Daniel Cohen",
-      "email": "dcohenb@gmail.com",
+      "email": null,
       "url": "https://github.com/dcohenb",
       "contributions": 1,
       "additions": 1,
@@ -19,27 +73,63 @@
       "hireable": true
     },
     {
-      "name": "Trang",
-      "email": "trangtungn@gmail.com",
-      "url": "https://github.com/trangtungn",
+      "name": "Richard Pringle",
+      "email": null,
+      "url": "https://github.com/richardpringle",
       "contributions": 1,
-      "additions": 6,
+      "additions": 1,
+      "deletions": 1,
+      "hireable": null
+    },
+    {
+      "name": "Bert Verhelst",
+      "email": null,
+      "url": "https://github.com/bertyhell",
+      "contributions": 1,
+      "additions": 17,
+      "deletions": 0,
+      "hireable": null
+    },
+    {
+      "name": null,
+      "email": null,
+      "url": "https://github.com/jondayft",
+      "contributions": 1,
+      "additions": 18,
+      "deletions": 0,
+      "hireable": null
+    },
+    {
+      "name": "Bruce Johnson",
+      "email": null,
+      "url": "https://github.com/brucejo75",
+      "contributions": 1,
+      "additions": 36,
+      "deletions": 1,
+      "hireable": null
+    },
+    {
+      "name": "Jimi Ford",
+      "email": null,
+      "url": "https://github.com/JimiHFord",
+      "contributions": 1,
+      "additions": 5,
+      "deletions": 5,
+      "hireable": true
+    },
+    {
+      "name": "Alec Fenichel",
+      "email": null,
+      "url": "https://github.com/fenichelar",
+      "contributions": 1,
+      "additions": 1,
       "deletions": 1,
       "hireable": true
     },
     {
-      "name": "Matthias Lienau",
-      "email": "matthias@mlienau.de",
-      "url": "https://github.com/atufkas",
-      "contributions": 9,
-      "additions": 74,
-      "deletions": 45,
-      "hireable": null
-    },
-    {
-      "name": "Alec Fenichel",
-      "email": "alec.fenichel@gmail.com",
-      "url": "https://github.com/fenichelar",
+      "name": "Hocine Moukaideche",
+      "email": null,
+      "url": "https://github.com/Off76",
       "contributions": 1,
       "additions": 1,
       "deletions": 1,
@@ -55,125 +145,8 @@
       "hireable": null
     },
     {
-      "name": "Dimitri Kennedy",
-      "email": "dimitrikennedy@gmail.com",
-      "url": "https://github.com/roodboi",
-      "contributions": 2,
-      "additions": 3,
-      "deletions": 3,
-      "hireable": null
-    },
-    {
-      "name": null,
-      "email": null,
-      "url": "https://github.com/markwithers",
-      "contributions": 1,
-      "additions": 1,
-      "deletions": 1,
-      "hireable": null
-    },
-    {
-      "name": "Robert Porter",
-      "email": null,
-      "url": "https://github.com/colarob",
-      "contributions": 1,
-      "additions": 64,
-      "deletions": 21,
-      "hireable": null
-    },
-    {
-      "name": "Jessica Good",
-      "email": null,
-      "url": "https://github.com/jessicagood",
-      "contributions": 1,
-      "additions": 8,
-      "deletions": 5,
-      "hireable": null
-    },
-    {
-      "name": null,
-      "email": null,
-      "url": "https://github.com/jondayft",
-      "contributions": 1,
-      "additions": 18,
-      "deletions": 0,
-      "hireable": null
-    },
-    {
-      "name": "Dane Petersen",
-      "email": null,
-      "url": "https://github.com/thegreatsunra",
-      "contributions": 1,
-      "additions": 18920,
-      "deletions": 8429,
-      "hireable": null
-    },
-    {
-      "name": "Jimi Ford",
-      "email": null,
-      "url": "https://github.com/JimiHFord",
-      "contributions": 1,
-      "additions": 5,
-      "deletions": 5,
-      "hireable": null
-    },
-    {
-      "name": "Hocine Moukaideche",
-      "email": null,
-      "url": "https://github.com/Off76",
-      "contributions": 1,
-      "additions": 1,
-      "deletions": 1,
-      "hireable": true
-    },
-    {
-      "name": "Keyang Xiang",
-      "email": "keyang.xiang@gmail.com",
-      "url": "https://github.com/Keyang",
-      "contributions": 122,
-      "additions": 46304,
-      "deletions": 65397,
-      "hireable": null
-    },
-    {
-      "name": "Ionică Bizău",
-      "email": "contact@ionicabizau.net",
-      "url": "https://github.com/IonicaBizau",
-      "contributions": 1,
-      "additions": 98,
-      "deletions": 86,
-      "hireable": null
-    },
-    {
-      "name": "Sean Lang",
-      "email": "slang800@gmail.com",
-      "url": "https://github.com/slang800",
-      "contributions": 2,
-      "additions": 2,
-      "deletions": 1,
-      "hireable": true
-    },
-    {
-      "name": "Tom Dodson",
-      "email": "t3.dodson@gmail.com",
-      "url": "https://github.com/t3dodson",
-      "contributions": 25,
-      "additions": 1485,
-      "deletions": 1414,
-      "hireable": null
-    },
-    {
-      "name": "Jeff Johnson",
-      "email": null,
-      "url": "https://github.com/jeffcjohnson",
-      "contributions": 1,
-      "additions": 1,
-      "deletions": 1,
-      "hireable": null
-    },
-    {
       "name": "Amila Welihinda",
-      "email": "amilajack@gmail.com",
+      "email": null,
       "url": "https://github.com/amilajack",
       "contributions": 1,
       "additions": 2,
@@ -188,6 +161,87 @@
       "additions": 40,
       "deletions": 2,
       "hireable": true
+    },
+    {
+      "name": "Ionică Bizău (Johnny B.)",
+      "email": null,
+      "url": "https://github.com/IonicaBizau",
+      "contributions": 1,
+      "additions": 98,
+      "deletions": 86,
+      "hireable": null
+    },
+    {
+      "name": "Keita Akutsu",
+      "email": null,
+      "url": "https://github.com/kakts",
+      "contributions": 4,
+      "additions": 821,
+      "deletions": 784,
+      "hireable": true
+    },
+    {
+      "name": null,
+      "email": null,
+      "url": "https://github.com/markwithers",
+      "contributions": 1,
+      "additions": 1,
+      "deletions": 1,
+      "hireable": null
+    },
+    {
+      "name": "Trang",
+      "email": null,
+      "url": "https://github.com/trangtungn",
+      "contributions": 1,
+      "additions": 6,
+      "deletions": 1,
+      "hireable": true
+    },
+    {
+      "name": "Keyang Xiang",
+      "email": null,
+      "url": "https://github.com/Keyang",
+      "contributions": 141,
+      "additions": 70357,
+      "deletions": 66412,
+      "hireable": null
+    },
+    {
+      "name": "Jeff Johnson",
+      "email": null,
+      "url": "https://github.com/jeffcjohnson",
+      "contributions": 1,
+      "additions": 1,
+      "deletions": 1,
+      "hireable": null
+    },
+    {
+      "name": "Sean Lang",
+      "email": null,
+      "url": "https://github.com/slang800",
+      "contributions": 2,
+      "additions": 2,
+      "deletions": 1,
+      "hireable": true
+    },
+    {
+      "name": "Matthias Lienau",
+      "email": null,
+      "url": "https://github.com/atufkas",
+      "contributions": 9,
+      "additions": 74,
+      "deletions": 45,
+      "hireable": null
+    },
+    {
+      "name": "Ron Korving",
+      "email": null,
+      "url": "https://github.com/ronkorving",
+      "contributions": 3,
+      "additions": 3,
+      "deletions": 3,
+      "hireable": null
     }
   ],
   "version": "1.1.8",
@@ -235,7 +289,7 @@
     "test-debug": "mocha debug ./test -R spec",
     "test-all": "mocha  ./test -R spec && CSV_WORKER=3 mocha ./test -R spec "
   },
-  "browser":{
-    "child_process":false
+  "browser": {
+    "child_process": false
   }
 }
