@@ -119,11 +119,13 @@ function _escapeQuote(segment, quote, escape) {
 
   var key = "es|" + quote + "|" + escape;
   if (cachedRegExp[key] === undefined) {
-    if (escape === "\\") {
-      escape = "\\\\";
-    }
-    cachedRegExp[key] = new RegExp(escape + quote, 'g');
+
+    // if (escape === "\\") {
+    //   escape = "\\\\";
+    // }
+    cachedRegExp[key] = new RegExp('\\'+escape + '\\'+quote, 'g');
   }
   var regExp = cachedRegExp[key];
+  // console.log(regExp,segment);
   return segment.replace(regExp, quote);
 }

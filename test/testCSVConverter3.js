@@ -73,4 +73,16 @@ describe("CSV Converter", function () {
         done()
       });
   })
+  it("should accept pipe as quote", function (done) {
+    csv({
+      quote:"|"
+    })
+      .fromFile(__dirname + "/data/pipeAsQuote")
+      .on('csv', function (csv) {
+        assert.equal(csv[2],"blahhh, blah");
+      })
+      .on('done', function () {
+        done()
+      });
+  })
 });

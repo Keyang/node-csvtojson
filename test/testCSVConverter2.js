@@ -430,6 +430,7 @@ describe("CSV Converter", function () {
 
   it("should ignore column", function(done) {
     var rs = fs.createReadStream(__dirname + "/data/dataWithQoutes");
+    var headerEmitted=false;
     csv({
      ignoreColumns:[0]
     })
@@ -437,8 +438,15 @@ describe("CSV Converter", function () {
     .on("header", function(header) {
       assert.equal(header.indexOf("TIMESTAMP"), -1);
       assert.equal(header.indexOf("UPDATE"), 0);
+      if (headerEmitted){
+        throw("header event should only happen once")
+      }
+      headerEmitted=true;
     })
     .on("csv", function(row, idx) {
+      if (!headerEmitted) {
+        throw("header should be emitted before any data events");
+      }
       assert(idx >= 0);
       if (idx ===1){
         assert.equal(row[0],"n");
@@ -449,6 +457,7 @@ describe("CSV Converter", function () {
       assert(idx >= 0);
     })
     .on("end", function() {
+      assert(headerEmitted);
       done();
     });
   });

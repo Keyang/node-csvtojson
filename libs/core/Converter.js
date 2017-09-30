@@ -302,7 +302,7 @@ Converter.prototype.processHead = function (fileLine, cb) {
   }
   var res = linesToJson(lines.lines, params, 0);
   // Put the header with the first row
-  if(res.length > 0) res[0].header = params._headers;
+  // if(res.length > 0) res[0].header = params._headers;
   this.processResult(res);
   this.lastIndex += res.length;
   this.recordNum += res.length;
@@ -354,7 +354,7 @@ Converter.prototype.processResult = function (result) {
 
 Converter.prototype.emitResult = function (r) {
   var index = r.index;
-  var header = r.header;
+  var header = this.param;
   var row = r.row;
   var result = r.json;
   var resultJson = null;
@@ -374,8 +374,8 @@ Converter.prototype.emitResult = function (r) {
     this.transform(resultJson, row, index);
     resultStr = null;
   }
-  if (this._needEmitHeader && header) {
-    this.emit("header", header);
+  if (this._needEmitHeader && this.param._headers && index === 0) {
+    this.emit("header", this.param._headers);
   }
   if (this._needEmitJson) {
     this.emit("json", resultJson, index);
