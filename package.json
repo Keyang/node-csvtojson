@@ -234,5 +234,8 @@
     "test": "mocha ./test -R spec",
     "test-debug": "mocha debug ./test -R spec",
     "test-all": "mocha  ./test -R spec && CSV_WORKER=3 mocha ./test -R spec "
+  },
+  "browser":{
+    "child_process":false
   }
 }
