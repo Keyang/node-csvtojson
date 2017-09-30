@@ -105,6 +105,7 @@ Converter.prototype._transform = function (data, encoding, cb) {
    * The code below is to check if a single utf8 char (which could be multiple bytes) being split.
    * If the char being split, the buffer from two chunk needs to be concat
    * check how utf8 being encoded to understand the code below. 
+   * If anyone has any better way to do this, please let me know.
    */
   if ((data[idx] & 1<<7) !=0){
     while ((data[idx] & 3<<6) === 128){
@@ -307,6 +308,9 @@ Converter.prototype.processHead = function (fileLine, cb) {
   }
   configIgnoreIncludeColumns(params);
   params._headers = require("./filterRow")(params._headers, params);
+  if (this._needEmitHeader && this.param._headers) {
+    this.emit("header", this.param._headers);
+  }
   var lines = fileLineToCSVLine(fileLine, params);
   this.setPartialData(lines.partial);
   if (this.param.workerNum > 1) {
@@ -385,9 +389,6 @@ Converter.prototype.emitResult = function (r) {
   if (this.transform && typeof this.transform === "function") {
     this.transform(resultJson, row, index);
     resultStr = null;
-  }
-  if (this._needEmitHeader && this.param._headers && index === 0) {
-    this.emit("header", this.param._headers);
   }
   if (this._needEmitJson) {
     this.emit("json", resultJson, index);

@@ -68,6 +68,7 @@ function workerMgr() {
 }
 
 function Worker(params) {
+  var spawn = require("child_process").spawn;
   this.cp = spawn(process.execPath, [__dirname + "/worker.js"], {
     env: {
       child:true
