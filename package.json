@@ -290,6 +290,7 @@
     "test-all": "mocha  ./test -R spec && CSV_WORKER=3 mocha ./test -R spec "
   },
   "browser": {
-    "child_process": false
+    "child_process": false,
+    "fs": false
   }
 }
