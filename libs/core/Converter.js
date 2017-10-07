@@ -89,9 +89,10 @@ function emitDone(conv) {
 
 
 function bufFromString(str) {
+  var length=Buffer.byteLength(str);
   var buffer = Buffer.allocUnsafe
-    ? Buffer.allocUnsafe(str.length)
-    : new Buffer(str.length);
+    ? Buffer.allocUnsafe(length)
+    : new Buffer(length);
   buffer.write(str);
   return buffer;
 }
@@ -530,7 +531,9 @@ Converter.prototype.transf = function (func) {
 
 Converter.prototype.fromString = function (csvString, cb) {
   if (typeof csvString !== "string") {
-    return cb(new Error("Passed CSV Data is not a string."));
+    if (cb && typeof cb ==="function"){
+      return cb(new Error("Passed CSV Data is not a string."));
+    }
   }
   if (cb && typeof cb === "function") {
     this.wrapCallback(cb, function () {
