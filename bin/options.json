@@ -74,7 +74,7 @@
             "type": "~object"
         },
         "--colParser": {
-            "desc": "Specific parser for columns. e.g. --colParser='{\"col1\":\"number\",\"col2\",\"string\"}'",
+            "desc": "Specific parser for columns. e.g. --colParser='{\"col1\":\"number\",\"col2\":\"string\"}'",
             "type": "~object"
         }
     },
