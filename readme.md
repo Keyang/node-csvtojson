@@ -583,7 +583,7 @@ There are some limitations when using multi-core feature:
 
 ## Column Parser
 
-Although `csvtojson` has a bunch of built in parameters, it will not cover all the edge cases. `Column Parser` allows developers using speicified parser for a specified column. 
+Although `csvtojson` has a bunch of built in parameters, it will not cover all the edge cases. `Column Parser` allows developers using specified parser for a specified column. 
 
 Differ from `transform` which works on output json of the parser, `colParser` will override existing parsing logic of your own to construct json result (which may be `transform` after that). 
 
