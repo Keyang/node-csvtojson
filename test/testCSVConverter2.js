@@ -487,6 +487,66 @@ describe("CSV Converter", function () {
       done();
     });
   });
+
+  it("should allow headers and include columns to be given as reference to the same var", function(done) {
+    var rs = fs.createReadStream(__dirname + "/data/complexJSONCSV");
+    const headers = [
+      'first',
+      'second',
+      'third',
+    ];
+
+    const expected = [].concat(headers);
+
+    csv({
+      headers: headers,
+      includeColumns: headers,
+    })
+      .fromStream(rs)
+      .on("header", function(header) {
+        expected.forEach(function(value, index) {
+          assert.equal(header.indexOf(value), index);
+        });
+      })
+      .on("json", function(j, idx) {
+        assert(idx >= 0);
+        assert.equal(expected.length, Object.keys(j).length);
+        expected.forEach(function(attribute) {
+          assert(j.hasOwnProperty(attribute));
+        });
+      })
+      .on("end", function() {
+        expected.forEach(function(value, index) {
+          assert.equal(headers.indexOf(value), index);
+        });
+        done();
+      });
+  });
+
+  it("should leave provided params objects unmutated", function(done) {
+    var rs = fs.createReadStream(__dirname + "/data/complexJSONCSV");
+    const includeColumns = [
+      'fieldA.title',
+      'description',
+    ];
+
+    const expected = [].concat(includeColumns);
+
+    csv({
+      includeColumns: includeColumns,
+    })
+      .fromStream(rs)
+      .on("json", function(j, idx) {
+        assert(idx >= 0);
+      })
+      .on("end", function() {
+        expected.forEach(function (header, index) {
+          assert.equal(index, includeColumns.indexOf(header));
+        });
+        done();
+      });
+  });
+
   it ("should only call done once",function(done){
     var counter=0;
     csv()
