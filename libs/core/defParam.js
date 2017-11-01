@@ -33,7 +33,11 @@ module.exports = function (params) {
   }
   for (var key in params) {
     if (params.hasOwnProperty(key)) {
-      _param[key] = params[key];
+      if (Array.isArray(params[key])) {
+        _param[key] = [].concat(params[key]);
+      } else {
+        _param[key] = params[key];
+      }
     }
   }
   if (_param.ignoreColumns.length > 0 && !numExp.test(_param.ignoreColumns.join(""))) {
