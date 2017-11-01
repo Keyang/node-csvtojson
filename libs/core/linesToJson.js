@@ -10,7 +10,7 @@ var numReg = /^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$/;
  */
 module.exports = function (lines, params, idx) {
   if (params._needParseJson) {
-    if (!params._headers) {
+    if (!params._headers || !Array.isArray(params._headers)) {
       params._headers = [];
     }
     if (!params.parseRules) {
