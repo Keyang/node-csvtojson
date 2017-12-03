@@ -1,4 +1,4 @@
-//deprecated but leave it for backword compatibility
+//deprecated but leave it for backward compatibility
 module.exports.core=require("./core");
 
 //live apis
