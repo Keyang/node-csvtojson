@@ -34,7 +34,7 @@
             "type": "boolean"
         },
         "--headers": {
-            "desc": "An array to specify the headers of CSV data. If --noheader is false, this value will override CSV header. Default: null. Example: [\"my field\",\"name\"]",
+            "desc": "An array to specify the headers of CSV data. If --noheader is false, this value will override CSV header. Default: null. Example: --headers='[\"my field\",\"name\"]'",
             "type": "object"
         },
         "--flatKeys": {
