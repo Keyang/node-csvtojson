@@ -541,7 +541,7 @@ csv({
 
 // original source has no header row. use 'header1' 'header2' as its header row
 csv({
-	noheader: true
+	noheader: true,
 	headers: ['header1','header2']
 })
 
