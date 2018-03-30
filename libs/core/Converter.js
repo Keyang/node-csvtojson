@@ -510,7 +510,7 @@ Converter.prototype.fromFile = function (filePath, cb, options) {
       rs = fs.createReadStream(filePath,options);
       rs.pipe(this);
     } else {
-      this.emit('error', new Error("File not exists"));
+      this.emit('error', new Error("File does not exist. Check to make sure the file path to your csv is correct."));
     }
   }.bind(this));
   return this;
