@@ -264,6 +264,7 @@ Following parameters are supported:
 * **includeColumns**: This parameter instructs the parser to include only those columns as specified by an array of column indexes or header names.  Example: [0,2,3,"name"] will parse and include only columns 0, 2, 3, and column with header "name" in the JSON output.
 * **ignoreColumns**: This parameter instructs the parser to ignore columns as specified by an array of column indexes or header names.  Example: [1,3,5,"title","age"] will ignore columns 1, 3, 5, title column and age column and will not return them in the JSON output.
 * **colParser**: Allows override parsing logic for a specific column. It accepts a JSON object with fields like: `headName: <String | Function>` . e.g. {field1:'number'} will use built-in number parser to convert value of the `field1` column to number. Another example {"name":nameProcessFunc} will use specified function to parse the value. See [details below](#column-parser)
+* **alwaysSplitAtEOL**: Always interpret each line (as defined by `eol`) as a row. This will prevent `eol` characters from being used within a row (even inside a quoted field). This ensures that misplaced quotes only break on row, and not all ensuing rows.
 
 All parameters can be used in Command Line tool.
 
