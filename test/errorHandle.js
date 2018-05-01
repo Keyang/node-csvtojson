@@ -77,4 +77,25 @@ describe("Converter error handling", function() {
     });
     rs.pipe(conv);
   });
+
+  it("should treat quote not closed as column_mismatched when alwaysSplitAtEOL is true", function(done) {
+    var rs = fs.createReadStream(__dirname + "/data/dataWithUnclosedQuotes");
+    var conv = new Converter({
+      checkColumn:true,
+      alwaysSplitAtEOL:true,
+    });
+    var tested = false;
+    conv.on("error", function(err) {
+      if (tested === false) {
+        assert(err.err === "column_mismatched");
+        tested = true;
+      }
+    });
+    conv.on("json",function() {});
+    conv.on('done',function() {
+      assert(tested);
+      done();
+    });
+    rs.pipe(conv);
+  });
 });
