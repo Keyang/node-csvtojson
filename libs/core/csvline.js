@@ -12,7 +12,7 @@ module.exports = function(lines, param) {
   while (lines.length) {
     var line = left + lines.shift();
     var row = rowSplit(line, param);
-    if (row.closed) {
+      if (row.closed || param.alwaysSplitAtEOL) {
       csvLines.push(row.cols);
       left = "";
     } else {
