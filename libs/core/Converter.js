@@ -169,7 +169,11 @@ Converter.prototype.processData = function (data, cb) {
   if (params.ignoreEmpty && !params._headers) {
     data = data.trimLeft();
   }
+  const eol = this.param.eol;
   var fileLines = fileline(data, this.param);
+  if (this.param.eol !== eol) {
+    this.emit("eol", this.param.eol);
+  }
   if (fileLines.lines.length > 0) {
     if (this.preProcessLine && typeof this.preProcessLine === "function") {
       fileLines.lines = this._preProcessLines(fileLines.lines, this.lastIndex);

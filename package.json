@@ -278,7 +278,8 @@
     "load-grunt-tasks": "^3.4.0",
     "minimist": "^1.2.0",
     "mocha": "^2.4.5",
-    "request": "^2.81.0"
+    "request": "^2.81.0",
+    "sinon": "^5.0.3"
   },
   "dependencies": {
     "lodash": "^4.17.3",
