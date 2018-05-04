@@ -283,7 +283,11 @@ Converter.prototype.processHead = function (fileLine, cb) {
   if (!params.noheader) {
     while (lines.length) {
       var line = left + lines.shift();
+      var delimiter = params.delimiter;
       var row = rowSplit(line, params);
+      if (params.delimiter !== delimiter) {
+        this.emit("delimiter", params.delimiter);
+      }
       if (row.closed) {
         headerRow = row.cols;
         left = "";
@@ -316,7 +320,11 @@ Converter.prototype.processHead = function (fileLine, cb) {
   if (this._needEmitHeader && this.param._headers) {
     this.emit("header", this.param._headers);
   }
+  var delimiter = params.delimiter;
   var lines = fileLineToCSVLine(fileLine, params);
+  if (params.delimiter !== delimiter) {
+    this.emit("delimiter", params.delimiter);
+  }
   this.setPartialData(lines.partial);
   if (this.param.workerNum > 1) {
     this.workerMgr.setParams(params);

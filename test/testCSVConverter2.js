@@ -2,7 +2,12 @@ var Converter = require("../libs/core/Converter.js");
 var csv = require("../");
 var assert = require("assert");
 var fs = require("fs");
+var sandbox = require('sinon').sandbox.create();
 describe("CSV Converter", function () {
+  afterEach(function () {
+    sandbox.restore();
+  });
+
   it("should convert from large csv string", function (done) {
     var csvStr = fs.readFileSync(__dirname + "/data/large-csv-sample.csv", "utf8");
     var conv = new Converter({
@@ -15,7 +20,7 @@ describe("CSV Converter", function () {
     });
   });
 
-  it("should set eol ", function (done) {
+  it("should set eol", function (done) {
     var rs = fs.createReadStream(__dirname + "/data/large-csv-sample.csv");
     var conv = new Converter({
       workerNum: 1,
@@ -144,7 +149,7 @@ describe("CSV Converter", function () {
     rs.pipe(conv);
   });
 
-  it("should detect delimiter ", function (done) {
+  it("should detect delimiter", function (done) {
     var testData = __dirname + "/data/dataWithAutoDelimiter";
     var rs = fs.createReadStream(testData);
     var conv = new Converter({ delimiter: "auto" });
@@ -153,6 +158,50 @@ describe("CSV Converter", function () {
       assert.equal(res[1].col1, "#Mini. Sectt");
       done();
     });
+    rs.pipe(conv);
+  });
+
+  it("should emit delimiter event", function (done) {
+    var testData = __dirname + "/data/dataWithAutoDelimiter";
+    var rs = fs.createReadStream(testData);
+    var conv = new Converter({ delimiter: "auto" });
+    var delimiterCallback = sandbox.spy(function (delimiter) {
+      assert.equal(delimiter, ":");
+    });
+    conv.on("delimiter", delimiterCallback);
+    conv.on("end_parsed", function () {
+      assert.equal(delimiterCallback.callCount, 1);
+      done();
+    });
+    rs.pipe(conv);
+  });
+
+  it("should emit delimiter event when no header", function (done) {
+    var testData = __dirname + "/data/dataWithAutoDelimiter";
+    var rs = fs.createReadStream(testData);
+    var conv = new Converter({ delimiter: "auto", noheader: true });
+    var delimiterCallback = sandbox.spy(function (delimiter) {
+      assert.equal(delimiter, ":");
+    });
+    conv.on("delimiter", delimiterCallback);
+    conv.on("end_parsed", function () {
+      assert.equal(delimiterCallback.callCount, 1);
+      done();
+    });
+    rs.pipe(conv);
+  });
+
+  it("should not emit delimiter event when delimiter is specified", function (done) {
+    var testData = __dirname + "/data/columnArray";
+    var rs = fs.createReadStream(testData);
+    var conv = new Converter();
+    conv.on("delimiter", function (delimiter) {
+      assert.fail("delimiter event should not have been emitted");
+    });
+    conv.on("end_parsed", function () {
+      done();
+    });
+
     rs.pipe(conv);
   });
 
@@ -547,7 +596,7 @@ describe("CSV Converter", function () {
       });
   });
 
-  it ("should only call done once",function(done){
+  it("should only call done once", function (done) {
     var counter=0;
     csv()
     .fromString('"a","b", "c""')
