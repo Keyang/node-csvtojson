@@ -2,9 +2,14 @@ var Converter = require("../libs/core/Converter.js");
 var csv = require('../');
 var assert = require("assert");
 var fs = require("fs");
+var sandbox = require("sinon").sandbox.create();
 var file = __dirname + "/data/testData";
 var trailCommaData = __dirname + "/data/trailingComma";
 describe("CSV Converter", function () {
+  afterEach(function () {
+    sandbox.restore();
+  });
+
   it("should create new instance of csv", function () {
     var obj = new Converter();
     assert(obj);
@@ -406,6 +411,49 @@ describe("CSV Converter", function () {
       assert(res.length===2);
       assert(j.name === "joe");
       assert(j.age === "20");
+      done();
+    });
+  });
+
+  it("should emit eol event when line ending is detected as CRLF", function (done) {
+    var testData = __dirname + "/data/dataNoTrimCRLF";
+    var rs = fs.createReadStream(testData);
+
+    var st = rs.pipe(new Converter());
+    var eolCallback = sandbox.spy(function (eol) {
+      assert.equal(eol, "\r\n");
+    });
+    st.on("eol", eolCallback);
+    st.on("end_parsed", function () {
+      assert.equal(eolCallback.callCount, 1, 'should emit eol event once');
+      done();
+    })
+  });
+
+  it("should emit eol event when line ending is detected as LF", function (done) {
+    var testData = __dirname + "/data/columnArray";
+    var rs = fs.createReadStream(testData);
+
+    var st = rs.pipe(new Converter());
+    var eolCallback = sandbox.spy(function (eol) {
+      assert.equal(eol, "\n");
+    });
+    st.on("eol", eolCallback);
+    st.on("end_parsed", function () {
+      assert.equal(eolCallback.callCount, 1, 'should emit eol event once');
+      done();
+    })
+  });
+
+  it("should not emit eol event when eol is specified", function (done) {
+    var testData = __dirname + "/data/columnArray";
+    var rs = fs.createReadStream(testData);
+
+    var st = rs.pipe(new Converter({eol: "\n"}));
+    st.on("eol", function (eol) {
+      assert.fail("eol event should not have been fired");
+    });
+    st.on("end_parsed", function () {
       done();
     });
   });
