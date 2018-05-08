@@ -169,7 +169,7 @@ Converter.prototype.processData = function (data, cb) {
   if (params.ignoreEmpty && !params._headers) {
     data = data.trimLeft();
   }
-  const eol = this.param.eol;
+  var eol = this.param.eol;
   var fileLines = fileline(data, this.param);
   if (this.param.eol !== eol) {
     this.emit("eol", this.param.eol);

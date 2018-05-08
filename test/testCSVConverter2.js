@@ -539,13 +539,13 @@ describe("CSV Converter", function () {
 
   it("should allow headers and include columns to be given as reference to the same var", function(done) {
     var rs = fs.createReadStream(__dirname + "/data/complexJSONCSV");
-    const headers = [
+    var headers = [
       'first',
       'second',
       'third',
     ];
 
-    const expected = [].concat(headers);
+    var expected = [].concat(headers);
 
     csv({
       headers: headers,
@@ -574,12 +574,12 @@ describe("CSV Converter", function () {
 
   it("should leave provided params objects unmutated", function(done) {
     var rs = fs.createReadStream(__dirname + "/data/complexJSONCSV");
-    const includeColumns = [
+    var includeColumns = [
       'fieldA.title',
       'description',
     ];
 
-    const expected = [].concat(includeColumns);
+    var expected = [].concat(includeColumns);
 
     csv({
       includeColumns: includeColumns,
