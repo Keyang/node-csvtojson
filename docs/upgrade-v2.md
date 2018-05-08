@@ -13,6 +13,11 @@ There are many exciting changes in csvtojson `v2`.
 
 However, as a major release, it breaks something. 
 
+## Dropped support to node.js<4
+
+From `v2.0.0` csvtojson only supports Node.JS >=4.0.0
+
+
 
 ## 'csv', 'json', 'record_parsed', 'end_parsed' events were replaced by .subscribe and .then
 

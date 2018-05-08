@@ -262,7 +262,7 @@
   },
   "license": "MIT",
   "engines": {
-    "node": ">=0.10"
+    "node": ">=4.0.0"
   },
   "devDependencies": {
     "@types/bluebird": "^3.5.20",

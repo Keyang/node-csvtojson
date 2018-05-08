@@ -5,7 +5,7 @@ import { CSVParseParam } from "./Parameters";
 import { ParseRuntime } from "./ParseRuntime";
 import { stringToLines } from "./fileline";
 import { map } from "lodash/map";
-import { RowSplit } from "./rowSplit";
+import { RowSplit, RowSplitResult } from "./rowSplit";
 import getEol from "./getEol";
 export class Flow {
   private params: CSVParseParam;
@@ -69,6 +69,7 @@ export class Flow {
       csv = csv.trimLeft();
     }
     const stringToLineResult = stringToLines(csv, runtime);
+    this.prependLeftBuf(bufFromString(stringToLineResult.partial));
     if (stringToLineResult.lines.length > 0) {
       let prom: P<string[]>;
       if (runtime.preFileLineHook) {
@@ -88,12 +89,12 @@ export class Flow {
       })
 
     } else {
-      this.prependLeftBuf(bufFromString(stringToLineResult.partial));
+      
       return P.resolve([]);
     }
 
   }
-  private processDataWithHead(lines: string[]): P<ProcessLineResult[]> {
+  private processDataWithHead(lines: string[]): ProcessLineResult[] {
     if (this.params.noheader) {
       if (this.params.headers) {
         this.runtime.headers = this.params.headers;
@@ -114,9 +115,9 @@ export class Flow {
           left = line + getEol(line, this.runtime);
         }
       }
+      this.prependLeftBuf(bufFromString(left));
       if (headerRow.length === 0) {
-        this.prependLeftBuf(bufFromString(left));
-        return P.resolve([]);
+        return [];
       }
       if (this.params.headers) {
         this.runtime.headers = this.params.headers;
@@ -126,7 +127,19 @@ export class Flow {
     }
     return this.processCSVBody(lines);
   }
-  private processCSVBody(lines: string[]): P<ProcessLineResult[]> {
+  
+  private processCSVBody(lines: string[]): ProcessLineResult[] {
+    if (this.params.output === "row"){
+      return 
+    }
+    const result = this.rowSplit.parseMultiLines(lines);
+    this.prependLeftBuf(bufFromString(result.partial));
+    // var jsonArr = linesToJson(lines.lines, params, this.recordNum);
+    // this.processResult(jsonArr);
+    // this.lastIndex += jsonArr.length;
+    // this.recordNum += jsonArr.length;
+  }
+  private fileLineToCSVLine():RowSplitResult{
 
   }
   private prependLeftBuf(buf: Buffer) {
@@ -140,17 +153,21 @@ export class Flow {
 
   }
   private runPreLineHook(lines: string[]): P<string[]> {
-
+    return P.mapSeries(lines, (line, idx) => {
+      if (this.runtime.preFileLineHook) {
+        return this.runtime.preFileLineHook(line, this.runtime.parsedLineNumber + idx)
+      } else {
+        return line;
+      }
+    });
   }
   private processDataFork(chunk: Buffer): P<ProcessLineResult[]> {
     return P.reject("not implemented");
   }
 }
 export interface ProcessLineResult {
-  csv?: string[],
-  jsonStr?: string,
-  fileline?: string,
-  line: number
+  result:string | string[];
+  line: number;
 }
 
 function bufFromString(str: string): Buffer {

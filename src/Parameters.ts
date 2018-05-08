@@ -69,7 +69,7 @@ export interface CSVParseParam {
    *  Always interpret each line (as defined by eol) as a row. This will prevent eol characters from being used within a row (even inside a quoted field). This ensures that misplaced quotes only break on row, and not all ensuing rows.
    */
   alwaysSplitAtEOL: boolean;
-  output: "jsonarray" | "csv" | "jsons" | "fileline";
+  output: "jsonarray" | "csv" | "jsons" | "row";
 }
 
 export type CellParser = <T>(item: string, head: string, resultRow: any, row: any[], columnIdx: number) => Promise<T> | T;

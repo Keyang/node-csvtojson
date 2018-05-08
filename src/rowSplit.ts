@@ -1,6 +1,7 @@
 import { CSVParseParam } from "./Parameters";
 import { Converter } from "./Converter";
 import { Fileline } from "./fileline";
+import getEol from "./getEol";
 
 const defaulDelimiters = [",", "|", "\t", ";", ":"];
 export class RowSplit {
@@ -138,9 +139,26 @@ export class RowSplit {
     // console.log(regExp,segment);
     return segment.replace(regExp, quote);
   }
-
+  parseMultiLines(lines: Fileline[]): MultipleRowResult {
+    const csvLines: string[][] = [];
+    let left = "";
+    while (lines.length) {
+      const line = left + lines.shift();
+      const row = this.parse(line);
+      if (row.closed || this.conv.parseParam.alwaysSplitAtEOL) {
+        csvLines.push(row.cells);
+        left = "";
+      } else {
+        left = line + (getEol(line, this.conv.parseRuntime) || "\n");
+      }
+    }
+    return { rowsCells: csvLines, partial: left };
+  }
 }
-
+export interface MultipleRowResult {
+  rowsCells: string[][];
+  partial: string;
+}
 export interface RowSplitResult {
   /**
    * csv row array. ["a","b","c"]
