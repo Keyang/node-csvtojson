@@ -539,9 +539,18 @@ Converter.prototype.fromString = function (csvString, cb) {
     this.wrapCallback(cb, function () {
     });
   }
-  process.nextTick(function () {
-    this.end(csvString);
-  }.bind(this));
+  var read=new Readable();
+  var idx=0;
+  read._read=function(size){
+    if (idx>=csvString.length){
+      this.push(null);
+    }else{
+      var str=csvString.substr(idx,size);
+      this.push(str);
+      idx+=size;
+    }
+  }
+  read.pipe(this);
   return this;
 };
 

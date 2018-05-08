@@ -1,5 +1,4 @@
 function csvtojson() {
-  var web = require("../libs/interfaces").web;
   var Converter = require("../libs/core/Converter.js");
   var fs = require("fs");
   var options = require("./options.json");
@@ -76,8 +75,6 @@ function csvtojson() {
   function run(cmd, options) {
     if (cmd === "parse") {
       parse();
-    } else if (cmd === "startserver") {
-      web.startWebServer(options);
     } else if (cmd === "version") {
       console.log(pkg.version);
     } else {
