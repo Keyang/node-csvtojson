@@ -1,49 +1,21 @@
-var csv = require("../");
+import csv from "../src";
 var assert = require("assert");
 var fs = require("fs");
-describe("CSV Converter", function () {
-  it("should ignore column only once", function (done) {
-    csv({
-      ignoreColumns: [0, 0]
-    })
-      .fromFile(__dirname + "/data/complexJSONCSV")
-      .on('json', function (json) {
-        assert(!json.fieldA.title);
-        assert(json.fieldA.children[0].name);
-      })
-      .on('done', function () {
-        done()
-      });
-  })
-  it("should ignore column by header name", function (done) {
-    csv({
-      ignoreColumns: [0, "fieldA.title", 2]
-    })
-      .fromFile(__dirname + "/data/complexJSONCSV")
-      .on('json', function (json) {
-        assert(!json.fieldA.title);
-        assert(json.fieldA.children[0].name);
-        assert(!json.fieldA.children[0].id);
-      })
-      .on('done', function () {
-        done()
-      });
-  })
+describe("testCSVConverter3", function () {
   it("should parse large csv file with UTF-8 without spliting characters", function (done) {
     var testData = __dirname + "/data/large-utf8.csv";
     var rs = fs.createReadStream(testData);
     var csvConverter = csv({
-      constructResult: false
     });
     var count = 0;
-    csvConverter.preRawData(function (csvRawData, cb) {
+    csvConverter.preRawData(function (csvRawData) {
       assert(csvRawData.charCodeAt(0) < 2000);
-      cb(csvRawData);
+      return csvRawData;
     })
-    csvConverter.on("record_parsed", function () {
+    csvConverter.on("data", function () {
       count++;
     });
-    csvConverter.on("end_parsed", function () {
+    csvConverter.then(function () {
       assert(count === 5290);
       done();
     });
@@ -65,7 +37,7 @@ describe("CSV Converter", function () {
       }
     })
       .fromFile(__dirname + "/data/dataWithType")
-      .on('json', function (json) {
+      .subscribe(function (json) {
         assert.equal(typeof json.column1,"string");
         assert.equal(json.column5,"hello world");
       })
@@ -75,10 +47,11 @@ describe("CSV Converter", function () {
   })
   it("should accept pipe as quote", function (done) {
     csv({
-      quote:"|"
+      quote:"|",
+      output:"csv"
     })
       .fromFile(__dirname + "/data/pipeAsQuote")
-      .on('csv', function (csv) {
+      .subscribe(function (csv) {
         assert.equal(csv[2],"blahhh, blah");
       })
       .on('done', function () {

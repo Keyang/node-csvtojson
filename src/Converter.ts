@@ -2,54 +2,174 @@ import { Transform, TransformOptions, Readable } from "stream";
 import { CSVParseParam, mergeParams } from "./Parameters";
 import { ParseRuntime, initParseRuntime } from "./ParseRuntime";
 import P from "bluebird";
-import { Flow } from "./Flow";
 import { Worker } from "./Worker";
-export class Converter extends Transform implements CSVParser {
+import { stringToLines } from "./fileline";
+import { map } from "lodash/map";
+import { RowSplit, RowSplitResult } from "./rowSplit";
+import getEol from "./getEol";
+import lineToJson, { JSONResult } from "./lineToJson";
+import { Processor, ProcessLineResult } from "./Processor";
+import { ProcessorFork } from "./ProcessFork";
+import { ProcessorLocal } from "./ProcessorLocal";
+import { Result } from "./Result";
+import CSVError from "./CSVError";
+import { bufFromString } from "./util";
+export class Converter extends Transform {
   preRawData(onRawData: PreRawDataCallback) {
-    throw new Error("Method not implemented.");
+    this.runtime.preRawDataHook = onRawData;
   }
   preFileLine(onFileLine: PreFileLineCallback) {
-    throw new Error("Method not implemented.");
+    this.runtime.preFileLineHook = onFileLine;
   }
-  subscribe(onNext: (data: any) => void | PromiseLike<void>, onError: (err: Error) => void, onCompleted: () => void): CSVParser {
-    throw new Error("Method not implemented.");
+  subscribe(
+    onNext?: (data: any, lineNumber: number) => void | PromiseLike<void>,
+    onError?: (err: CSVError) => void,
+    onCompleted?: () => void): Converter {
+    this.parseRuntime.subscribe = {
+      onNext,
+      onError,
+      onCompleted
+    }
+    return this;
   }
-  fromFile(filePath: string, options?: string | CreateReadStreamOption | undefined): CSVParser {
-    throw new Error("Method not implemented.");
+  fromFile(filePath: string, options?: string | CreateReadStreamOption | undefined): Converter {
+    const fs = require("fs");
+    // var rs = null;
+    // this.wrapCallback(cb, function () {
+    //   if (rs && rs.destroy) {
+    //     rs.destroy();
+    //   }
+    // });
+    fs.exists(filePath, (exist) => {
+      if (exist) {
+        const rs = fs.createReadStream(filePath, options);
+        rs.pipe(this);
+      } else {
+        this.emit('error', new Error("File does not exist. Check to make sure the file path to your csv is correct."));
+      }
+    });
+    return this;
   }
-  fromStream(readStream: Readable): CSVParser {
-    throw new Error("Method not implemented.");
+  fromStream(readStream: Readable): Converter {
+    readStream.pipe(this);
+    return this;
   }
-  fromString(csvString: string): CSVParser {
-    throw new Error("Method not implemented.");
+  fromString(csvString: string): Converter {
+    const csv = csvString.toString();
+    const read = new Readable();
+    let idx = 0;
+    read._read = function (size) {
+      if (idx >= csvString.length) {
+        this.push(null);
+      } else {
+        const str = csvString.substr(idx, size);
+        this.push(str);
+        idx += size;
+      }
+    }
+    return this.fromStream(read);
   }
   then<TResult1 = any[], TResult2 = never>(onfulfilled?: (value: any[]) => TResult1 | PromiseLike<TResult1>, onrejected?: (reason: any) => TResult2 | PromiseLike<TResult2>): PromiseLike<TResult1 | TResult2> {
-    throw new Error("Method not implemented.");
+    return new P((resolve, reject) => {
+      this.parseRuntime.then = {
+        onfulfilled: (value: any[]) => {
+          if (onfulfilled) {
+            resolve(onfulfilled(value));
+          } else {
+            resolve(value as any);
+          }
+        },
+        onrejected: (err: Error) => {
+          if (onrejected) {
+            resolve(onrejected(err));
+          } else {
+            reject(err);
+          }
+        }
+      }
+    });
   }
   public get parseParam(): CSVParseParam {
     return this.params;
   }
   public get parseRuntime(): ParseRuntime {
-    return this.parseRuntime;
+    return this.runtime;
   }
   private params: CSVParseParam;
   private runtime: ParseRuntime;
-  private flow: Flow;
+  private processor: Processor;
+  private result: Result;
   constructor(param?: Partial<CSVParseParam>, public options: TransformOptions = {}) {
     super(options);
     this.params = mergeParams(param);
     this.runtime = initParseRuntime(this);
-    this.flow = new Flow(this);
+    this.result = new Result(this);
     if (this.params.fork) {
-      this.runtime.worker = new Worker(this);
+      this.processor = new ProcessorFork(this);
+    } else {
+      this.processor = new ProcessorLocal(this);
     }
+    this.once("error", (err: any) => {
+      // console.log("BBB");
+      this.result.processError(err);
+      setTimeout(() => {
+        this.emit("done", err);
+      },0);
+
+    });
+
     return this;
   }
-  _transform(data: any, encoding: string, cb: Function) {
-    this.flow.transform(data, cb);
+  _transform(chunk: any, encoding: string, cb: Function) {
+    this.processor.process(chunk)
+      .then((result) => {
+        if (result.length > 0) {
+          this.runtime.started = true;
+          return this.result.processResult(result);
+        }
+      })
+      .then(() => {
+        cb();
+      }, (error) => {
+        this.runtime.hasError = true;
+        this.runtime.error = error;
+        this.emit("error", error);
+        cb();
+      });
   }
   _flush(cb: Function) {
-    this.flow.flush(cb);
+    if (this.runtime.csvLineBuffer && this.runtime.csvLineBuffer.length > 0) {
+      const buf = this.runtime.csvLineBuffer;
+      this.runtime.csvLineBuffer = undefined;
+      this.processor.process(buf, true)
+        .then((result) => {
+          if (result.length > 0) {
+            return this.result.processResult(result);
+          }
+        })
+        .then(() => {
+          if (this.runtime.csvLineBuffer && this.runtime.csvLineBuffer.length > 0) {
+            this.emit("error", CSVError.unclosed_quote(this.parsedLineNumber, this.runtime.csvLineBuffer.toString()));
+          } else {
+            this.processEnd(cb);
+          }
+          // cb();
+
+        }, (err) => {
+          this.emit("error", err);
+          cb();
+        })
+    } else {
+      this.processEnd(cb);
+    }
+  }
+  private processEnd(cb) {
+    this.result.endProcess();
+    this.emit("done");
+    cb();
+  }
+  get parsedLineNumber(): number {
+    return this.runtime.parsedLineNumber;
   }
 }
 export interface CreateReadStreamOption {
@@ -64,17 +184,6 @@ export interface CreateReadStreamOption {
 }
 export type CallBack = (err: Error, data: Array<any>) => void;
 
-export interface CSVParser extends PromiseLike<Array<any>> {
-  fromFile(filePath: string, options?: string | CreateReadStreamOption): CSVParser;
-  fromStream(readStream: Readable): CSVParser;
-  fromString(csvString: string): CSVParser;
-  subscribe(
-    onNext: (data: any) => PromiseLike<void> | void,
-    onError?: (err: Error) => void,
-    onCompleted?: () => void
-  ): CSVParser;
-  preRawData(onRawData:PreRawDataCallback),
-  preFileLine(onFileLine:PreFileLineCallback)
-}
-export type PreFileLineCallback=(line:string, lineNumber:number) => string | PromiseLike<string>;
-export type PreRawDataCallback=(csvString:string)=>string | PromiseLike<string>;
+
+export type PreFileLineCallback = (line: string, lineNumber: number) => string | PromiseLike<string>;
+export type PreRawDataCallback = (csvString: string) => string | PromiseLike<string>;

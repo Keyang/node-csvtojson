@@ -3,17 +3,17 @@
 
 # CSVTOJSON
 
-`csvtojson` module is a comprehensive nodejs csv parser to convert csv to json or column arrays. It can be used as node.js library / command line tool / or in browser. Below are some features:
+`csvtojson` module is a comprehensive nodejs csv parser to convert csv to json or column arrays. It can be used as node.js library / command line tool / or in browser with help of `browserify` or `webpack`. Below are some features:
 
 * Large csv file parsing with low memory (stream support)
-* TypeScript support
 * Easy to use yet abundant API / parameters
-* Commandline tool
-* Multiple output format support -- json / csv / lines
-* Error handling
+* Commandline support
+* Multiple output format support 
+* Multiple input source support
+* Error catching
 * Non-blocking parsing
-* [Extremely fast](https://github.com/Keyang/node-csvtojson/blob/develop/docs/performance.md): **4 - 6 times faster** than other csv parsers
-* Support node.js 4+ to latest
+* [Extremely fast](https://github.com/Keyang/node-csvtojson/blob/develop/docs/performance.md): **4 - 6 times faster** than other csv parsers on node.js
+* Support node.js 0.10 + to latest
 
 # Donation
 
@@ -26,14 +26,6 @@ Thank you again.
 # csvtojson online 
 
 [Here](http://keyangxiang.com/csvtojson/) is a free online csv to json convert service utilizing latest `csvtojson` module.
-
-# Upgrade to V2
-
-`csvtojson` has released version `2.0.0`. 
-* To upgrade to v2, please follow [upgrading guide](https://github.com/Keyang/node-csvtojson/blob/develop/docs/upgrade-v2.md)
-* For new features of v2, please follow [this doc](https://github.com/Keyang/node-csvtojson/blob/develop/docs/v2-features.md)
-* If you are looking for documentation for `v1`, open [this page](https://github.com/Keyang/node-csvtojson/blob/develop/docs/readme.v1.md).
-
 
 # Menu
 

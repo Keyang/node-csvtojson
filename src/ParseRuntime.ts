@@ -1,7 +1,8 @@
-import { CSVParseParam } from "./Parameters";
+import { CSVParseParam, CellParser } from "./Parameters";
 import { Converter, PreRawDataCallback, PreFileLineCallback } from "./Converter";
 import { ChildProcess } from "child_process";
 import { Worker } from "./Worker";
+import CSVError from "./CSVError";
 
 export interface ParseRuntime {
   /**
@@ -28,46 +29,9 @@ export interface ParseRuntime {
    */
   eol?: string;
   /**
-   * If need emit end_parsed event
+   * Converter function for a column. Populated at runtime.
    */
-  needEmitFinalResult: boolean;
-  /**
-   * If need emit record_parsed event
-   */
-  needEmitResult: boolean;
-  /**
-   * If need emit json event
-   */
-  needEmitJSON: boolean;
-  /**
-   * If need emit header event
-   */
-  needEmitHeader: boolean;
-  /**
-   * If need emit csv event
-   */
-  needEmitCSV: boolean;
-  /**
-   * If there is downstream waiting for data
-   */
-  needPushDownstream: boolean;
-  /**
-   * For each line, if only csv row is needed (true) or need to convert to json (false)
-   */
-  justCSVRow: boolean;
-  /**
-   * for each line, if parser needs to convert JSON string to JSON Object using JSON.parse
-   */
-  needJSONObject: boolean;
-  /**
-   * should parser enable async json transformation
-   */
-  needTransformJSON: boolean;
-  /**
-   * for each line, if parser needs to stringify csv row array using JSON.stringify
-   */
-  needCSVString: boolean;
-  columnConv: any[],
+  columnConv: (CellParser | null)[],
   headerType: any[],
   headerTitle: string[],
   headerFlag: any[],
@@ -87,30 +51,31 @@ export interface ParseRuntime {
   started: boolean,
   preRawDataHook?: PreRawDataCallback,
   preFileLineHook?: PreFileLineCallback,
-  parsedLineNumber: number
+  parsedLineNumber: number,
+
+  columnValueSetter: Function[];
+  subscribe?: {
+    onNext?: (data: any, lineNumber:number) => void | PromiseLike<void>;
+    onError?: (err: CSVError) => void;
+    onCompleted?: () => void;
+  };
+  then?: {
+    onfulfilled: (value: any[]) => any;
+    onrejected: (err: Error) => any;
+  }
 
 }
 export function initParseRuntime(converter: Converter): ParseRuntime {
   const params = converter.parseParam;
   const rtn: ParseRuntime = {
     needProcessIgnoreColumn: false,
-    needProcessIncludeColumn: true,
+    needProcessIncludeColumn: false,
     selectedColumns: undefined,
     ended: false,
     hasError: false,
     error: undefined,
     delimiter: converter.parseParam.delimiter,
     eol: converter.parseParam.eol,
-    needEmitFinalResult: false,
-    needEmitResult: false,
-    needEmitJSON: false,
-    needEmitHeader: false,
-    needEmitCSV: false,
-    needPushDownstream: false,
-    justCSVRow: true,
-    needJSONObject: false,
-    needCSVString: false,
-    needTransformJSON: false,
     columnConv: [],
     headerType: [],
     headerTitle: [],
@@ -118,7 +83,8 @@ export function initParseRuntime(converter: Converter): ParseRuntime {
     headers: undefined,
     started: false,
     isWorker: false,
-    parsedLineNumber: 0
+    parsedLineNumber: 0,
+    columnValueSetter: [],
   }
   if (params.ignoreColumns) {
     rtn.needProcessIgnoreColumn = true;
@@ -126,16 +92,5 @@ export function initParseRuntime(converter: Converter): ParseRuntime {
   if (params.includeColumns) {
     rtn.needProcessIncludeColumn = true;
   }
-  setTimeout(() => {
-    rtn.needEmitFinalResult = converter.listeners("end_parsed").length > 0;
-    rtn.needEmitResult = converter.listeners("record_parsed").length > 0;
-    rtn.needEmitJSON = converter.listeners("json").length > 0;
-    rtn.needEmitHeader = converter.listeners("header").length > 0;
-    rtn.needEmitCSV = converter.listeners("csv").length > 0;
-    rtn.needJSONObject = !!(rtn.needEmitJSON || rtn.needEmitFinalResult || rtn.needEmitResult || rtn.needTransformJSON || converter.options.objectMode);
-    rtn.needPushDownstream = converter.listeners("data").length > 0 || converter.listeners("readable").length > 0;
-    rtn.justCSVRow = !(rtn.needJSONObject || rtn.needPushDownstream);
-    rtn.needCSVString = rtn.needEmitCSV && rtn.needPushDownstream && params.output === "csv";
-  }, 0);
   return rtn;
 }

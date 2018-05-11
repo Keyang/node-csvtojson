@@ -59,7 +59,7 @@ export interface CSVParseParam {
    *   Allows override parsing logic for a specific column. It accepts a JSON object with fields like: headName: <String | Function> . e.g. {field1:'number'} will use built-in number parser to convert value of the field1 column to number. Another example {"name":nameProcessFunc} will use specified function to parse the value.
    */
   colParser: {
-    [key: string]: string | CellParser
+    [key: string]: string | CellParser | ColumnParam
   };
   /**
    *  End of line character. If omitted, parser will attempt to retrieve it from the first chunks of CSV data
@@ -69,11 +69,15 @@ export interface CSVParseParam {
    *  Always interpret each line (as defined by eol) as a row. This will prevent eol characters from being used within a row (even inside a quoted field). This ensures that misplaced quotes only break on row, and not all ensuing rows.
    */
   alwaysSplitAtEOL: boolean;
-  output: "jsonarray" | "csv" | "jsons" | "row";
+  output: "json" | "csv" | "line";
 }
 
-export type CellParser = <T>(item: string, head: string, resultRow: any, row: any[], columnIdx: number) => Promise<T> | T;
+export type CellParser = (item: string, head: string, resultRow: any, row: string[], columnIndex: number) => any;
 
+export interface ColumnParam {
+  flat?: boolean;
+  cellParser?: string | CellParser;
+}
 
 export function mergeParams(params?: Partial<CSVParseParam>): CSVParseParam {
   const defaultParam: CSVParseParam = {
@@ -94,7 +98,7 @@ export function mergeParams(params?: Partial<CSVParseParam>): CSVParseParam {
     colParser: {},
     eol: undefined,
     alwaysSplitAtEOL: false,
-    output: "jsonarray"
+    output: "json"
   }
   if (!params) {
     params = {};

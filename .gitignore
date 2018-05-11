@@ -15,3 +15,6 @@ graph.png
 .project
 .settings
 .vscode
+coverage/
+.nyc_output
+.coveralls.yml

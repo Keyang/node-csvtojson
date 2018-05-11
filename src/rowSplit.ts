@@ -2,19 +2,26 @@ import { CSVParseParam } from "./Parameters";
 import { Converter } from "./Converter";
 import { Fileline } from "./fileline";
 import getEol from "./getEol";
+import { filterArray } from "./util";
 
 const defaulDelimiters = [",", "|", "\t", ";", ":"];
 export class RowSplit {
   private quote: string;
   private trim: boolean;
   private escape: string;
-  private delimiter: string | string[];
   private cachedRegExp: { [key: string]: RegExp } = {};
+  private delimiterEmitted = false;
+  private _needEmitDelimiter?: boolean = undefined;
+  private get needEmitDelimiter() {
+    if (this._needEmitDelimiter === undefined) {
+      this._needEmitDelimiter = this.conv.listeners("delimiter").length > 0;
+    }
+    return this._needEmitDelimiter;
+  }
   constructor(private conv: Converter) {
     this.quote = conv.parseParam.quote;
     this.trim = conv.parseParam.trim;
     this.escape = conv.parseParam.escape;
-    this.delimiter = conv.parseParam.delimiter;
   }
   parse(fileline: Fileline): RowSplitResult {
     if (fileline === "") {
@@ -23,28 +30,38 @@ export class RowSplit {
     const quote = this.quote;
     const trim = this.trim;
     const escape = this.escape;
-    if (this.delimiter instanceof Array || this.delimiter.toLowerCase() === "auto") {
-      this.delimiter = this.getDelimiter(fileline);
+    if (this.conv.parseRuntime.delimiter instanceof Array || this.conv.parseRuntime.delimiter.toLowerCase() === "auto") {
+      this.conv.parseRuntime.delimiter = this.getDelimiter(fileline);
+
     }
-    const delimiter = this.delimiter;
+    if (this.needEmitDelimiter && !this.delimiterEmitted) {
+      this.conv.emit("delimiter", this.conv.parseRuntime.delimiter);
+      this.delimiterEmitted = true;
+    }
+    const delimiter = this.conv.parseRuntime.delimiter;
     const rowArr = fileline.split(delimiter);
     if (quote === "off") {
       return { cells: rowArr, closed: true };
+    } else {
+      return this.toCSVRow(rowArr, trim, quote, delimiter);
     }
+
+  }
+  private toCSVRow(rowArr: string[], trim: boolean, quote: string, delimiter: string): RowSplitResult {
     const row: string[] = [];
     let inquote = false;
     let quoteBuff = '';
     for (let i = 0, rowLen = rowArr.length; i < rowLen; i++) {
       let e = rowArr[i];
       if (!inquote && trim) {
-        e = e.trim();
+        e = e.trimLeft();
       }
       const len = e.length;
       if (!inquote) {
         if (this.isQuoteOpen(e)) { //quote open
           e = e.substr(1);
           if (this.isQuoteClose(e)) { //quote close
-            e = e.substring(0, e.length - 1);
+            e = e.substring(0, e.lastIndexOf(quote));
             e = this.escapeQuote(e);
             row.push(e);
             continue;
@@ -54,6 +71,9 @@ export class RowSplit {
             continue;
           }
         } else {
+          if (trim) {
+            e = e.trimRight();
+          }
           row.push(e);
           continue;
         }
@@ -110,6 +130,9 @@ export class RowSplit {
   private isQuoteClose(str: string): boolean {
     const quote = this.quote;
     const escape = this.escape;
+    if (this.conv.parseParam.trim) {
+      str = str.trimRight();
+    }
     let count = 0;
     let idx = str.length - 1;
     while (str[idx] === quote || str[idx] === escape) {
@@ -130,14 +153,13 @@ export class RowSplit {
 
 
   private escapeQuote(segment: string): string {
-    const quote = this.quote;
-    const key = "es|" + quote + "|" + escape;
+    const key = "es|" + this.quote + "|" + this.escape;
     if (this.cachedRegExp[key] === undefined) {
-      this.cachedRegExp[key] = new RegExp('\\' + escape + '\\' + quote, 'g');
+      this.cachedRegExp[key] = new RegExp('\\' + this.escape + '\\' + this.quote, 'g');
     }
     const regExp = this.cachedRegExp[key];
     // console.log(regExp,segment);
-    return segment.replace(regExp, quote);
+    return segment.replace(regExp, this.quote);
   }
   parseMultiLines(lines: Fileline[]): MultipleRowResult {
     const csvLines: string[][] = [];
@@ -146,7 +168,12 @@ export class RowSplit {
       const line = left + lines.shift();
       const row = this.parse(line);
       if (row.closed || this.conv.parseParam.alwaysSplitAtEOL) {
-        csvLines.push(row.cells);
+        if (this.conv.parseRuntime.selectedColumns) {
+          csvLines.push(filterArray(row.cells, this.conv.parseRuntime.selectedColumns));
+        } else {
+          csvLines.push(row.cells);
+        }
+
         left = "";
       } else {
         left = line + (getEol(line, this.conv.parseRuntime) || "\n");

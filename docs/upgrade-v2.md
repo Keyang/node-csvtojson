@@ -21,11 +21,11 @@ From `v2.0.0` csvtojson only supports Node.JS >=4.0.0
 
 ## 'csv', 'json', 'record_parsed', 'end_parsed' events were replaced by .subscribe and .then
 
-One big issue for `csvtojson` is asynchronous processing data as `event` emitting does not pause the stream.
+One big issue for `csvtojson` is asynchronous processing data as `event` emitting does not pause the stream. It is able to use `.pipe` to a downstream but it is not quite handy.
 
-From `2.0.0`, those events above are replaced by `.subscribe` and `.then` methods along with a `output` parameter.
+From `2.0.0`, those events above are replaced by `.subscribe` and `.then` methods controlled by a `output` parameter.
 
-There are lots of benefits by doing this. Enabling asynchronous data processing is one. Another benefit is it allows using `async / await` of ES7 or TypeScript.
+There are lots of benefits by doing this. Enabling asynchronous data processing is one. Another benefit is it allows using `async / await` of ES7 or TypeScript or using Promise chain.
 
 Below some examples:
 
@@ -45,10 +45,18 @@ csv({output:"csv"}).fromString(myCSVString).subscribe(function(csvRow){});
 // async process example -- send json to db 
 csv().fromString(myCSVString).subscribe(function(json){
   return new Promise(function(resolve,reject){
-    // call async db call
+    // call async db call for each json returned
   })
 })
 
+// Promise chain
+request.get(csvUrl)
+.then((csvdata)=>{
+  return csv().fromString(csvdata)
+})
+.then((jsonArray)=>{
+  // work with json array
+})
 ```
 
 
@@ -169,3 +177,31 @@ csv()
   return Promise.resolve(newData);
 })
 ```
+
+## removed toArrayString parameter
+
+this feature is mostly not used.
+
+## line number now starts from 0 instead of 1
+
+first row in csv now is indexed as 0 -- no matter it is header row or not.
+
+
+## Moved Converter constructor.
+
+The construct function returned by `require("csvtojson")` does not have `.Converter` exposed anymore. Use `require("csvtojson/build/Converter")` instead.
+
+**Before**
+
+```js
+var Converter=require("csvtojson").Converter;
+var conv=new Converter();
+```
+
+**After**
+
+```js
+var Converter=require("csvtojson/build/Converter");
+var conv=new Converter();
+```
+

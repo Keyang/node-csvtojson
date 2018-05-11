@@ -1,38 +1,39 @@
-var Converter = require("../libs/core/Converter.js");
-var csv = require("../");
+import { Converter } from "../src/Converter";
+import csv from "../src";
 var assert = require("assert");
 var fs = require("fs");
-describe("CSV Converter", function () {
+var sandbox = require('sinon').sandbox.create();
+describe("testCSVConverter2", function () {
+  afterEach(function () {
+    sandbox.restore();
+  });
+
   it("should convert from large csv string", function (done) {
     var csvStr = fs.readFileSync(__dirname + "/data/large-csv-sample.csv", "utf8");
     var conv = new Converter({
-      workerNum: 1
     });
-    conv.fromString(csvStr, function (err, res) {
-      assert(!err);
+    conv.fromString(csvStr).then(function (res) {
       assert(res.length === 5290);
       done();
     });
   });
 
-  it("should set eol ", function (done) {
+  it("should set eol", function (done) {
     var rs = fs.createReadStream(__dirname + "/data/large-csv-sample.csv");
     var conv = new Converter({
-      workerNum: 1,
-      constructResult: false,
       eol: "\n"
     });
     var count = 0;
-    conv.on("record_parsed", function (resultJson, row, index) {
+    conv.subscribe(function (resultJson, index) {
       count++;
       assert(resultJson);
-      assert(row.length === 2);
+      // assert(row.length === 2);
       assert(index >= 0);
     });
     conv.on("error", function () {
       console.log(arguments);
     });
-    conv.on("end_parsed", function (result) {
+    conv.then(function (result) {
       assert(result);
       assert(count === 5290);
       done();
@@ -43,9 +44,13 @@ describe("CSV Converter", function () {
   it("should convert tsv String", function (done) {
     var tsv = __dirname + "/data/dataTsv";
     var csvStr = fs.readFileSync(tsv, "utf8");
-    var conv = new Converter({ workerNum: 1, delimiter: "\t", "checkType": false });
-    conv.fromString(csvStr, function (err, res) {
-      assert(!err);
+    var conv = new Converter({
+      delimiter: "\t",
+      "checkType": false
+    });
+    conv.fromString(csvStr).then(function (res) {
+      assert(res);
+      assert.equal(res.length, 200);
       done();
     });
   });
@@ -57,7 +62,7 @@ describe("CSV Converter", function () {
       noheader: true,
       headers: ["a", "b", "c", "e", "f", "g"]
     });
-    conv.fromString(rs, function (err, json) {
+    conv.fromString(rs).then(function (json) {
       assert.equal(json[0].field7, 40);
       assert.equal(json[0].a, "CC102-PDMI-001");
       done();
@@ -67,10 +72,8 @@ describe("CSV Converter", function () {
   it("should parse fromFile", function (done) {
     var csvFile = __dirname + "/data/large-csv-sample.csv";
     var conv = new Converter({
-      workerNum: 3
     });
-    conv.fromFile(csvFile, function (err, res) {
-      assert(!err);
+    conv.fromFile(csvFile).then(function (res) {
       assert.equal(res.length, 5290);
       done();
     });
@@ -79,9 +82,11 @@ describe("CSV Converter", function () {
   it("should fromFile should emit error", function (done) {
     var csvFile = __dirname + "/data/dataWithUnclosedQuotes";
     var conv = new Converter({
-      workerNum: 1
     });
-    conv.fromFile(csvFile, function (err, res) {
+    conv.fromFile(csvFile).then(function (res) {
+
+      done();
+    }, function (err) {
       assert(err);
       done();
     });
@@ -93,7 +98,7 @@ describe("CSV Converter", function () {
     var conv = new Converter({
       noheader: true
     });
-    conv.fromString(rs, function (err, json) {
+    conv.fromString(rs).then(function (json) {
       assert.equal(json.length, 2);
       assert.equal(json[1].field4, 7);
       done();
@@ -106,7 +111,7 @@ describe("CSV Converter", function () {
     var conv = new Converter({
       delimiter: "\t"
     });
-    conv.fromString(rs, function (err, json) {
+    conv.fromString(rs).then(function (json) {
       assert.equal(json[0].Idevise, "");
       done();
     });
@@ -117,38 +122,18 @@ describe("CSV Converter", function () {
     var conv = new Converter({
       noheader: true
     });
-    conv.fromFile(testData, function (err, json) {
-      assert(!err);
+    conv.fromFile(testData).then(function (json) {
+      assert(json);
       done();
     });
   });
 
-  it("should use sync transform", function (done) {
-    var testData = __dirname + "/data/complexJSONCSV";
-    var rs = fs.createReadStream(testData);
-    var conv = new Converter({});
-    conv.transform = function (json, row, index) {
-      json.rowNum = index;
-    };
-    conv.on("record_parsed", function (resultJson, row, index) {
-      assert(resultJson.rowNum >= 0);
-      assert(row.length === 9);
-      assert(index >= 0);
-    });
-    conv.on("end_parsed", function (res) {
-      assert(res.length === 2);
-      assert(res[0].rowNum === 0);
-      assert(res[1].rowNum === 1);
-      done();
-    });
-    rs.pipe(conv);
-  });
 
-  it("should detect delimiter ", function (done) {
+  it("should detect delimiter", function (done) {
     var testData = __dirname + "/data/dataWithAutoDelimiter";
     var rs = fs.createReadStream(testData);
     var conv = new Converter({ delimiter: "auto" });
-    conv.on("end_parsed", function (res) {
+    conv.then(function (res) {
       assert.equal(res[0].col1, "Mini. Sectt:hisar S.O");
       assert.equal(res[1].col1, "#Mini. Sectt");
       done();
@@ -156,11 +141,55 @@ describe("CSV Converter", function () {
     rs.pipe(conv);
   });
 
+  it("should emit delimiter event", function (done) {
+    var testData = __dirname + "/data/dataWithAutoDelimiter";
+    var rs = fs.createReadStream(testData);
+    var conv = new Converter({ delimiter: "auto" });
+    var delimiterCallback = sandbox.spy(function (delimiter) {
+      assert.equal(delimiter, ":");
+    });
+    conv.on("delimiter", delimiterCallback);
+    conv.then(function () {
+      assert.equal(delimiterCallback.callCount, 1);
+      done();
+    });
+    rs.pipe(conv);
+  });
+
+  it("should emit delimiter event when no header", function (done) {
+    var testData = __dirname + "/data/dataWithAutoDelimiter";
+    var rs = fs.createReadStream(testData);
+    var conv = new Converter({ delimiter: "auto", noheader: true });
+    var delimiterCallback = sandbox.spy(function (delimiter) {
+      assert.equal(delimiter, ":");
+    });
+    conv.on("delimiter", delimiterCallback);
+    conv.then(function () {
+      assert.equal(delimiterCallback.callCount, 1);
+      done();
+    });
+    rs.pipe(conv);
+  });
+
+  // it("should not emit delimiter event when delimiter is specified", function (done) {
+  //   var testData = __dirname + "/data/columnArray";
+  //   var rs = fs.createReadStream(testData);
+  //   var conv = new Converter();
+  //   conv.on("delimiter", function (delimiter) {
+  //     assert.fail("delimiter event should not have been emitted");
+  //   });
+  //   conv.then(function () {
+  //     done();
+  //   });
+
+  //   rs.pipe(conv);
+  // });
+
   it("should stripe out whitespaces if trim is true", function (done) {
     var testData = __dirname + "/data/dataWithWhiteSpace";
     var rs = fs.createReadStream(testData);
     var conv = new Converter({ trim: true });
-    conv.on("end_parsed", function (res) {
+    conv.then(function (res) {
       assert.equal(res[0]["Column 1"], "Column1Row1");
       assert.equal(res[0]["Column 2"], "Column2Row1");
       done();
@@ -172,7 +201,7 @@ describe("CSV Converter", function () {
     var testData = __dirname + "/data/dataWithTripleQoutes";
     var rs = fs.createReadStream(testData);
     var conv = new Converter({ trim: true });
-    conv.on("end_parsed", function (res) {
+    conv.then(function (res) {
       assert.equal(res[0].Description, "ac, abs, moon");
       assert.equal(res[1].Model, "Venture \"Extended Edition\"");
       assert.equal(res[2].Model, "Venture \"Extended Edition, Very Large\"");
@@ -181,28 +210,16 @@ describe("CSV Converter", function () {
     rs.pipe(conv);
   });
 
-  // it ("should auto flat header if header is not valid nested json keys",function(done){
-  //   var testData = __dirname + "/data/invalidHeader";
-  //   var rs = fs.createReadStream(testData);
-  //   var conv=new Converter();
-  //   conv.on("end_parsed",function(res){
-  //     console.log(res[0])
-  //     assert.equal(res[0]["header1.filed1"],"q7");
-  //     assert.equal(res[0]["header2.field1[]"],"undefinedzvTY3Qd3pSkKOk");
-  //     done();
-  //   });
-  //   rs.pipe(conv);
-  // })
+
 
   it("should pre process raw data in the line", function (done) {
     var testData = __dirname + "/data/quoteTolerant";
     var rs = fs.createReadStream(testData);
     var conv = new Converter();
-    conv.preRawData(function (d, cb) {
-      d = d.replace('THICK', 'THIN');
-      cb(d);
+    conv.preRawData(function (d) {
+      return d.replace('THICK', 'THIN');
     });
-    conv.on("end_parsed", function (res) {
+    conv.then(function (res) {
       assert(res[0].Description.indexOf('THIN') > -1);
       done();
     });
@@ -214,13 +231,13 @@ describe("CSV Converter", function () {
     var rs = fs.createReadStream(testData);
     var conv = new Converter();
     conv.preFileLine(function (line, lineNumber) {
-      if (lineNumber === 2) {
+      if (lineNumber === 1) {
         line = line.replace('THICK', 'THIN');
       }
       return line;
     });
 
-    conv.on("end_parsed", function (res) {
+    conv.then(function (res) {
       assert(res[0].Description.indexOf('THIN') > -1);
       done();
     });
@@ -236,7 +253,7 @@ describe("CSV Converter", function () {
     conv.on("data", function (d) {
       assert(typeof d === "object");
     });
-    conv.on("end_parsed", function (res) {
+    conv.then(function (res) {
       assert(res);
       assert(res.length > 0);
       done();
@@ -253,8 +270,7 @@ describe("CSV Converter", function () {
     });
 
     var my_data = 'first_val\tsecond_val';
-    test_converter.fromString(my_data, function (err, result) {
-      assert(!err);
+    test_converter.fromString(my_data).then(function (result) {
       assert.equal(result.length, 1);
       assert.equal(result[0].col1, "first_val");
       assert.equal(result[0].col2, "second_val");
@@ -265,12 +281,12 @@ describe("CSV Converter", function () {
   it("should process escape chars", function (done) {
     var test_converter = new Converter({
       escape: "\\",
-      checkType:true
+      checkType: true
     });
 
     var testData = __dirname + "/data/dataWithSlashEscape";
     var rs = fs.createReadStream(testData);
-    test_converter.on("end_parsed", function (res) {
+    test_converter.then(function (res) {
       assert.equal(res[0].raw.hello, "world");
       assert.equal(res[0].raw.test, true);
       done();
@@ -280,11 +296,12 @@ describe("CSV Converter", function () {
 
   it("should output ndjson format", function (done) {
     var conv = new Converter();
-    conv.fromString("a,b,c\n1,2,3\n4,5,6").on("data", function (d) {
-      d = d.toString();
-      assert.equal(d[d.length - 1], "\n");
-    })
-      .on("end", done);
+    conv.fromString("a,b,c\n1,2,3\n4,5,6")
+      .on("data", function (d) {
+        d = d.toString();
+        assert.equal(d[d.length - 1], "\n");
+      })
+      .on("done", done);
   });
 
   it("should parse from stream", function (done) {
@@ -292,71 +309,56 @@ describe("CSV Converter", function () {
     var rs = fs.createReadStream(testData);
     csv()
       .fromStream(rs)
-      .on("end_parsed", function (res) {
+      .then(function (res) {
         assert(res);
         done();
       });
   });
 
-  it("should emit json and csv and finish event", function (done) {
+  it("should set output as csv", function (done) {
     var testData = __dirname + "/data/complexJSONCSV";
     var rs = fs.createReadStream(testData);
     var numOfRow = 0;
-    var numOfJson = 0;
-    csv()
+    csv({ output: "csv" })
       .fromStream(rs)
-      .on('csv', function (row, idx) {
+      .subscribe(function (row, idx) {
         numOfRow++;
         assert(row);
         assert(idx >= 0);
       })
-      .on("json", function (res, idx) {
-        numOfJson++;
-        assert.equal(typeof res, "object");
-        assert(idx >= 0);
-      })
+
       .on("done", function (error) {
         assert(!error);
-        assert.equal(numOfJson, numOfRow);
+        assert.equal(2, numOfRow);
         assert(numOfRow !== 0);
         done();
       });
   });
 
-  it("should transform with transf function", function (done) {
+  it("should transform with subscribe function", function (done) {
     var testData = __dirname + "/data/complexJSONCSV";
     var rs = fs.createReadStream(testData);
     var numOfRow = 0;
     var numOfJson = 0;
     csv()
       .fromStream(rs)
-      .transf(function (json, row, idx) {
+      .subscribe(function (json, idx) {
         json.a = "test";
-        assert(row);
         assert(idx >= 0);
       })
-      .on('csv', function (row, idx) {
-        numOfRow++;
-        assert(row);
-        assert(idx >= 0);
-      })
-      .on("json", function (res, idx) {
-        numOfJson++;
-        assert.equal(typeof res, "object");
-        assert.equal(res.a, "test");
-        assert(idx >= 0);
+      .on("data", function (d) {
+        const j = JSON.parse(d.toString());
+        assert.equal(j.a, "test");
       })
       .on("end", function () {
-        assert.equal(numOfJson, numOfRow);
-        assert(numOfRow !== 0);
         done();
       });
   });
 
   it("should parse a complex JSON", function (done) {
-    var converter = new Converter({checkType:true});
+    var converter = new Converter({ checkType: true });
     var r = fs.createReadStream(__dirname + "/data/complexJSONCSV");
-    converter.on("end_parsed", function (res) {
+    converter.then(function (res) {
       assert(res);
       assert(res.length === 2);
       assert(res[0].fieldA.title === "Food Factory");
@@ -377,177 +379,181 @@ describe("CSV Converter", function () {
 
   it("should allow flatKey to change parse behaviour", function (done) {
     var conv = new Converter({
-      flatKeys:true
+      flatKeys: true
     });
-    conv.fromString("a.b,b.d,c.a\n1,2,3\n4,5,6").on("json", function (d) {
+    conv.fromString("a.b,b.d,c.a\n1,2,3\n4,5,6").subscribe(function (d) {
       assert(d["a.b"]);
       assert(d["b.d"]);
       assert(d["c.a"]);
     })
-      .on("end", done);
+      .on("done", done);
   });
   it("should allow flat mods to change parse behaviour", function (done) {
     var conv = new Converter({
+      colParser: {
+        "a.b": {
+          flat: true
+        }
+      }
     });
-    conv.fromString("*flat*a.b,b.d,c.a\n1,2,3\n4,5,6").on("json", function (d) {
+    conv.fromString("a.b,b.d,c.a\n1,2,3\n4,5,6").subscribe(function (d) {
       assert(d["a.b"]);
     })
-      .on("end", done);
+      .on("done", done);
   });
 
   it("should process long header", function (done) {
     var testData = __dirname + "/data/longHeader";
-    var rs = fs.createReadStream(testData,{highWaterMark: 100});
+    var rs = fs.createReadStream(testData, { highWaterMark: 100 });
     var numOfRow = 0;
     var numOfJson = 0;
-    csv({},{highWaterMark:100})
+    csv({}, { highWaterMark: 100 })
       .fromStream(rs)
-      .on('csv', function (row, idx) {
-        numOfRow++;
-        assert(idx >= 0);
-      })
-      .on("json", function (res, idx) {
+      .subscribe(function (res, idx) {
         numOfJson++;
         assert.equal(res.Date, '8/26/16');
         assert(idx >= 0);
       })
-      .on("end", function () {
-        assert.equal(numOfJson, numOfRow);
+      .on("done", function () {
         assert(numOfJson === 1);
         done();
       });
   });
 
-  it("should parse #139", function(done) {
+  it("should parse #139", function (done) {
     var rs = fs.createReadStream(__dirname + "/data/data#139");
     csv()
       .fromStream(rs)
-      .on("end_parsed", function(res) {
+      .then(function (res) {
         assert.equal(res[1].field3, "9001009395 9001009990");
         done();
       });
   });
 
-  it("should ignore column", function(done) {
+  it("should ignore column", function (done) {
     var rs = fs.createReadStream(__dirname + "/data/dataWithQoutes");
-    var headerEmitted=false;
+    var headerEmitted = false;
     csv({
-     ignoreColumns:[0]
+      ignoreColumns: /TIMESTAMP/
     })
-    .fromStream(rs)
-    .on("header", function(header) {
-      assert.equal(header.indexOf("TIMESTAMP"), -1);
-      assert.equal(header.indexOf("UPDATE"), 0);
-      if (headerEmitted){
-        throw("header event should only happen once")
-      }
-      headerEmitted=true;
+      .fromStream(rs)
+      .on("header", function (header) {
+        assert.equal(header.indexOf("TIMESTAMP"), -1);
+        assert.equal(header.indexOf("UPDATE"), 0);
+        if (headerEmitted) {
+          throw ("header event should only happen once")
+        }
+        headerEmitted = true;
+      })
+      // .on("csv", function (row, idx) {
+      //   if (!headerEmitted) {
+      //     throw ("header should be emitted before any data events");
+      //   }
+      //   assert(idx >= 0);
+      //   if (idx === 1) {
+      //     assert.equal(row[0], "n");
+      //   }
+      // })
+      .subscribe(function (j, idx) {
+        assert(!j.TIMESTAMP);
+        assert(idx >= 0);
+      })
+      .on("done", function () {
+        assert(headerEmitted);
+        done();
+      });
+  });
+  it("should keep space around comma in csv", function () {
+    const str = `"Name","Number"
+    "John , space", 1234
+    "Mr. , space", 4321
+    `;
+    return csv().fromString(str)
+      .then((data) => {
+        assert.equal(data[0].Name, "John , space");
+        assert.equal(data[1].Name, "Mr. , space");
+      })
+  })
+
+  it("should include column", function (done) {
+    var rs = fs.createReadStream(__dirname + "/data/dataWithQoutes");
+    csv({
+      includeColumns: /TIMESTAMP/
     })
-    .on("csv", function(row, idx) {
-      if (!headerEmitted) {
-        throw("header should be emitted before any data events");
-      }
-      assert(idx >= 0);
-      if (idx ===1){
-        assert.equal(row[0],"n");
-      }
-    })
-    .on("json", function(j, idx) {
-      assert(!j.TIMESTAMP);
-      assert(idx >= 0);
-    })
-    .on("end", function() {
-      assert(headerEmitted);
-      done();
-    });
+      .fromStream(rs)
+      .on("header", function (header) {
+        assert.equal(header.indexOf("TIMESTAMP"), 0);
+        assert.equal(header.indexOf("UPDATE"), -1);
+        assert.equal(header.length, 1);
+      })
+      .subscribe(function (j, idx) {
+        assert(idx >= 0);
+        if (idx === 1) {
+          assert.equal(j.TIMESTAMP, "abc, def, ccc");
+        }
+        assert(!j.UID)
+        assert(!j['BYTES SENT'])
+      })
+      .on("done", function () {
+        done();
+      });
   });
 
-  it("should include column",function(done) {
-    var rs = fs.createReadStream(__dirname + "/data/dataWithQoutes");
-    csv({
-     includeColumns:[0]
-    })
-    .fromStream(rs)
-    .on("header", function(header) {
-      assert.equal(header.indexOf("TIMESTAMP"), 0);
-      assert.equal(header.indexOf("UPDATE"), -1);
-      assert.equal(header.length, 1);
-    })
-    .on("csv", function(row, idx) {
-      assert(idx >= 0);
-      assert.equal(row.length, 1);
-    })
-    .on("json", function(j, idx) {
-      assert(idx >= 0);
-      if (idx === 1){
-        assert.equal(j.TIMESTAMP, "abc, def, ccc");
-      }
-    })
-    .on("end", function() {
-      done();
-    });
-  });
-
-  it("should allow headers and include columns to be given as reference to the same var", function(done) {
+  it("should allow headers and include columns to be given as reference to the same var", function (done) {
     var rs = fs.createReadStream(__dirname + "/data/complexJSONCSV");
-    const headers = [
+    var headers = [
       'first',
       'second',
       'third',
     ];
 
-    const expected = [].concat(headers);
+    var expected = headers;
 
     csv({
       headers: headers,
-      includeColumns: headers,
+      includeColumns: /(first|second|third)/,
     })
       .fromStream(rs)
-      .on("header", function(header) {
-        expected.forEach(function(value, index) {
+      .on("header", function (header) {
+        expected.forEach(function (value, index) {
           assert.equal(header.indexOf(value), index);
         });
       })
-      .on("json", function(j, idx) {
+      .subscribe(function (j, idx) {
         assert(idx >= 0);
         assert.equal(expected.length, Object.keys(j).length);
-        expected.forEach(function(attribute) {
+        expected.forEach(function (attribute) {
           assert(j.hasOwnProperty(attribute));
         });
       })
-      .on("end", function() {
-        expected.forEach(function(value, index) {
-          assert.equal(headers.indexOf(value), index);
-        });
+      .on("done", function () {
         done();
       });
   });
 
-  it("should leave provided params objects unmutated", function(done) {
+  it("should leave provided params objects unmutated", function() {
     var rs = fs.createReadStream(__dirname + "/data/complexJSONCSV");
-    const includeColumns = [
+    var includeColumns = [
       'fieldA.title',
       'description',
     ];
 
-    const expected = [].concat(includeColumns);
 
-    csv({
-      includeColumns: includeColumns,
+    return csv({
+      includeColumns: /(fieldA\.title|description)/,
     })
       .fromStream(rs)
       .on("json", function(j, idx) {
         assert(idx >= 0);
       })
-      .on("end", function() {
-        expected.forEach(function (header, index) {
-          assert.equal(index, includeColumns.indexOf(header));
+      .on("header", function(header) {
+        includeColumns.forEach(function (value, index) {
+          assert.equal(index, header.indexOf(value));
         });
-        done();
-      });
+      })
   });
 
-  it ("should only call done once",function(done){
+  it("should only call done once", function (done) {
     var counter=0;
     csv()
     .fromString('"a","b", "c""')
