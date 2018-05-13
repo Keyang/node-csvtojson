@@ -6,13 +6,13 @@
 `csvtojson` module is a comprehensive nodejs csv parser to convert csv to json or column arrays. It can be used as node.js library / command line tool / or in browser. Below are some features:
 
 * Large csv file parsing with low memory (stream support)
-* TypeScript support
+* ES6 / ES7 / TypeScript support
 * Easy to use yet abundant API / parameters
 * Commandline tool
 * Multiple output format support -- json / csv / lines
 * Error handling
 * Non-blocking parsing
-* [Extremely fast](https://github.com/Keyang/node-csvtojson/blob/develop/docs/performance.md): **4 - 6 times faster** than other csv parsers
+* [Extremely fast](https://github.com/Keyang/node-csvtojson/blob/master/docs/performance.md): **4 - 6 times faster** than other csv parsers
 * Support node.js 4+ to latest
 
 # Donation
@@ -30,10 +30,18 @@ Thank you again.
 # Upgrade to V2
 
 `csvtojson` has released version `2.0.0`. 
-* To upgrade to v2, please follow [upgrading guide](https://github.com/Keyang/node-csvtojson/blob/develop/docs/upgrade-v2.md)
-* For new features of v2, please follow [this doc](https://github.com/Keyang/node-csvtojson/blob/develop/docs/v2-features.md)
-* If you are looking for documentation for `v1`, open [this page](https://github.com/Keyang/node-csvtojson/blob/develop/docs/readme.v1.md).
+* To upgrade to v2, please follow [upgrading guide](https://github.com/Keyang/node-csvtojson/blob/master/docs/csvtojson-v2.md)
+* If you are looking for documentation for `v1`, open [this page](https://github.com/Keyang/node-csvtojson/blob/master/docs/readme.v1.md).
 
+It is still able to use v1 with `csvtojson@2.0.0`
+
+```js
+const csvtojsonV1=require("csvtojson/v1");
+const csvtojsonV2=require("csvtojson");
+// OR
+const csvtojsonV2=require("csvtojson/v2");
+
+```
 
 # Menu
 
@@ -588,7 +596,7 @@ $ csvtojson --workerNum=4
 
 This will create 3 extra workers. Main process will only be used for delegating data / emitting result / pushing to downstream. Just keep in mind, those operations on Main process are not free and it will still take a certain amount CPU time.
 
-See [here](https://github.com/Keyang/node-csvtojson/blob/develop/docs/performance.md#cpu-usage-leverage) for how `csvtojson` leverages CPU usage when using multi-cores.
+See [here](https://github.com/Keyang/node-csvtojson/blob/master/docs/performance.md#cpu-usage-leverage) for how `csvtojson` leverages CPU usage when using multi-cores.
 
 ### Limitations
 
@@ -731,9 +739,9 @@ Thanks all the [contributors](https://github.com/Keyang/node-csvtojson/graphs/co
 * Optimised Performance
 * Added new APIs
 
-Version 1.1.0 has added new features and optimised lib performance. It also introduced simpler APIs to use. Thus readme is re-written to adapt the preferred new APIs. The lib will support old APIs. To review the old readme please [click here](https://github.com/Keyang/node-csvtojson/blob/develop/readme-old.md).
+Version 1.1.0 has added new features and optimised lib performance. It also introduced simpler APIs to use. Thus readme is re-written to adapt the preferred new APIs. The lib will support old APIs. To review the old readme please [click here](https://github.com/Keyang/node-csvtojson/blob/master/readme-old.md).
 
-* [Performance Optimisation](https://github.com/Keyang/node-csvtojson/blob/develop/docs/performance.md#performance-optimisation): V1.1.0 is 30%-50% faster
+* [Performance Optimisation](https://github.com/Keyang/node-csvtojson/blob/master/docs/performance.md#performance-optimisation): V1.1.0 is 30%-50% faster
 * Better error tolerance
 * Simplified API (see below)
 

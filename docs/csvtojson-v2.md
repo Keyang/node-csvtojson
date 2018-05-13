@@ -1,5 +1,30 @@
 # V2 Features / Changes
 
+[Features](#features)
+
+* [Add Promise and Async / Await support](#add-promise-and-async--await-support)
+* [Add asynchronous line by line processing support](#add-asynchronous-json-result-processing-support)
+* [Built-in TypeScript support](#built-in-typescript-support)
+* [Output format options](#output-format-options)
+* [Background Processing](#background-processing)
+* [Async Hooks Support](#async-hooks-support)
+* [Performance Improvement](#performance-improvement)
+
+[Upgrade to v2](#upgrade-to-csvtojson-v2)
+
+* [Dropped support to node.js<4](#dropped-support-to-nodejs4)
+* ['csv', 'json', 'record_parsed', 'end_parsed' events were replaced by .subscribe and .then](##csv-json-record_parsed-end_parsed-events-were-replaced-by-subscribe-and-then)
+* [Worker Process is replaced by background parsing (fork)](#worker-process-is-replaced-by-background-parsing-fork)
+* [fromFile / fromStream / fromString will not accept callback. Use .then instead](#fromfile--fromstream--fromstring-will-not-accept-callback-use-then-instead)
+* [ignoreColumns and includeColumns accepts only RegExp now](#ignorecolumns-and-includecolumns-accepts-only-regexp-now)
+* [.transf is removed](#transf-is-removed)
+* [.preRawData uses Promise instead of using callback](#prerawdata-uses-promise-instead-of-using-callback)
+* [removed toArrayString parameter](#removed-toarraystring-parameter)
+* [line number now starts from 0 instead of 1](#line-number-now-starts-from-0-instead-of-1)
+* [Moved Converter constructor.](#moved-converter-constructor)
+
+# Features
+
 ## Add Promise and Async / Await support
 
 ```js
@@ -23,7 +48,7 @@ request.get(csvUrl)
 })
 ```
 
-## Add asynchronous json result processing support
+## Add asynchronous line by line processing support
 
 ```js
 // async process
@@ -181,11 +206,14 @@ The more we use the worker feature the more we found node.js does not really nee
 Thus we decided to remove the worker process but keep the `fork` feature which allows csv parsing happening in another process.
 
 For example, if we have 48 cpus / cores
+
 **Before**
+
 We can use 48 Cores to parse 1 large csv file at a time.
 
 **After**
-We can parse 48 large csv files in parallel.
+
+We can parse (theoretically) 48 large csv files in parallel.
 
 Also background parsing does not support hooks for the moment. This caveat will be addressed in future.
 
