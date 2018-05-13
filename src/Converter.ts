@@ -15,11 +15,13 @@ import { Result } from "./Result";
 import CSVError from "./CSVError";
 import { bufFromString } from "./util";
 export class Converter extends Transform {
-  preRawData(onRawData: PreRawDataCallback) {
+  preRawData(onRawData: PreRawDataCallback):Converter {
     this.runtime.preRawDataHook = onRawData;
+    return this;
   }
-  preFileLine(onFileLine: PreFileLineCallback) {
+  preFileLine(onFileLine: PreFileLineCallback):Converter {
     this.runtime.preFileLineHook = onFileLine;
+    return this;
   }
   subscribe(
     onNext?: (data: any, lineNumber: number) => void | PromiseLike<void>,
@@ -111,8 +113,9 @@ export class Converter extends Transform {
     }
     this.once("error", (err: any) => {
       // console.log("BBB");
-      this.result.processError(err);
+      
       setTimeout(() => {
+        this.result.processError(err);
         this.emit("done", err);
       },0);
 

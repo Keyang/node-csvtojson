@@ -78,7 +78,7 @@ function processLineByLine(
   needPushDownstream: boolean,
   cb: (err?) => void,
 ) {
-  if (lines.length === 0) {
+  if (offset >= lines.length) {
     cb();
   } else {
     if (conv.parseRuntime.subscribe && conv.parseRuntime.subscribe.onNext) {

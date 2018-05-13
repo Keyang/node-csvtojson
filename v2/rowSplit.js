@@ -43,6 +43,11 @@ var RowSplit = /** @class */ (function () {
         var delimiter = this.conv.parseRuntime.delimiter;
         var rowArr = fileline.split(delimiter);
         if (quote === "off") {
+            if (trim) {
+                for (var i = 0; i < rowArr.length; i++) {
+                    rowArr[i] = rowArr[i].trim();
+                }
+            }
             return { cells: rowArr, closed: true };
         }
         else {
@@ -146,14 +151,14 @@ var RowSplit = /** @class */ (function () {
         }
         return count % 2 !== 0;
     };
-    RowSplit.prototype.twoDoubleQuote = function (str) {
-        var twoQuote = this.quote + this.quote;
-        var curIndex = -1;
-        while ((curIndex = str.indexOf(twoQuote, curIndex)) > -1) {
-            str = str.substring(0, curIndex) + str.substring(++curIndex);
-        }
-        return str;
-    };
+    // private twoDoubleQuote(str: string): string {
+    //   var twoQuote = this.quote + this.quote;
+    //   var curIndex = -1;
+    //   while ((curIndex = str.indexOf(twoQuote, curIndex)) > -1) {
+    //     str = str.substring(0, curIndex) + str.substring(++curIndex);
+    //   }
+    //   return str;
+    // }
     RowSplit.prototype.escapeQuote = function (segment) {
         var key = "es|" + this.quote + "|" + this.escape;
         if (this.cachedRegExp[key] === undefined) {

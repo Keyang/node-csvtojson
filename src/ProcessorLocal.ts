@@ -221,7 +221,7 @@ export class ProcessorLocal extends Processor {
 function processLineHook(lines: string[], runtime: ParseRuntime, offset: number,
   cb: (err?) => void
 ) {
-  if (lines.length === 0) {
+  if (offset >=lines.length) {
     cb();
   } else {
     if (runtime.preFileLineHook) {

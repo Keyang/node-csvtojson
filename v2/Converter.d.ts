@@ -5,8 +5,8 @@ import { ParseRuntime } from "./ParseRuntime";
 import CSVError from "./CSVError";
 export declare class Converter extends Transform {
     options: TransformOptions;
-    preRawData(onRawData: PreRawDataCallback): void;
-    preFileLine(onFileLine: PreFileLineCallback): void;
+    preRawData(onRawData: PreRawDataCallback): Converter;
+    preFileLine(onFileLine: PreFileLineCallback): Converter;
     subscribe(onNext?: (data: any, lineNumber: number) => void | PromiseLike<void>, onError?: (err: CSVError) => void, onCompleted?: () => void): Converter;
     fromFile(filePath: string, options?: string | CreateReadStreamOption | undefined): Converter;
     fromStream(readStream: Readable): Converter;

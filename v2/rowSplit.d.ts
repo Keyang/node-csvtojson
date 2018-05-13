@@ -15,7 +15,6 @@ export declare class RowSplit {
     private getDelimiter(fileline);
     private isQuoteOpen(str);
     private isQuoteClose(str);
-    private twoDoubleQuote(str);
     private escapeQuote(segment);
     parseMultiLines(lines: Fileline[]): MultipleRowResult;
 }

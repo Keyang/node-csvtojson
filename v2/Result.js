@@ -83,7 +83,7 @@ var Result = /** @class */ (function () {
 }());
 exports.Result = Result;
 function processLineByLine(lines, conv, offset, needPushDownstream, cb) {
-    if (lines.length === 0) {
+    if (offset >= lines.length) {
         cb();
     }
     else {

@@ -24,5 +24,17 @@ describe("ProcessLocal",()=>{
     
     assert(lines.length === 2);
   })
+  it ("should return empty array if preRawHook removed the data",()=>{
+    const conv=new Converter();
+    conv.preRawData((str)=>{
+      return "";
+    });
+    const processor=new ProcessorLocal(conv);
+    const data=readFileSync(dataDir+"/complexJSONCSV");
+    return processor.process(data)
+    .then((list)=>{
+      assert.equal(list.length,0);
+    })
+  })
 })
 

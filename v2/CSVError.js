@@ -27,12 +27,6 @@ var CSVError = /** @class */ (function (_super) {
     CSVError.unclosed_quote = function (index, extra) {
         return new CSVError("unclosed_quote", index, extra);
     };
-    CSVError.fromArray = function (arr) {
-        return new CSVError(arr[0], arr[1], arr[2]);
-    };
-    CSVError.prototype.toString = function () {
-        return JSON.stringify([this.err, this.line, this.extra]);
-    };
     return CSVError;
 }(Error));
 exports.default = CSVError;

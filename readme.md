@@ -1,5 +1,5 @@
 [![Build Status](https://travis-ci.org/Keyang/node-csvtojson.svg?branch=master)](https://travis-ci.org/Keyang/node-csvtojson)
-
+[![Coverage Status](https://coveralls.io/repos/github/Keyang/node-csvtojson/badge.svg?branch=v2)](https://coveralls.io/github/Keyang/node-csvtojson?branch=v2)
 
 # CSVTOJSON
 

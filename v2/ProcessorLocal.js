@@ -256,7 +256,7 @@ var ProcessorLocal = /** @class */ (function (_super) {
 }(Processor_1.Processor));
 exports.ProcessorLocal = ProcessorLocal;
 function processLineHook(lines, runtime, offset, cb) {
-    if (lines.length === 0) {
+    if (offset >= lines.length) {
         cb();
     }
     else {

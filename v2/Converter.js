@@ -38,8 +38,8 @@ var Converter = /** @class */ (function (_super) {
         }
         _this.once("error", function (err) {
             // console.log("BBB");
-            _this.result.processError(err);
             setTimeout(function () {
+                _this.result.processError(err);
                 _this.emit("done", err);
             }, 0);
         });
@@ -47,9 +47,11 @@ var Converter = /** @class */ (function (_super) {
     }
     Converter.prototype.preRawData = function (onRawData) {
         this.runtime.preRawDataHook = onRawData;
+        return this;
     };
     Converter.prototype.preFileLine = function (onFileLine) {
         this.runtime.preFileLineHook = onFileLine;
+        return this;
     };
     Converter.prototype.subscribe = function (onNext, onError, onCompleted) {
         this.parseRuntime.subscribe = {

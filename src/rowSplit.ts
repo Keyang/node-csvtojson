@@ -41,6 +41,11 @@ export class RowSplit {
     const delimiter = this.conv.parseRuntime.delimiter;
     const rowArr = fileline.split(delimiter);
     if (quote === "off") {
+      if (trim){
+        for (let i =0;i<rowArr.length;i++){
+          rowArr[i]=rowArr[i].trim();
+        }
+      }
       return { cells: rowArr, closed: true };
     } else {
       return this.toCSVRow(rowArr, trim, quote, delimiter);
@@ -142,14 +147,14 @@ export class RowSplit {
     return count % 2 !== 0;
   }
 
-  private twoDoubleQuote(str: string): string {
-    var twoQuote = this.quote + this.quote;
-    var curIndex = -1;
-    while ((curIndex = str.indexOf(twoQuote, curIndex)) > -1) {
-      str = str.substring(0, curIndex) + str.substring(++curIndex);
-    }
-    return str;
-  }
+  // private twoDoubleQuote(str: string): string {
+  //   var twoQuote = this.quote + this.quote;
+  //   var curIndex = -1;
+  //   while ((curIndex = str.indexOf(twoQuote, curIndex)) > -1) {
+  //     str = str.substring(0, curIndex) + str.substring(++curIndex);
+  //   }
+  //   return str;
+  // }
 
 
   private escapeQuote(segment: string): string {
