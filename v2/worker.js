@@ -37,16 +37,11 @@ function processMsg(msg) {
         conv.on("done", function () {
             var drained = process.stdout.write("", function () {
                 if (drained) {
-                    conv.removeAllListeners();
-                    process.removeAllListeners();
+                    gracelyExit();
                 }
             });
             if (!drained) {
-                process.stdout.on("drain", function () {
-                    conv.removeAllListeners();
-                    process.removeAllListeners();
-                    // console.log("DRAINED!!!");
-                });
+                process.stdout.on("drain", gracelyExit);
             }
             // process.stdout.write(EOM);
         });
@@ -54,6 +49,12 @@ function processMsg(msg) {
             process.send({ cmd: "inited" });
         }
     }
+}
+function gracelyExit() {
+    setTimeout(function () {
+        conv.removeAllListeners();
+        process.removeAllListeners();
+    }, 50);
 }
 function prepareParams(p) {
     if (p.ignoreColumns) {

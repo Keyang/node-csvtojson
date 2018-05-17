@@ -38,16 +38,11 @@ function processMsg(msg: Message) {
     conv.on("done", () => {
       const drained = process.stdout.write("", () => {
         if (drained) {
-          conv.removeAllListeners();
-          process.removeAllListeners();
+          gracelyExit();
         }
       });
       if (!drained) {
-        process.stdout.on("drain", () => {
-          conv.removeAllListeners();
-          process.removeAllListeners();
-          // console.log("DRAINED!!!");
-        })
+        process.stdout.on("drain", gracelyExit)
       }
 
 
@@ -59,6 +54,12 @@ function processMsg(msg: Message) {
 
 
   }
+}
+function gracelyExit(){
+  setTimeout(()=>{
+    conv.removeAllListeners();
+    process.removeAllListeners();
+  },50);
 }
 function prepareParams(p: any): CSVParseParam {
   if (p.ignoreColumns) {

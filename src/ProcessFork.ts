@@ -15,10 +15,10 @@ export class ProcessorFork extends Processor {
       this.finalChunk = true;
       this.next = resolve;
       this.childProcess.stdin.end();
-      this.childProcess.stdout.on("end",()=>{
-        // console.log("!!!!");
-        this.flushResult();
-      })
+      // this.childProcess.stdout.on("end",()=>{
+      //   // console.log("!!!!");
+      //   this.flushResult();
+      // })
     });
   }
   destroy(): P<void> {

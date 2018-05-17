@@ -39,10 +39,10 @@ var ProcessorFork = /** @class */ (function (_super) {
             _this.finalChunk = true;
             _this.next = resolve;
             _this.childProcess.stdin.end();
-            _this.childProcess.stdout.on("end", function () {
-                // console.log("!!!!");
-                _this.flushResult();
-            });
+            // this.childProcess.stdout.on("end",()=>{
+            //   // console.log("!!!!");
+            //   this.flushResult();
+            // })
         });
     };
     ProcessorFork.prototype.destroy = function () {
