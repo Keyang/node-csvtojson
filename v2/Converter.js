@@ -20,7 +20,6 @@ var bluebird_1 = __importDefault(require("bluebird"));
 var ProcessFork_1 = require("./ProcessFork");
 var ProcessorLocal_1 = require("./ProcessorLocal");
 var Result_1 = require("./Result");
-var CSVError_1 = __importDefault(require("./CSVError"));
 var Converter = /** @class */ (function (_super) {
     __extends(Converter, _super);
     function Converter(param, options) {
@@ -42,6 +41,9 @@ var Converter = /** @class */ (function (_super) {
                 _this.result.processError(err);
                 _this.emit("done", err);
             }, 0);
+        });
+        _this.once("done", function () {
+            _this.processor.destroy();
         });
         return _this;
     }
@@ -148,6 +150,7 @@ var Converter = /** @class */ (function (_super) {
             }
         })
             .then(function () {
+            _this.emit("drained");
             cb();
         }, function (error) {
             _this.runtime.hasError = true;
@@ -158,31 +161,18 @@ var Converter = /** @class */ (function (_super) {
     };
     Converter.prototype._flush = function (cb) {
         var _this = this;
-        if (this.runtime.csvLineBuffer && this.runtime.csvLineBuffer.length > 0) {
-            var buf = this.runtime.csvLineBuffer;
-            this.runtime.csvLineBuffer = undefined;
-            this.processor.process(buf, true)
-                .then(function (result) {
-                if (result.length > 0) {
-                    return _this.result.processResult(result);
-                }
-            })
-                .then(function () {
-                if (_this.runtime.csvLineBuffer && _this.runtime.csvLineBuffer.length > 0) {
-                    _this.emit("error", CSVError_1.default.unclosed_quote(_this.parsedLineNumber, _this.runtime.csvLineBuffer.toString()));
-                }
-                else {
-                    _this.processEnd(cb);
-                }
-                // cb();
-            }, function (err) {
-                _this.emit("error", err);
-                cb();
-            });
-        }
-        else {
-            this.processEnd(cb);
-        }
+        this.processor.flush()
+            .then(function (data) {
+            if (data.length > 0) {
+                return _this.result.processResult(data);
+            }
+        })
+            .then(function () {
+            _this.processEnd(cb);
+        }, function (err) {
+            _this.emit("error", err);
+            cb();
+        });
     };
     Converter.prototype.processEnd = function (cb) {
         this.result.endProcess();

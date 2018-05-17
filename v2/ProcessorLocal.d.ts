@@ -1,8 +1,10 @@
-/// <reference types="node" />
 /// <reference types="bluebird" />
+/// <reference types="node" />
 import { Processor, ProcessLineResult } from "./Processor";
 import P from "bluebird";
 export declare class ProcessorLocal extends Processor {
+    flush(): P<ProcessLineResult[]>;
+    destroy(): P<void>;
     private rowSplit;
     private eolEmitted;
     private _needEmitEol?;

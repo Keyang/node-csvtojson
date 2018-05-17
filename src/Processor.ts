@@ -12,5 +12,7 @@ export abstract class Processor {
     this.runtime = converter.parseRuntime;
   }
   abstract process(chunk: Buffer,finalChunk?:boolean): P<ProcessLineResult[]>
+  abstract destroy():P<void>;
+  abstract flush(): P<ProcessLineResult[]>;
 }
 export type ProcessLineResult = string | string[] | JSONResult;

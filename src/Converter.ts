@@ -2,7 +2,6 @@ import { Transform, TransformOptions, Readable } from "stream";
 import { CSVParseParam, mergeParams } from "./Parameters";
 import { ParseRuntime, initParseRuntime } from "./ParseRuntime";
 import P from "bluebird";
-import { Worker } from "./Worker";
 import { stringToLines } from "./fileline";
 import { map } from "lodash/map";
 import { RowSplit, RowSplitResult } from "./rowSplit";
@@ -120,6 +119,9 @@ export class Converter extends Transform {
       },0);
 
     });
+    this.once("done",()=>{
+      this.processor.destroy();
+    })
 
     return this;
   }
@@ -132,6 +134,7 @@ export class Converter extends Transform {
         }
       })
       .then(() => {
+        this.emit("drained");
         cb();
       }, (error) => {
         this.runtime.hasError = true;
@@ -141,30 +144,18 @@ export class Converter extends Transform {
       });
   }
   _flush(cb: Function) {
-    if (this.runtime.csvLineBuffer && this.runtime.csvLineBuffer.length > 0) {
-      const buf = this.runtime.csvLineBuffer;
-      this.runtime.csvLineBuffer = undefined;
-      this.processor.process(buf, true)
-        .then((result) => {
-          if (result.length > 0) {
-            return this.result.processResult(result);
-          }
-        })
-        .then(() => {
-          if (this.runtime.csvLineBuffer && this.runtime.csvLineBuffer.length > 0) {
-            this.emit("error", CSVError.unclosed_quote(this.parsedLineNumber, this.runtime.csvLineBuffer.toString()));
-          } else {
-            this.processEnd(cb);
-          }
-          // cb();
-
-        }, (err) => {
-          this.emit("error", err);
-          cb();
-        })
-    } else {
+    this.processor.flush()
+    .then((data)=>{
+      if (data.length>0){
+        return this.result.processResult(data);
+      }
+    })
+    .then(()=>{
       this.processEnd(cb);
-    }
+    },(err)=>{
+      this.emit("error",err);
+      cb();
+    })
   }
   private processEnd(cb) {
     this.result.endProcess();

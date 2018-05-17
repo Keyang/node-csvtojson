@@ -7,8 +7,28 @@ import { bufFromString, filterArray } from "./util";
 import { RowSplit } from "./rowSplit";
 import lineToJson from "./lineToJson";
 import { ParseRuntime } from "./ParseRuntime";
+import CSVError from "./CSVError";
 
 export class ProcessorLocal extends Processor {
+  flush(): P<ProcessLineResult[]> {
+    if (this.runtime.csvLineBuffer && this.runtime.csvLineBuffer.length > 0) {
+      const buf = this.runtime.csvLineBuffer;
+      this.runtime.csvLineBuffer = undefined;
+      return this.process(buf, true)
+        .then((res) => {
+          if (this.runtime.csvLineBuffer && this.runtime.csvLineBuffer.length > 0) {
+            return P.reject(CSVError.unclosed_quote(this.runtime.parsedLineNumber, this.runtime.csvLineBuffer.toString()))
+          } else {
+            return P.resolve(res);
+          }
+        })
+    } else {
+      return P.resolve([]);
+    }
+  }
+  destroy(): P<void> {
+    return P.resolve();
+  }
   private rowSplit: RowSplit = new RowSplit(this.converter);
   private eolEmitted = false;
   private _needEmitEol?: boolean = undefined;
@@ -206,11 +226,11 @@ export class ProcessorLocal extends Processor {
 
   }
   private runPreLineHook(lines: string[]): P<string[]> {
-    return new P((resolve,reject)=>{
-      processLineHook(lines,this.runtime,0,(err)=>{
-        if (err){
+    return new P((resolve, reject) => {
+      processLineHook(lines, this.runtime, 0, (err) => {
+        if (err) {
           reject(err);
-        }else{
+        } else {
           resolve(lines);
         }
       })
@@ -221,7 +241,7 @@ export class ProcessorLocal extends Processor {
 function processLineHook(lines: string[], runtime: ParseRuntime, offset: number,
   cb: (err?) => void
 ) {
-  if (offset >=lines.length) {
+  if (offset >= lines.length) {
     cb();
   } else {
     if (runtime.preFileLineHook) {

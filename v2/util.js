@@ -9,6 +9,13 @@ function bufFromString(str) {
     return buffer;
 }
 exports.bufFromString = bufFromString;
+function emptyBuffer() {
+    var buffer = Buffer.allocUnsafe
+        ? Buffer.allocUnsafe(0)
+        : new Buffer(0);
+    return buffer;
+}
+exports.emptyBuffer = emptyBuffer;
 function filterArray(arr, filter) {
     var rtn = [];
     for (var i = 0; i < arr.length; i++) {

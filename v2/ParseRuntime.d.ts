@@ -1,7 +1,6 @@
 /// <reference types="node" />
 import { CellParser } from "./Parameters";
 import { Converter, PreRawDataCallback, PreFileLineCallback } from "./Converter";
-import { Worker } from "./Worker";
 import CSVError from "./CSVError";
 export interface ParseRuntime {
     /**
@@ -39,11 +38,6 @@ export interface ParseRuntime {
      */
     headers?: any[];
     csvLineBuffer?: Buffer;
-    worker?: Worker;
-    /**
-     * Indicate if current running process is worker.
-     */
-    isWorker: boolean;
     /**
      * after first chunk of data being processed and emitted, started will become true.
      */

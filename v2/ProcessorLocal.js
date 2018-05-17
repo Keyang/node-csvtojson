@@ -21,6 +21,7 @@ var fileline_1 = require("./fileline");
 var util_1 = require("./util");
 var rowSplit_1 = require("./rowSplit");
 var lineToJson_1 = __importDefault(require("./lineToJson"));
+var CSVError_1 = __importDefault(require("./CSVError"));
 var ProcessorLocal = /** @class */ (function (_super) {
     __extends(ProcessorLocal, _super);
     function ProcessorLocal() {
@@ -32,6 +33,28 @@ var ProcessorLocal = /** @class */ (function (_super) {
         _this._needEmitHead = undefined;
         return _this;
     }
+    ProcessorLocal.prototype.flush = function () {
+        var _this = this;
+        if (this.runtime.csvLineBuffer && this.runtime.csvLineBuffer.length > 0) {
+            var buf = this.runtime.csvLineBuffer;
+            this.runtime.csvLineBuffer = undefined;
+            return this.process(buf, true)
+                .then(function (res) {
+                if (_this.runtime.csvLineBuffer && _this.runtime.csvLineBuffer.length > 0) {
+                    return bluebird_1.default.reject(CSVError_1.default.unclosed_quote(_this.runtime.parsedLineNumber, _this.runtime.csvLineBuffer.toString()));
+                }
+                else {
+                    return bluebird_1.default.resolve(res);
+                }
+            });
+        }
+        else {
+            return bluebird_1.default.resolve([]);
+        }
+    };
+    ProcessorLocal.prototype.destroy = function () {
+        return bluebird_1.default.resolve();
+    };
     Object.defineProperty(ProcessorLocal.prototype, "needEmitEol", {
         get: function () {
             if (this._needEmitEol === undefined) {

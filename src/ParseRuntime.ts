@@ -1,7 +1,6 @@
 import { CSVParseParam, CellParser } from "./Parameters";
 import { Converter, PreRawDataCallback, PreFileLineCallback } from "./Converter";
 import { ChildProcess } from "child_process";
-import { Worker } from "./Worker";
 import CSVError from "./CSVError";
 
 export interface ParseRuntime {
@@ -40,11 +39,7 @@ export interface ParseRuntime {
    */
   headers?: any[],
   csvLineBuffer?: Buffer,
-  worker?: Worker,
-  /**
-   * Indicate if current running process is worker.
-   */
-  isWorker: boolean,
+  
   /**
    * after first chunk of data being processed and emitted, started will become true.
    */
@@ -82,7 +77,6 @@ export function initParseRuntime(converter: Converter): ParseRuntime {
     headerFlag: [],
     headers: undefined,
     started: false,
-    isWorker: false,
     parsedLineNumber: 0,
     columnValueSetter: [],
   }

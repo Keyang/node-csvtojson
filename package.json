@@ -295,7 +295,7 @@
   "scripts": {
     "dev": "tsc -w",
     "build": "tsc",
-    "test": "mocha -r ts-node/register src/**/*.test.ts ./test/*.ts -R spec",
+    "test": "TS_NODE_CACHE=false mocha -r ts-node/register src/**/*.test.ts ./test/*.ts -R spec",
     "travis": "nyc --reporter lcov mocha -r ts-node/register src/**/*.test.ts ./test/*.ts -R spec",
     "test:debug": "mocha debug -r ts-node/register src/**/*.test.ts ./test/*.ts -R spec",
     "test-all": "mocha  ./test -R spec && CSV_WORKER=3 mocha ./test -R spec ",
@@ -308,5 +308,5 @@
     "child_process": false,
     "fs": false
   },
-  "main": "./build/index.js"
+  "main": "./v2/index.js"
 }

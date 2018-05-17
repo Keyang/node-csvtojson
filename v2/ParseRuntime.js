@@ -17,7 +17,6 @@ function initParseRuntime(converter) {
         headerFlag: [],
         headers: undefined,
         started: false,
-        isWorker: false,
         parsedLineNumber: 0,
         columnValueSetter: [],
     };
