@@ -39,6 +39,10 @@ var ProcessorFork = /** @class */ (function (_super) {
             _this.finalChunk = true;
             _this.next = resolve;
             _this.childProcess.stdin.end();
+            _this.childProcess.stdout.on("end", function () {
+                // console.log("!!!!");
+                _this.flushResult();
+            });
         });
     };
     ProcessorFork.prototype.destroy = function () {
@@ -63,6 +67,9 @@ var ProcessorFork = /** @class */ (function (_super) {
     };
     ProcessorFork.prototype.initWorker = function () {
         var _this = this;
+        this.childProcess.on("exit", function () {
+            _this.flushResult();
+        });
         this.childProcess.send({
             cmd: "init",
             params: this.prepareParam(this.converter.parseParam)
@@ -82,7 +89,7 @@ var ProcessorFork = /** @class */ (function (_super) {
                 }
             }
             else if (msg.cmd === "done") {
-                _this.flushResult();
+                // this.flushResult();
             }
         });
         this.childProcess.stdout.on("data", function (data) {

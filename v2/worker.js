@@ -35,10 +35,8 @@ function processMsg(msg) {
                 process.send({ cmd: "header", "value": header });
         });
         conv.on("done", function () {
-            setTimeout(function () {
-                if (process.send)
-                    process.send({ cmd: "done" });
-            }, 10);
+            conv.removeAllListeners();
+            process.removeAllListeners();
             // process.stdout.write(EOM);
         });
         if (process.send) {

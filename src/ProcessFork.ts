@@ -15,6 +15,10 @@ export class ProcessorFork extends Processor {
       this.finalChunk = true;
       this.next = resolve;
       this.childProcess.stdin.end();
+      this.childProcess.stdout.on("end",()=>{
+        // console.log("!!!!");
+        this.flushResult();
+      })
     });
   }
   destroy(): P<void> {
@@ -51,6 +55,9 @@ export class ProcessorFork extends Processor {
     return clone;
   }
   private initWorker() {
+    this.childProcess.on("exit",()=>{
+      this.flushResult();
+    })
     this.childProcess.send({
       cmd: "init",
       params: this.prepareParam(this.converter.parseParam)
@@ -68,7 +75,7 @@ export class ProcessorFork extends Processor {
         }
       }else if (msg.cmd === "done"){
 
-        this.flushResult();
+        // this.flushResult();
       }
 
     });
