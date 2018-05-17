@@ -131,6 +131,7 @@ var ProcessorFork = /** @class */ (function (_super) {
             this.resultBuf.push(item);
             counter++;
         }
+        // console.log("buf length",this.resultBuf.length);
     };
     ProcessorFork.prototype.process = function (chunk) {
         var _this = this;

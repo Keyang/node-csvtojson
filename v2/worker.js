@@ -35,8 +35,19 @@ function processMsg(msg) {
                 process.send({ cmd: "header", "value": header });
         });
         conv.on("done", function () {
-            conv.removeAllListeners();
-            process.removeAllListeners();
+            var drained = process.stdout.write("", function () {
+                if (drained) {
+                    conv.removeAllListeners();
+                    process.removeAllListeners();
+                }
+            });
+            if (!drained) {
+                process.stdout.on("drain", function () {
+                    conv.removeAllListeners();
+                    process.removeAllListeners();
+                    // console.log("DRAINED!!!");
+                });
+            }
             // process.stdout.write(EOM);
         });
         if (process.send) {

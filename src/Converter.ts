@@ -147,6 +147,7 @@ export class Converter extends Transform {
     this.processor.flush()
     .then((data)=>{
       if (data.length>0){
+        
         return this.result.processResult(data);
       }
     })

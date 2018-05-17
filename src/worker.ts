@@ -36,13 +36,27 @@ function processMsg(msg: Message) {
         process.send({ cmd: "header", "value": header });
     })
     conv.on("done", () => {
-      conv.removeAllListeners();
-      process.removeAllListeners();
+      const drained = process.stdout.write("", () => {
+        if (drained) {
+          conv.removeAllListeners();
+          process.removeAllListeners();
+        }
+      });
+      if (!drained) {
+        process.stdout.on("drain", () => {
+          conv.removeAllListeners();
+          process.removeAllListeners();
+          // console.log("DRAINED!!!");
+        })
+      }
+
+
       // process.stdout.write(EOM);
     })
     if (process.send) {
       process.send({ cmd: "inited" });
     }
+
 
   }
 }

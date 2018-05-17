@@ -115,11 +115,12 @@ export class ProcessorFork extends Processor {
         continue;
       }
       if (this.params.output !== "line") {
-        item = JSON.parse(item);
+          item = JSON.parse(item);
       }
       this.resultBuf.push(item);
       counter++;
     }
+    // console.log("buf length",this.resultBuf.length);
   }
 
   process(chunk: Buffer): P<ProcessLineResult[]> {
