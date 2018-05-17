@@ -294,7 +294,7 @@
   },
   "scripts": {
     "dev": "tsc -w",
-    "build": "tsc",
+    "build": "rm -Rf ./v2 && tsc",
     "test": "TS_NODE_CACHE=false mocha -r ts-node/register src/**/*.test.ts ./test/*.ts -R spec",
     "travis": "nyc --reporter lcov mocha -r ts-node/register src/**/*.test.ts ./test/*.ts -R spec",
     "test:debug": "mocha debug -r ts-node/register src/**/*.test.ts ./test/*.ts -R spec",
