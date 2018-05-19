@@ -11,7 +11,7 @@
 * Commandline tool
 * Multiple output format -- json / csv / lines
 * Error handling
-* [Extremely fast](https://github.com/Keyang/node-csvtojson/blob/master/docs/performance.md) -- targeting on millions of lines csv data
+* [Extremely fast](https://github.com/Keyang/csvbench) -- targeting on millions of lines csv data
 * node.js 4+ to latest
 
 # Donation
