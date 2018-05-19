@@ -27,7 +27,7 @@ var RowSplit = /** @class */ (function () {
         configurable: true
     });
     RowSplit.prototype.parse = function (fileline) {
-        if (fileline === "") {
+        if (fileline.length === 0 || (this.conv.parseParam.ignoreEmpty && fileline.trim().length === 0)) {
             return { cells: [], closed: true };
         }
         var quote = this.quote;
@@ -174,6 +174,9 @@ var RowSplit = /** @class */ (function () {
         while (lines.length) {
             var line = left + lines.shift();
             var row = this.parse(line);
+            if (row.cells.length === 0 && this.conv.parseParam.ignoreEmpty) {
+                continue;
+            }
             if (row.closed || this.conv.parseParam.alwaysSplitAtEOL) {
                 if (this.conv.parseRuntime.selectedColumns) {
                     csvLines.push(util_1.filterArray(row.cells, this.conv.parseRuntime.selectedColumns));

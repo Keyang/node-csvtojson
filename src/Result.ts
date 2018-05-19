@@ -38,6 +38,7 @@ export class Result {
             }
           },
         )
+        // resolve();
       } else {
         this.appendFinalResult(resultLines);
         resolve();

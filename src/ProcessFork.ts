@@ -82,6 +82,7 @@ export class ProcessorFork extends Processor {
     this.childProcess.stdout.on("data", (data) => {
       // console.log("stdout", data.toString());
       const res = data.toString();
+      // console.log(res);
       this.appendBuf(res);
 
     });
@@ -108,18 +109,18 @@ export class ProcessorFork extends Processor {
     } else {
       this.leftChunk = "";
     }
-
-    while (list.length) {
-      let item = list.shift() || "";
-      if (item.length === 0 ) {
-        continue;
-      }
-      if (this.params.output !== "line") {
-          item = JSON.parse(item);
-      }
-      this.resultBuf.push(item);
-      counter++;
-    }
+    this.resultBuf=this.resultBuf.concat(list);
+    // while (list.length) {
+    //   let item = list.shift() || "";
+    //   if (item.length === 0 ) {
+    //     continue;
+    //   }
+    //   // if (this.params.output !== "line") {
+    //   //     item = JSON.parse(item);
+    //   // }
+    //   this.resultBuf.push(item);
+    //   counter++;
+    // }
     // console.log("buf length",this.resultBuf.length);
   }
 

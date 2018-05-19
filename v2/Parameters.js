@@ -9,7 +9,7 @@ function mergeParams(params) {
         trim: true,
         checkType: false,
         ignoreEmpty: false,
-        fork: false,
+        // fork: false,
         noheader: false,
         headers: undefined,
         flatKeys: false,

@@ -4,11 +4,11 @@ export interface CSVParseParam {
    */
   delimiter: string | string[];
   /**
-   *  This parameter instructs the parser to ignore columns as specified by an array of column indexes or header names. Example: [1,3,5,"title","age"] will ignore columns 1, 3, 5, title column and age column and will not return them in the JSON output
+   *  This parameter instructs the parser to ignore columns as specified by the regular expression. Example: /(name|age)/ will ignore columns whose header contains "name" or "age"
    */
   ignoreColumns?: RegExp;
   /**
-   *  This parameter instructs the parser to include only those columns as specified by an array of column indexes or header names. Example: [0,2,3,"name"] will parse and include only columns 0, 2, 3, and column with header "name" in the JSON output.
+   *  This parameter instructs the parser to include only those columns as specified by the regular expression. Example: /(name|age)/ will parse and include columns whose header contains "name" or "age"
    */
   includeColumns?: RegExp;
   /**
@@ -30,7 +30,7 @@ export interface CSVParseParam {
   /**
    *  Delegate parsing work to another process.
    */
-  fork: boolean;
+  // fork: boolean;
   /**
    *  Indicating csv data has no header row and first row is data row. Default is false.
    */
@@ -69,6 +69,9 @@ export interface CSVParseParam {
    *  Always interpret each line (as defined by eol) as a row. This will prevent eol characters from being used within a row (even inside a quoted field). This ensures that misplaced quotes only break on row, and not all ensuing rows.
    */
   alwaysSplitAtEOL: boolean;
+  /**
+   * The format to be converted to. "json" (default) -- convert csv to json. "csv" -- convert csv to csv row array. "line" -- convert csv to csv line string 
+   */
   output: "json" | "csv" | "line";
 }
 
@@ -88,7 +91,7 @@ export function mergeParams(params?: Partial<CSVParseParam>): CSVParseParam {
     trim: true,
     checkType: false,
     ignoreEmpty: false,
-    fork: false,
+    // fork: false,
     noheader: false,
     headers: undefined,
     flatKeys: false,

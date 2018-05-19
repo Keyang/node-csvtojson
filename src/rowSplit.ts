@@ -24,7 +24,7 @@ export class RowSplit {
     this.escape = conv.parseParam.escape;
   }
   parse(fileline: Fileline): RowSplitResult {
-    if (fileline === "") {
+    if (fileline.length ===0 ||(this.conv.parseParam.ignoreEmpty && fileline.trim().length===0) ) {
       return { cells: [], closed: true };
     }
     const quote = this.quote;
@@ -172,6 +172,9 @@ export class RowSplit {
     while (lines.length) {
       const line = left + lines.shift();
       const row = this.parse(line);
+      if (row.cells.length === 0 && this.conv.parseParam.ignoreEmpty){
+        continue;
+      }
       if (row.closed || this.conv.parseParam.alwaysSplitAtEOL) {
         if (this.conv.parseRuntime.selectedColumns) {
           csvLines.push(filterArray(row.cells, this.conv.parseRuntime.selectedColumns));

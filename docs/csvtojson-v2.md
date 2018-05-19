@@ -6,7 +6,6 @@
 * [Add asynchronous line by line processing support](#add-asynchronous-json-result-processing-support)
 * [Built-in TypeScript support](#built-in-typescript-support)
 * [Output format options](#output-format-options)
-* [Background Processing](#background-processing)
 * [Async Hooks Support](#async-hooks-support)
 * [Performance Improvement](#performance-improvement)
 
@@ -14,7 +13,7 @@
 
 * [Dropped support to node.js<4](#dropped-support-to-nodejs4)
 * ['csv', 'json', 'record_parsed', 'end_parsed' events were replaced by .subscribe and .then](##csv-json-record_parsed-end_parsed-events-were-replaced-by-subscribe-and-then)
-* [Worker Process is replaced by background parsing (fork)](#worker-process-is-replaced-by-background-parsing-fork)
+* [Worker has been removed](#worker-has-been-removed)
 * [fromFile / fromStream / fromString will not accept callback. Use .then instead](#fromfile--fromstream--fromstring-will-not-accept-callback-use-then-instead)
 * [ignoreColumns and includeColumns accepts only RegExp now](#ignorecolumns-and-includecolumns-accepts-only-regexp-now)
 * [.transf is removed](#transf-is-removed)
@@ -22,6 +21,7 @@
 * [removed toArrayString parameter](#removed-toarraystring-parameter)
 * [line number now starts from 0 instead of 1](#line-number-now-starts-from-0-instead-of-1)
 * [Moved Converter constructor.](#moved-converter-constructor)
+* [end event will not emit if no downstream](#end-event-will-not-emit-if-no-downstream)
 
 # Features
 
@@ -113,16 +113,7 @@ result= await csv({output:"line",noheader: true}).fromString(csvStr);
  */
 
 ```
-## background processing
 
-```js
-// blocking master process which is potentially running webserver.
-const result=await csv().fromFile(bigCsvFile);
-
-// Using backgroudn process (child process) to  process data. Use minimum master process CPU.
-const result=await csv({fork:true}).fromFile(bigCsvFile);
-
-```
 
 ## Async Hooks support
 
@@ -199,23 +190,12 @@ const jsonArray=await csv().fromString(myCSV);  // async /await
 ```
 
 
-## Worker Process is replaced by background parsing (fork)
+## Worker has been removed
 
-The more we use the worker feature the more we found node.js does not really need this feature. Because majority use case of this parser is on a (web) server, we care more about simultaneous parsing and non-blocking parsing. Furthermore, the serialize  / deserialize of communication between processes become very costy.
+Worker feature makes sense to Command Line where it could utilize multiple CPU cores to speed up processing large csv file. However, it does not quite work as expected mainly because cooperation of multiple processes' result is very complex. Also the inter process communication adds too much overhead which minimize the benefit gained from spawning workers.
 
-Thus we decided to remove the worker process but keep the `fork` feature which allows csv parsing happening in another process.
+Thus in verions `2.0.0` I decided to temporarily remove `Worker` feature and will re-think how to better utilize multiple CPU Cores.
 
-For example, if we have 48 cpus / cores
-
-**Before**
-
-We can use 48 Cores to parse 1 large csv file at a time.
-
-**After**
-
-We can parse (theoretically) 48 large csv files in parallel.
-
-Also background parsing does not support hooks for the moment. This caveat will be addressed in future.
 
 ## fromFile / fromStream / fromString will not accept callback. Use `.then` instead
 
@@ -309,21 +289,14 @@ this feature is mostly not used.
 first row in csv now is always indexed as 0 -- no matter it is header row or not.
 
 
-## Moved Converter constructor.
+## end event will not emit if no downstream
 
-The construct function returned by `require("csvtojson")` does not have `.Converter` exposed anymore. Use `require("csvtojson/v2/Converter")` instead.
-
-**Before**
+The definition of [end event](https://nodejs.org/api/stream.html#stream_event_end) is when there is no more data to be consumed from the stream. Thus it will not emit if there is no downstream after the parser. To subscribe the parsing finish, use `done` event instead.
 
 ```js
-var Converter=require("csvtojson").Converter;
-var conv=new Converter();
+// before
+csv().on("end",()=>{})
+
+// now
+csv().on("done",()=>{})
 ```
-
-**After**
-
-```js
-var Converter=require("csvtojson/v2/Converter");
-var conv=new Converter();
-```
-

@@ -1,19 +1,18 @@
 [![Build Status](https://travis-ci.org/Keyang/node-csvtojson.svg?branch=master)](https://travis-ci.org/Keyang/node-csvtojson)
-[![Coverage Status](https://coveralls.io/repos/github/Keyang/node-csvtojson/badge.svg?branch=v2)](https://coveralls.io/github/Keyang/node-csvtojson?branch=v2)
+[![Coverage Status](https://coveralls.io/repos/github/Keyang/node-csvtojson/badge.svg?branch=master)](https://coveralls.io/github/Keyang/node-csvtojson?branch=master)
 
 # CSVTOJSON
 
 `csvtojson` module is a comprehensive nodejs csv parser to convert csv to json or column arrays. It can be used as node.js library / command line tool / or in browser. Below are some features:
 
 * Large csv file parsing with low memory (stream support)
-* ES6 / ES7 / TypeScript support
+* Node.JS / Browser (with WebPack) support
 * Easy to use yet abundant API / parameters
 * Commandline tool
-* Multiple output format support -- json / csv / lines
+* Multiple output format -- json / csv / lines
 * Error handling
-* Non-blocking parsing
-* [Extremely fast](https://github.com/Keyang/node-csvtojson/blob/master/docs/performance.md): **4 - 6 times faster** than other csv parsers
-* Support node.js 4+ to latest
+* [Extremely fast](https://github.com/Keyang/node-csvtojson/blob/master/docs/performance.md) -- targeting on millions of lines csv data
+* node.js 4+ to latest
 
 # Donation
 
@@ -36,9 +35,10 @@ Thank you again.
 It is still able to use v1 with `csvtojson@2.0.0`
 
 ```js
+// v1
 const csvtojsonV1=require("csvtojson/v1");
+// v2
 const csvtojsonV2=require("csvtojson");
-// OR
 const csvtojsonV2=require("csvtojson/v2");
 
 ```
@@ -63,27 +63,7 @@ const csvtojsonV2=require("csvtojson/v2");
 npm i --save csvtojson
 ```
 
-### From CSV String
-
-```js
-/**
-csvStr:
-1,2,3
-4,5,6
-7,8,9
-*/
-const csv=require('csvtojson')
-csv({noheader:true})
-.fromString(csvStr)
-.on('csv',(csvRow)=>{ // this func will be called 3 times
-	console.log(csvRow) // => [1,2,3] , [4,5,6]  , [7,8,9]
-})
-.on('done',()=>{
-	//parsing finished
-})
-```
-
-### From CSV File
+### From CSV File to JSON Array
 
 ```js
 /** csv file
@@ -95,36 +75,44 @@ const csvFilePath='<path to csv file>'
 const csv=require('csvtojson')
 csv()
 .fromFile(csvFilePath)
-.on('json',(jsonObj)=>{
-	// combine csv header row and csv line to a json object
-	// jsonObj.a ==> 1 or 4
+.then((jsonObj)=>{
+	console.log(jsonObj);
+	/**
+	 * [
+	 * 	{a:"1", b:"2", c:"3"},
+	 * 	{a:"4", b:"5". c:"6"}
+	 * ]
+	 */ 
 })
-.on('done',(error)=>{
-	console.log('end')
-})
+
+// Async / await usage
+const jsonArray=await csv().fromFile(csvFilePath);
 
 ```
 
-Note that `.fromFile(filePath[ ,cb ,options])` takes an `options` parameter which will be passed to `fs.createReadStream()`. See [here](https://nodejs.org/dist/latest-v6.x/docs/api/fs.html#fs_fs_createreadstream_path_options) for docs.
-
-### From CSV Stream
+### From CSV String to CSV Row
 
 ```js
-//const csvReadStream -- Readable stream for csv source
+/**
+csvStr:
+1,2,3
+4,5,6
+7,8,9
+*/
 const csv=require('csvtojson')
-
-csv()
-.fromStream(csvReadStream)
-.on('csv',(csvRow)=>{
-	// csvRow is an array
+csv({
+	noheader:true,
+	output: "csv"
 })
-.on('done',(error)=>{
-
+.fromString(csvStr)
+.then((csvRow)=>{ 
+	console.log(csvRow) // => [["1","2","3"], ["4","5","6"], ["7","8","9"]]
 })
 
 ```
 
-### From CSV Url
+
+### Asynchronously process each line from csv url
 
 ```js
 const request=require('request')
@@ -132,16 +120,15 @@ const csv=require('csvtojson')
 
 csv()
 .fromStream(request.get('http://mywebsite.com/mycsvfile.csv'))
-.on('csv',(csvRow)=>{
-	// csvRow is an array
-})
-.on('done',(error)=>{
-
-})
+.subscribe((json)=>{
+	return new Promise((resolve,reject)=>{
+		// long operation for each json e.g. transform / write into database.
+	})
+},onError,onComplete);
 
 ```
 
-### Convert to CSV row arrays with csv header row
+### Convert to CSV lines
 
 ```js
 /**
@@ -152,38 +139,16 @@ a,b,c
 */
 
 const csv=require('csvtojson')
-csv()
+csv({output:"line"})
 .fromString(csvStr)
-.on('csv',(csvRow)=>{ //this func will be called twice. Header row will not be populated
-	// csvRow =>  [1,2,3] and [4,5,6]
-})
-.on('done',()=>{
-	console.log('end')
+.subscribe((csvLine)=>{ 
+	// csvLine =>  "1,2,3" and "4,5,6"
 })
 ```
 
-### Convert to JSON without csv header row
 
-```js
-/**
-csvStr:
-1,2,3
-4,5,6
-7,8,9
-*/
 
-const csv=require('csvtojson')
-csv({noheader:true})
-.fromString(csvStr)
-.on('json',(json)=>{ //this func will be called 3 times
-	// json.field1 => 1,4,7
-	// json.field2 => 2,5,8
-	// json.field3 => 3,6,9
-})
-.on('done',()=>{
-	console.log('end')
-})
-```
+To find more detailed usage, please see [API](#api) section
 
 ## Command Line Usage
 
@@ -208,12 +173,6 @@ Convert csv file and save result to json file:
 $ csvtojson source.csv > converted.json
 ```
 
-Use multiple cpu-cores:
-
-```
-$ csvtojson --workerNum=4 source.csv > converted.json
-```
-
 Pipe in csv data:
 
 ```
@@ -228,15 +187,8 @@ $ csvtojson
 
 # API
 
-```js
-const csv=require('csvtojson')
-const converter=csv(params) //params see below Parameters section
-
-```
-
-In above, `converter` is an instance of Converter which is a subclass of node.js `Transform` class.
-
 * [Parameters](#parameters)
+* [Asynchronouse Result Process](#asynchronouse-result-process)
 * [Events](#events)
 * [Hook / Transform](#hook--transform)
 * [Nested JSON Structure](#nested-json-structure)
@@ -270,13 +222,13 @@ const converter=csv({
 ```
 Following parameters are supported:
 
+* **output**: The format to be converted to. "json" (default) -- convert csv to json. "csv" -- convert csv to csv row array. "line" -- convert csv to csv line string  
 * **delimiter**: delimiter used for seperating columns. Use "auto" if delimiter is unknown in advance, in this case, delimiter will be auto-detected (by best attempt). Use an array to give a list of potential delimiters e.g. [",","|","$"]. default: ","
 * **quote**: If a column contains delimiter, it is able to use quote character to surround the column content. e.g. "hello, world" wont be split into two columns while parsing. Set to "off" will ignore all quotes. default: " (double quote)
 * **trim**: Indicate if parser trim off spaces surrounding column content. e.g. "  content  " will be trimmed to "content". Default: true
 * **checkType**: This parameter turns on and off whether check field type. Default is false. (The default is `true` if version < 1.1.4)
-* **toArrayString**: Stringify the stream output to JSON array. This is useful when pipe output to a file which expects stringified JSON array. default is false and only stringified JSON (without []) will be pushed to downstream.
 * **ignoreEmpty**: Ignore the empty value in CSV columns. If a column value is not given, set this to true to skip them. Default: false.
-* **workerNum**: Number of worker processes. The worker process will use multi-cores to help process CSV data. Set to number of Core to improve the performance of processing large csv file. Keep 1 for small csv files. Default 1.
+* **fork (experimental)**: Fork another process to parse the CSV stream. It is effective if many concurrent parsing sessions for large csv files. Default: false
 * **noheader**:Indicating csv data has no header row and first row is data row. Default is false. See [header row](#header-row)
 * **headers**: An array to specify the headers of CSV data. If --noheader is false, this value will override CSV header row. Default: null. Example: ["my field","name"]. See [header row](#header-row)
 * **flatKeys**: Don't interpret dots (.) and square brackets in header fields as nested object or array identifiers at all (treat them like regular characters for JSON field identifiers). Default: false.
@@ -284,12 +236,33 @@ Following parameters are supported:
 * **checkColumn**: whether check column number of a row is the same as headers. If column number mismatched headers number, an error of "mismatched_column" will be emitted.. default: false
 * **eol**: End of line character. If omitted, parser will attempt to retrieve it from the first chunks of CSV data.
 * **escape**: escape character used in quoted column. Default is double quote (") according to RFC4108. Change to back slash (\\) or other chars for your own case.
-* **includeColumns**: This parameter instructs the parser to include only those columns as specified by an array of column indexes or header names.  Example: [0,2,3,"name"] will parse and include only columns 0, 2, 3, and column with header "name" in the JSON output.
-* **ignoreColumns**: This parameter instructs the parser to ignore columns as specified by an array of column indexes or header names.  Example: [1,3,5,"title","age"] will ignore columns 1, 3, 5, title column and age column and will not return them in the JSON output.
-* **colParser**: Allows override parsing logic for a specific column. It accepts a JSON object with fields like: `headName: <String | Function>` . e.g. {field1:'number'} will use built-in number parser to convert value of the `field1` column to number. Another example {"name":nameProcessFunc} will use specified function to parse the value. See [details below](#column-parser)
+* **includeColumns**: This parameter instructs the parser to include only those columns as specified by the regular expression. Example: /(name|age)/ will parse and include columns whose header contains "name" or "age"
+* **ignoreColumns**: This parameter instructs the parser to ignore columns as specified by the regular expression. Example: /(name|age)/ will ignore columns whose header contains "name" or "age"
+* **colParser**: Allows override parsing logic for a specific column. It accepts a JSON object with fields like: `headName: <String | Function | ColParser>` . e.g. {field1:'number'} will use built-in number parser to convert value of the `field1` column to number. For more information See [details below](#column-parser)
 * **alwaysSplitAtEOL**: Always interpret each line (as defined by `eol`) as a row. This will prevent `eol` characters from being used within a row (even inside a quoted field). This ensures that misplaced quotes only break on row, and not all ensuing rows.
 
 All parameters can be used in Command Line tool.
+
+## Asynchronouse Result Process
+
+Since `v2.0.0`, asynchronouse processing has been fully supported.
+
+e.g. Process each JSON result asynchronousely.
+
+```js
+csv().fromFile(csvFile)
+.subscribe((json)=>{
+	return new Promise((resolve,reject)=>{
+		// Async operation on the json
+		// dont forget to call resolve and reject
+	})
+})
+```
+For more details please read:
+
+* [Add Promise and Async / Await support](https://github.com/Keyang/node-csvtojson/blob/master/docs/csvtojson-v2.md#add-promise-and-async--await-support)
+* [Add asynchronous line by line processing support](https://github.com/Keyang/node-csvtojson/blob/master/docs/csvtojson-v2.md#add-asynchronous-json-result-processing-support)
+* [Async Hooks Support](https://github.com/Keyang/node-csvtojson/blob/master/docs/csvtojson-v2.md#async-hooks-support)
 
 
 ## Events
@@ -298,7 +271,7 @@ All parameters can be used in Command Line tool.
 
 ### header
 
-`header` event is emitted for each CSV file. It passes an array object which contains the names of the header row.
+`header` event is emitted for each CSV file once. It passes an array object which contains the names of the header row.
 
 ```js
 const csv=require('csvtojson')
@@ -310,41 +283,9 @@ csv()
 
 `header` is always an array of strings without types.
 
-`header` event will be emitted regardless of the `noHeaders` parameter setting.
-
-### json
-
-`json` event is emitted for each parsed CSV line. It passes JSON object and the row number of the CSV line in its callback function.
-
-```js
-const csv=require('csvtojson')
-csv()
-.on('json',(jsonObj, rowIndex)=>{
-	//jsonObj=> {header1:cell1,header2:cell2}
-	//rowIndex=> number
-})
-```
-
-### csv
-
-`csv` event is emitted for each CSV line. It passes an array object which contains cells content of one csv row.
-
-```js
-const csv=require('csvtojson')
-csv()
-.on('csv',(csvRow, rowIndex)=>{
-	//csvRow=> [cell1, cell2, cell3]
-	//rowIndex=> number
-})
-```
-
-`csvRow` is always an array of strings without types.
-
-`csv` event is the fastest parse event while `json` and `data` event is about 2 times slower. Thus if `csv` is enough, for best performance, just use it without `json` and `data` event.
-
 ### data
 
-`data` event is emitted for each parsed CSV line. It passes buffer of strigified JSON unless `objectMode` is set true in stream option.
+`data` event is emitted for each parsed CSV line. It passes buffer of strigified JSON in [ndjson format](http://ndjson.org/) unless `objectMode` is set true in stream option.
 
 ```js
 const csv=require('csvtojson')
@@ -366,39 +307,14 @@ csv()
 })
 ```
 
-Note that if `error` being emitted, the process will stop as node.js will automatically `unpipe()` upper-stream and chained down-stream<sup>1</sup>. This will cause `end` / `end_parsed` event never being emitted because `end` event is only emitted when all data being consumed <sup>2</sup>.
+Note that if `error` being emitted, the process will stop as node.js will automatically `unpipe()` upper-stream and chained down-stream<sup>1</sup>. This will cause `end` event never being emitted because `end` event is only emitted when all data being consumed <sup>2</sup>. If need to know when parsing finished, use `done` event instead of `end`.
 
 1. [Node.JS Readable Stream](https://github.com/nodejs/node/blob/master/lib/_stream_readable.js#L572-L583)
 2. [Writable end Event](https://nodejs.org/api/stream.html#stream_event_end)
 
-### record_parsed
-
-`record_parsed` event is emitted for each parsed CSV line. It is combination of `json` and `csv` events. For better performance, try to use `json` and `csv` instead.
-
-```js
-const csv=require('csvtojson')
-csv()
-.on('record_parsed',(jsonObj, row, index)=>{
-})
-```
-### end
-
-`end` event is emitted when all CSV lines being parsed.
-
-### end_parsed
-
-`end_parsed` event is emitted when all CSV lines being parsed. The only difference between `end_parsed` and `end` events is `end_parsed` will pass in a JSON array which contains all JSON objects. For better performance, try to use `end` event instead.
-
-```js
-const csv=require('csvtojson')
-csv()
-.on('end_parsed',(jsonArrObj)=>{
-})
-```
-
 ### done
 
-`done` event is emitted either after `end` or `error`. This indicates the processor has stopped.
+`done` event is emitted either after parsing successfully finished or any error happens. This indicates the processor has stopped.
 
 ```js
 const csv=require('csvtojson')
@@ -414,24 +330,35 @@ if any error during parsing, it will be passed in callback.
 
 ### Raw CSV Data Hook
 
+the hook -- `preRawData` will be called with csv string passed to parser.
+
 ```js
 const csv=require('csvtojson')
+// synchronouse
 csv()
-.preRawData((csvRawData,cb)=>{
-	var newData=csvRawData.replace('some value','another value')
-	cb(newData);
+.preRawData((csvRawData)=>{
+	var newData=csvRawData.replace('some value','another value');
+	return newData;
 })
-.on('json',(jsonObj)=>{
 
-});
+// asynchronouse
+csv()
+.preRawData((csvRawData)=>{
+	return new Promise((resolve,reject)=>{
+		var newData=csvRawData.replace('some value','another value');
+		resolve(newData);
+	})
+	
+})
 ```
-
-the function in `preRawData` will be called directly with the string from upper stream.
 
 ### CSV File Line Hook
 
+the function is called each time a file line has been parsed in csv stream. the `lineIdx` is the file line number in the file starting with 0. 
+
 ```js
 const csv=require('csvtojson')
+// synchronouse
 csv()
 .preFileLine((fileLineString, lineIdx)=>{
 	if (lineIdx === 2){
@@ -439,37 +366,44 @@ csv()
 	}
 	return fileLineString
 })
-.on('json',(jsonObj)=>{
 
-});
+// asynchronouse
+csv()
+.preFileLine((fileLineString, lineIdx)=>{
+	return new Promise((resolve,reject)=>{
+			// async function processing the data.
+	})
+	
+	
+})
 ```
 
-the function is called each time a file line being found in csv stream. the `lineIdx` is the file line number in the file. The function should return a string to processor.
 
 
 ### Result transform
 
+To transform result that is sent to downstream, use `.subscribe` method for each json populated.
+
 ```js
 const csv=require('csvtojson')
 csv()
-.transf((jsonObj,csvRow,index)=>{
+.subscribe((jsonObj,index)=>{
 	jsonObj.myNewKey='some value'
+	// OR asynchronousely
+	return new Promise((resolve,reject)=>{
+		jsonObj.myNewKey='some value';
+		resolve();
+	})
 })
-.on('json',(jsonObj)=>{
+.on('data',(jsonObj)=>{
 	console.log(jsonObj.myNewKey) // some value
 });
 ```
 
-`Transform` happens after CSV being parsed before result being emitted or pushed to downstream. This means if `jsonObj` is changed, the corresponding field in `csvRow` will not change. Vice versa. The events will emit changed value and downstream will receive changed value.
-
-`Transform` will cause some performance panelties because it voids optimisation mechanism. Try to use Node.js `Transform` class as downstream for transformation instead.
-
-
-
 
 ## Nested JSON Structure
 
-One of the powerful feature of `csvtojson` is the ability to convert csv line to a nested JSON by correctly defining its csv header row. This is default out-of-box feature.
+`csvtojson` is able to convert csv line to a nested JSON by correctly defining its csv header row. This is default out-of-box feature.
 
 Here is an example. Original CSV:
 
@@ -521,9 +455,9 @@ Using csvtojson to convert, the result would be like:
 }]
 ```
 
-### No nested JSON
+### Flat Keys
 
-In case to not produce nested JSON, simply set `flatKeys:true` in parameters.
+In order to not produce nested JSON, simply set `flatKeys:true` in parameters.
 
 ```js
 /**
@@ -533,7 +467,7 @@ a.b,a.c
 */
 csv({flatKeys:true})
 .fromString(csvStr)
-.on('json',(jsonObj)=>{
+.subscribe((jsonObj)=>{
 	//{"a.b":1,"a.c":2}  rather than  {"a":{"b":1,"c":2}}
 });
 
@@ -571,45 +505,13 @@ csv({
 
 ```
 
-## Multi CPU Core Support
-
-This is an experimental feature.
-
-`csvtojson` has built-in workers to allow CSV parsing happening on another process and leave Main Process non-blocked. This is very useful when dealing with large csv data on a webserver so that parsing CSV will not block the entire server due to node.js being single threaded.
-
-It is also useful when dealing with tons of CSV data on command line. Multi-CPU core support will dramatically reduce the time needed.
-
-
-To enable multi-cpu core, simply do:
-
-```js
-csv({
-	workerNum:4  // workerNum>=1
-})
-```
-
-or in command line:
-
-```
-$ csvtojson --workerNum=4
-```
-
-This will create 3 extra workers. Main process will only be used for delegating data / emitting result / pushing to downstream. Just keep in mind, those operations on Main process are not free and it will still take a certain amount CPU time.
-
-See [here](https://github.com/Keyang/node-csvtojson/blob/master/docs/performance.md#cpu-usage-leverage) for how `csvtojson` leverages CPU usage when using multi-cores.
-
-### Limitations
-
-There are some limitations when using multi-core feature:
-
-* Does not support if a column contains line break.
-* Cannot use `function` in `colParser` parameter as worker process wont be able to access the function.
-
 ## Column Parser
 
-Although `csvtojson` has a bunch of built in parameters, it will not cover all the edge cases. `Column Parser` allows developers using specified parser for a specified column. 
+`Column Parser` allows writing a custom parser for a column in CSV data. 
 
-Differ from `transform` which works on output json of the parser, `colParser` will override existing parsing logic of your own to construct json result (which may be `transform` after that). 
+**What is Column Parser**
+
+When `csvtojson` walks through csv data, it converts value in a cell to something else. For example, if `checkType` is `true`, `csvtojson` will attempt to find a proper type parser according to the cell value. That is, if cell value is "5", a `numberParser` will be used and all value under that column will use the `numberParser` to transform data.
 
 ### Built-in parsers
 
@@ -636,14 +538,14 @@ csv({
 	checkType:true
 })
 .fromString(csvString)
-.on("json",(jsonObj)=>{
+.subscribe((jsonObj)=>{
 	//jsonObj: {column2:"1234"}
 })
 ```
 
-### Custom parsers
+### Custom parsers function
 
-Sometimes, developers need to define custom parser. It is able to pass a function to specific column in `colParser`.
+Sometimes, developers want to define custom parser. It is able to pass a function to specific column in `colParser`.
 
 Example:
 
@@ -670,25 +572,31 @@ csv({
 
 Above example will convert `birthday` column into a js `Date` object.
 
-the returned value will be used in result JSON object. returning `undefined` will not change result JSON object. You can do following:
+the returned value will be used in result JSON object. returning `undefined` will not change result JSON object. 
+
+### Flat key column
+
+It is also able to mark a column as `flat`:
 
 ```js
-/*csv data
-user.name, birthday
-Joe, 1970-01-01
+
+/*csv string
+person.comment,person.number
+hello,1234
 */
 csv({
 	colParser:{
-		"user.name":function(item, head, resultRow, row , colIdx){
-			resultRow[head]=item;
+		"person.number":{
+			flat:true,
+			cellParser: "number" // string or a function 
 		}
 	}
 })
-
+.fromString(csvString)
+.subscribe((jsonObj)=>{
+	//jsonObj: {"person.number":1234,"person":{"comment":"hello"}}
+})
 ```
-
-without the parser the json is like {user:{name:Joe}}, with the parser the json is like {"user.name":Joe}
-
 
 
 # Contribution 
@@ -706,6 +614,8 @@ without the parser the json is like {user:{name:Joe}}, with the parser the json 
 Thanks all the [contributors](https://github.com/Keyang/node-csvtojson/graphs/contributors)
 
 # Change Log
+
+##
 
 ## 1.1.7
 

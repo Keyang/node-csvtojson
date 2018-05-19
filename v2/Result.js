@@ -48,6 +48,7 @@ var Result = /** @class */ (function () {
                         resolve();
                     }
                 });
+                // resolve();
             }
             else {
                 _this.appendFinalResult(resultLines);

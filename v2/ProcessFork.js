@@ -95,6 +95,7 @@ var ProcessorFork = /** @class */ (function (_super) {
         this.childProcess.stdout.on("data", function (data) {
             // console.log("stdout", data.toString());
             var res = data.toString();
+            // console.log(res);
             _this.appendBuf(res);
         });
         this.childProcess.stderr.on("data", function (data) {
@@ -120,17 +121,18 @@ var ProcessorFork = /** @class */ (function (_super) {
         else {
             this.leftChunk = "";
         }
-        while (list.length) {
-            var item = list.shift() || "";
-            if (item.length === 0) {
-                continue;
-            }
-            if (this.params.output !== "line") {
-                item = JSON.parse(item);
-            }
-            this.resultBuf.push(item);
-            counter++;
-        }
+        this.resultBuf = this.resultBuf.concat(list);
+        // while (list.length) {
+        //   let item = list.shift() || "";
+        //   if (item.length === 0 ) {
+        //     continue;
+        //   }
+        //   // if (this.params.output !== "line") {
+        //   //     item = JSON.parse(item);
+        //   // }
+        //   this.resultBuf.push(item);
+        //   counter++;
+        // }
         // console.log("buf length",this.resultBuf.length);
     };
     ProcessorFork.prototype.process = function (chunk) {

@@ -14,11 +14,11 @@ import { Result } from "./Result";
 import CSVError from "./CSVError";
 import { bufFromString } from "./util";
 export class Converter extends Transform {
-  preRawData(onRawData: PreRawDataCallback):Converter {
+  preRawData(onRawData: PreRawDataCallback): Converter {
     this.runtime.preRawDataHook = onRawData;
     return this;
   }
-  preFileLine(onFileLine: PreFileLineCallback):Converter {
+  preFileLine(onFileLine: PreFileLineCallback): Converter {
     this.runtime.preFileLineHook = onFileLine;
     return this;
   }
@@ -105,21 +105,21 @@ export class Converter extends Transform {
     this.params = mergeParams(param);
     this.runtime = initParseRuntime(this);
     this.result = new Result(this);
-    if (this.params.fork) {
-      this.processor = new ProcessorFork(this);
-    } else {
-      this.processor = new ProcessorLocal(this);
-    }
+    // if (this.params.fork) {
+    //   this.processor = new ProcessorFork(this);
+    // } else {
+    this.processor = new ProcessorLocal(this);
+    // }
     this.once("error", (err: any) => {
       // console.log("BBB");
-      
+
       setTimeout(() => {
         this.result.processError(err);
         this.emit("done", err);
-      },0);
+      }, 0);
 
     });
-    this.once("done",()=>{
+    this.once("done", () => {
       this.processor.destroy();
     })
 
@@ -128,8 +128,10 @@ export class Converter extends Transform {
   _transform(chunk: any, encoding: string, cb: Function) {
     this.processor.process(chunk)
       .then((result) => {
+        // console.log(result);
         if (result.length > 0) {
           this.runtime.started = true;
+
           return this.result.processResult(result);
         }
       })
@@ -145,18 +147,18 @@ export class Converter extends Transform {
   }
   _flush(cb: Function) {
     this.processor.flush()
-    .then((data)=>{
-      if (data.length>0){
-        
-        return this.result.processResult(data);
-      }
-    })
-    .then(()=>{
-      this.processEnd(cb);
-    },(err)=>{
-      this.emit("error",err);
-      cb();
-    })
+      .then((data) => {
+        if (data.length > 0) {
+
+          return this.result.processResult(data);
+        }
+      })
+      .then(() => {
+        this.processEnd(cb);
+      }, (err) => {
+        this.emit("error", err);
+        cb();
+      })
   }
   private processEnd(cb) {
     this.result.endProcess();

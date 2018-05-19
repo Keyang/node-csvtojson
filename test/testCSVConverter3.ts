@@ -200,4 +200,20 @@ describe("testCSVConverter3", function () {
         assert.equal(d[1].b,'5"');
       })
   })
+  it ("should allow ignoreEmpty with checkColumn",()=>{
+    return csv({
+      checkColumn:true,
+      ignoreEmpty: true
+    })
+    .fromString(`date,altitude,airtime
+    2016-07-08,2000,23
+    
+    2016-07-09,3000,43`)
+    .then((data)=>{
+
+    },(err)=>{
+      console.log(err);
+      assert(!err);
+    })
+  })
 });

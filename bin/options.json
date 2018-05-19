@@ -4,6 +4,10 @@
         "version": "Show version of current csvtojson"
     },
     "options": {
+        "--output":{
+            "desc": "The format to be converted to. \"json\" (default) -- convert csv to json. \"csv\" -- convert csv to csv row array. \"line\" -- convert csv to csv line string",
+            "type": "string"
+        },
         "--delimiter": {
             "desc": "delimiter to separate columns. Possible to give an array or just use 'auto'. default comma (,). e.g. --delimiter=# --delimiter='[\",\",\";\"]' --delimiter=auto",
             "type": "~object"
@@ -24,10 +28,6 @@
         "--ignoreEmpty": {
             "desc": "This parameter turns on and off whether ignore empty column values while parsing. default is false",
             "type": "boolean"
-        },
-        "--workerNum": {
-            "desc": "Number of worker processes. The worker process will use multi-cores to help process CSV data. Set to number of Core to improve the performance of processing large csv file. Keep 1 for small csv files. Default 1.",
-            "type": "number"
         },
         "--noheader": {
             "desc": "Indicating csv data has no header row and first row is data row. Default is false",
@@ -53,10 +53,6 @@
             "desc": "Explicitly specify the end of line character to use.",
             "type": "string"
         },
-        "--toArrayString": {
-            "desc": "Output result as JSON array. Default is true, set to false to output JSON objects (not array)",
-            "type": "boolean"
-        },
         "--quiet": {
             "desc": "If any error happens, quit the process quietly rather than log out the error. Default is false.",
             "type": "boolean"
@@ -66,16 +62,20 @@
             "type":"string"
         },
         "--ignoreColumns": {
-            "desc": "Columns to ignore on input. e.g. --ignoreColumns='[0,4,5, \"name\"]' ",
-            "type": "~object"
+            "desc": "RegExp matched columns to ignore from input. e.g. --ignoreColumns=/(name|age)/ ",
+            "type": "string"
         },
         "--includeColumns": {
-            "desc": "Columns to include on input. e.g. --includeColumns='[0,4,5, \"title\"]' ",
-            "type": "~object"
+            "desc": "RegExp matched columns to include from input. e.g. --includeColumns=/(name|age)/ ",
+            "type": "string"
         },
         "--colParser": {
             "desc": "Specific parser for columns. e.g. --colParser='{\"col1\":\"number\",\"col2\":\"string\"}'",
             "type": "~object"
+        },
+        "--alwaysSplitAtEOL":{
+            "desc": "Always interpret each line (as defined by eol) as a row. This will prevent eol characters from being used within a row (even inside a quoted field). This ensures that misplaced quotes only break on row, and not all ensuing rows.",
+            "type": "boolean"
         }
     },
     "examples": [
