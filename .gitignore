@@ -10,8 +10,10 @@ node_modules/
 pids
 logs
 results
-build
 graph.png
 .project
 .settings
 .vscode
+coverage/
+.nyc_output
+.coveralls.yml

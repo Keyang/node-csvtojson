@@ -244,7 +244,7 @@
       "hireable": null
     }
   ],
-  "version": "1.1.12",
+  "version": "2.0.0",
   "keywords": [
     "csv",
     "csv parser",
@@ -262,36 +262,50 @@
   },
   "license": "MIT",
   "engines": {
-    "node": ">=0.10"
+    "node": ">=4.0.0"
   },
   "devDependencies": {
-    "grunt": "^0.4.5",
-    "grunt-browserify": "^4.0.1",
-    "grunt-contrib-jshint": "^0.11.2",
-    "grunt-contrib-uglify": "^0.11.0",
-    "grunt-contrib-watch": "^1.0.1",
-    "grunt-git": "^0.3.5",
-    "grunt-madge": "0.0.6",
-    "grunt-mocha-test": "^0.12.7",
-    "grunt-newer": "^1.1.0",
-    "imgur": "^0.1.5",
-    "load-grunt-tasks": "^3.4.0",
+    "@types/bluebird": "^3.5.20",
+    "@types/mocha": "^5.2.0",
+    "@types/node": "^10.0.1",
+    "coveralls": "^3.0.1",
     "minimist": "^1.2.0",
     "mocha": "^5.1.1",
-    "request": "^2.81.0",
-    "sinon": "^3.2.3"
+    "nyc": "^11.7.3",
+    "sinon": "^3.2.3",
+    "ts-node": "^6.0.3",
+    "typescript": "^2.8.3"
   },
   "dependencies": {
+    "bluebird": "^3.5.1",
     "lodash": "^4.17.3",
     "strip-bom": "^2.0.0"
   },
+  "nyc": {
+    "extension": [
+      ".ts",
+      ".tsx"
+    ],
+    "include": [
+      "./src/**/*.ts"
+    ],
+    "all": true
+  },
   "scripts": {
-    "test": "mocha ./test -R spec",
-    "test-debug": "mocha debug ./test -R spec",
-    "test-all": "mocha  ./test -R spec && CSV_WORKER=3 mocha ./test -R spec "
+    "dev": "tsc -w",
+    "build": "rm -Rf ./v2 && tsc",
+    "test": "TS_NODE_CACHE=false mocha -r ts-node/register src/**/*.test.ts ./test/*.ts -R spec",
+    "travis": "nyc --reporter lcov mocha -r ts-node/register src/**/*.test.ts ./test/*.ts -R spec",
+    "test:debug": "mocha debug -r ts-node/register src/**/*.test.ts ./test/*.ts -R spec",
+    "test-all": "mocha  ./test -R spec && CSV_WORKER=3 mocha ./test -R spec ",
+    "test:unit": "mocha -r ts-node/register src/**/*.test.ts",
+    "test:all:debug": "mocha debug ./testNew -R spec",
+    "coverage": "nyc --reporter html  mocha -r ts-node/register src/**/*.test.ts ./test/*.ts -R spec",
+    "coveralls": "cat ./coverage/lcov.info | ./node_modules/.bin/coveralls"
   },
   "browser": {
     "child_process": false,
     "fs": false
-  }
+  },
+  "main": "./v2/index.js"
 }

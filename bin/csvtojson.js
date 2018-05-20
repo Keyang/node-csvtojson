@@ -1,12 +1,12 @@
 function csvtojson() {
-  var web = require("../libs/interfaces").web;
-  var Converter = require("../libs/core/Converter.js");
+  var Converter = require("../v2").Converter;
   var fs = require("fs");
   var options = require("./options.json");
   var cmds = options.commands;
   var opts = options.options;
   var exps = options.examples;
   var pkg = require("../package.json");
+  var os = require("os");
   /**
    *{
     "cmd": "parse", command to run
@@ -41,13 +41,14 @@ function csvtojson() {
     }
     process.exit(errno);
   }
-
+  function stringToRegExp(str) {
+    var lastSlash = str.lastIndexOf("/");
+    var source = str.substring(1, lastSlash);
+    var flag = str.substring(lastSlash + 1);
+    return new RegExp(source,flag);
+  }
   function parse() {
     var is = parsedCmd.inputStream;
-    parsedCmd.options.constructResult = false;
-    if (parsedCmd.options.toArrayString === undefined) {
-      parsedCmd.options.toArrayString = true;
-    }
     if (parsedCmd.options.maxRowLength === undefined) {
       parsedCmd.options.maxRowLength = 10240;
     }
@@ -55,10 +56,21 @@ function csvtojson() {
       console.log("Please specify csv file path or pipe the csv data through.\n");
       _showHelp(1);
     }
-    if (parsedCmd.options.delimiter === "\\t" ){
-      parsedCmd.options.delimiter="\t";
+    if (parsedCmd.options.delimiter === "\\t") {
+      parsedCmd.options.delimiter = "\t";
     }
+    if (parsedCmd.options.ignoreColumns) {
+      parsedCmd.options.ignoreColumns=stringToRegExp(parsedCmd.options.ignoreColumns);
+
+    }
+    if (parsedCmd.options.includeColumns) {
+      parsedCmd.options.includeColumns=stringToRegExp(parsedCmd.options.includeColumns);
+
+    }
+    console.log(process.pid);
+    parsedCmd.options.fork=true;
     var conv = new Converter(parsedCmd.options);
+    var isFirst = true;
     conv.on("error", function (err, pos) {
       if (!parsedCmd.options.quiet) {
         console.error("csvtojson got an error: ", err);
@@ -68,16 +80,22 @@ function csvtojson() {
         }
       }
       process.exit(1);
-    });
-    is.pipe(conv).pipe(process.stdout);
+    })
+      .on("data",function (dataStr) {
+        process.stdout.write((isFirst ? "" : "," + os.EOL) + dataStr);
+        isFirst = false;
+      })
+      .on("done", function () {
+        console.log(os.EOL + "]");
+      })
+    console.log("[");
+    is.pipe(conv);
     // is.pipe(conv);
   }
 
   function run(cmd, options) {
     if (cmd === "parse") {
       parse();
-    } else if (cmd === "startserver") {
-      web.startWebServer(options);
     } else if (cmd === "version") {
       console.log(pkg.version);
     } else {
