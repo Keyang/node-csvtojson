@@ -3,7 +3,7 @@
 [Features](#features)
 
 * [Add Promise and Async / Await support](#add-promise-and-async--await-support)
-* [Add asynchronous line by line processing support](#add-asynchronous-json-result-processing-support)
+* [Add asynchronous line by line processing support](#add-asynchronous-line-by-line-processing-supportt)
 * [Built-in TypeScript support](#built-in-typescript-support)
 * [Output format options](#output-format-options)
 * [Async Hooks Support](#async-hooks-support)
