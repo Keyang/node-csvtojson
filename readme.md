@@ -261,7 +261,7 @@ csv().fromFile(csvFile)
 For more details please read:
 
 * [Add Promise and Async / Await support](https://github.com/Keyang/node-csvtojson/blob/master/docs/csvtojson-v2.md#add-promise-and-async--await-support)
-* [Add asynchronous line by line processing support](https://github.com/Keyang/node-csvtojson/blob/master/docs/csvtojson-v2.md#add-asynchronous-json-result-processing-support)
+* [Add asynchronous line by line processing support](https://github.com/Keyang/node-csvtojson/blob/master/docs/csvtojson-v2.md#add-asynchronous-line-by-line-processing-support)
 * [Async Hooks Support](https://github.com/Keyang/node-csvtojson/blob/master/docs/csvtojson-v2.md#async-hooks-support)
 
 
