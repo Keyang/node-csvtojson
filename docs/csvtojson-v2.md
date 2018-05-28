@@ -12,7 +12,7 @@
 [Upgrade to v2](#upgrade-to-csvtojson-v2)
 
 * [Dropped support to node.js<4](#dropped-support-to-nodejs4)
-* ['csv', 'json', 'record_parsed', 'end_parsed' events were replaced by .subscribe and .then](##csv-json-record_parsed-end_parsed-events-were-replaced-by-subscribe-and-then)
+* ['csv', 'json', 'record_parsed', 'end_parsed' events were replaced by .subscribe and .then](#csv-json-record_parsed-end_parsed-events-were-replaced-by-subscribe-and-then)
 * [Worker has been removed](#worker-has-been-removed)
 * [fromFile / fromStream / fromString will not accept callback. Use .then instead](#fromfile--fromstream--fromstring-will-not-accept-callback-use-then-instead)
 * [ignoreColumns and includeColumns accepts only RegExp now](#ignorecolumns-and-includecolumns-accepts-only-regexp-now)
