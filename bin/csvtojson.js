@@ -67,8 +67,6 @@ function csvtojson() {
       parsedCmd.options.includeColumns=stringToRegExp(parsedCmd.options.includeColumns);
 
     }
-    console.log(process.pid);
-    parsedCmd.options.fork=true;
     var conv = new Converter(parsedCmd.options);
     var isFirst = true;
     conv.on("error", function (err, pos) {
