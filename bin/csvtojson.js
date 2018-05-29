@@ -80,7 +80,7 @@ function csvtojson() {
       process.exit(1);
     })
       .on("data",function (dataStr) {
-        process.stdout.write((isFirst ? "" : "," + os.EOL) + dataStr);
+        process.stdout.write((isFirst ? "" : "," + os.EOL) + dataStr.toString().substr(0,dataStr.length-1));
         isFirst = false;
       })
       .on("done", function () {
