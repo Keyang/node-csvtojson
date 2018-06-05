@@ -1,26 +1,22 @@
 [![Build Status](https://travis-ci.org/Keyang/node-csvtojson.svg?branch=master)](https://travis-ci.org/Keyang/node-csvtojson)
 [![Coverage Status](https://coveralls.io/repos/github/Keyang/node-csvtojson/badge.svg?branch=master)](https://coveralls.io/github/Keyang/node-csvtojson?branch=master)
+[![OpenCollective](https://opencollective.com/csvtojson/backers/badge.svg)](#backers) 
+[![OpenCollective](https://opencollective.com/csvtojson/sponsors/badge.svg)](#sponsors)
 
 # CSVTOJSON
 
 `csvtojson` module is a comprehensive nodejs csv parser to convert csv to json or column arrays. It can be used as node.js library / command line tool / or in browser. Below are some features:
 
-* Large csv file parsing with low memory (stream support)
-* Node.JS / Browser (with WebPack) support
-* Easy to use yet abundant API / parameters
-* Commandline tool
-* Multiple output format -- json / csv / lines
-* Error handling
-* [Extremely fast](https://github.com/Keyang/csvbench) -- targeting on millions of lines csv data
-* node.js 4+ to latest
+*  Strictly follow CSV definition [RF4180](https://www.loc.gov/preservation/digital/formats/fdd/fdd000323.shtml)
+*  Work with millions of lines of CSV data
+*  Provide comprehensive parsing parameters
+*  Provide out of box CSV parsing tool for Command Line
+*  Blazing fast -- [Focus on performance](https://github.com/Keyang/csvbench)
+*  Give flexibility to developer with 'pre-defined' helpers
+*  Allow async / streaming parsing
+*  Provide a csv parser for both Node.JS and browsers
+*  Easy to use API
 
-# Donation
-
-Very much appreciate your donation and support. 
-
-[![donate](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=DUBQLRPJADJFQ)
-
-Thank you again. 
 
 # csvtojson online 
 
@@ -48,7 +44,6 @@ const csvtojsonV2=require("csvtojson/v2");
 * [Quick Start](#quick-start)
 * [API](#api)
 * [Contribution](#contribution)
-* [Change Logs](#change-log)
 
 # Quick Start
 
@@ -598,8 +593,11 @@ csv({
 })
 ```
 
+# Contribution
 
-# Contribution 
+Very much appreciate any types of donation and support. 
+
+## Code
 
 `csvtojson` follows github convention for contributions. Here are some steps:
 
@@ -613,124 +611,17 @@ csv({
 
 Thanks all the [contributors](https://github.com/Keyang/node-csvtojson/graphs/contributors)
 
-# Change Log
+## Backers
 
-##
+Thank you to all our backers! [[Become a backer](https://opencollective.com/csvtojson#backer)]
 
-## 1.1.7
+[![OpenCollective](https://opencollective.com/csvtojson/backers.svg?width=890)](https://opencollective.com/csvtojson#backer)
 
-* add `colParser` parameter
-* fix bug that could cause utf-8 character broken
+## Sponsors
 
-## 1.1.5
+Thank you to all our sponsors! (please ask your company to also support this open source project by [becoming a sponsor](https://opencollective.com/csvtojson#sponsor))
 
-* `ignoreColumns` and `includeColumns` now allow put in header names and indecies.
-* only include `child_process` when multi worker is needed.
-* allow `fs.createReadStream` options being passed in through `fromFile` function
+## Paypal 
 
-## 1.1.4
+[![donate](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=DUBQLRPJADJFQ)
 
-* [Breaking Change!!] default value of `checkType` is now false as it causes problems on some csv docs.
-* Added ignoreColumns and includeColumns features. #138
-
-## 1.1.1
-
-* Fix bugs: preProcessLine is not emitted
-* Changed array definition in nested json structure to follow [lodash set] (https://lodash.com/docs/4.17.2#set)
-* Only use first line of csv body for type inference
-* added `done` event
-* added `hooks` section
-* removed `parserMgr`
-
-
-## 1.1.0
-
-* Remove support of `new Converter(true)`
-* Optimised Performance
-* Added new APIs
-
-Version 1.1.0 has added new features and optimised lib performance. It also introduced simpler APIs to use. Thus readme is re-written to adapt the preferred new APIs. The lib will support old APIs. To review the old readme please [click here](https://github.com/Keyang/node-csvtojson/blob/master/readme-old.md).
-
-* [Performance Optimisation](https://github.com/Keyang/node-csvtojson/blob/master/docs/performance.md#performance-optimisation): V1.1.0 is 30%-50% faster
-* Better error tolerance
-* Simplified API (see below)
-
-All changes are backward compatible.
-
-## 1.0.2
-* supported ndjson format as per #113 and #87
-* issue: #120
-
-## 1.0.0
-* Add [Stream Options](#stream-options)
-* Change version syntax to follow x.y.z
-
-## 0.5.12
-* Added support for scientific notation number support (#100)
-* Added "off" option to quote parameter
-
-## 0.5.4
-* Added new feature: accept special delimiter "auto" and array
-
-## 0.5.2
-
-* Changed type separator from # to #!
-* Fixed bugs
-
-## 0.5.0
-
-* Fixed some bugs
-* Performance improvement
-* **Implicity type for numbers now use RegExp:/^[-+]?[0-9]*\.?[0-9]+$/. Previously 00131 is a string now will be recognised as number type**
-* **If a column has no head, now it will use current column index as column name: 'field*'. previously parser uses a fixed index starting from 1. e.g. csv data: 'aa,bb,cc' with head 'a,b'. previously it will convert to {'a':'aa','b':'bb','field1':'cc'} and now it is {'a':'aa','b':'bb','field3':'cc'}**
-
-## 0.4.7
-* ignoreEmpty now ignores empty rows as well
-* optimised performance
-* added fromFile method
-
-## 0.4.4
-* Add error handling for corrupted CSV data
-* Exposed "eol" param
-
-## 0.4.3
-* Added header configuration
-* Refactored worker code
-* **Number type field now returns 0 if parseFloat returns NaN with the value of the field. Previously it returns original value in string.**
-
-## 0.4.0
-* Added Multi-core CPU support to increase performance
-* Added "fork" option to delegate csv converting work to another process.
-* Refactoring general flow
-
-## 0.3.21
-* Refactored Command Line Tool.
-* Added ignoreEmpty parameter.
-
-## 0.3.18
-* Fixed double qoute parse as per CSV standard.
-
-## 0.3.14
-* Added field type support
-* Fixed some minor bugs
-
-## 0.3.8
-* Empowered built-in JSON parser.
-* Change: Use JSON parser as default parser.
-* Added parameter trim in constructor. default: true. trim will trim content spaces.
-
-## 0.3.5
-* Added fromString method to support direct string input
-
-## 0.3.4
-* Added more parameters to command line tool.
-
-## 0.3.2
-* Added quote in parameter to support quoted column content containing delimiters
-* Changed row index starting from 0 instead of 1 when populated from record_parsed event
-
-## 0.3
-* Removed all dependencies
-* Deprecated applyWebServer
-* Added construct parameter for Converter Class
-* Converter Class now works as a proper stream object
