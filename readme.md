@@ -141,7 +141,18 @@ csv({output:"line"})
 })
 ```
 
+### Use Stream
 
+```js
+const csv=require('csvtojson');
+
+const readStream=require('fs').createReadStream(csvFilePath);
+
+const writeStream=request.put('http://mysite.com/obj.json');
+
+readStream.pipe(csv()).pipe(writeStream);
+
+```
 
 To find more detailed usage, please see [API](#api) section
 
