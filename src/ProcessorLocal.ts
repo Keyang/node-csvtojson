@@ -83,7 +83,7 @@ export class ProcessorLocal extends Processor {
     }
     // trim csv file has initial blank lines.
     if (params.ignoreEmpty && !runtime.started) {
-      csv = csv.trimLeft();
+      csv = csv.replace(/^\s+/, "");
     }
     const stringToLineResult = stringToLines(csv, runtime);
     if (!finalChunk) {

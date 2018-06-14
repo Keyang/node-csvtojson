@@ -55,7 +55,7 @@ module.exports = function rowSplit(rowStr, param) {
         quoteBuff += delimiter + e;
         quoteBuff = _escapeQuote(quoteBuff, quote, escape);
         if (trim) {
-          quoteBuff = quoteBuff.trimRight();
+          quoteBuff = quoteBuff.replace(/\s+$/, "");
         }
         row.push(quoteBuff);
         quoteBuff = "";

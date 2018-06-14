@@ -167,7 +167,7 @@ Converter.prototype.setPartialData = function (d) {
 Converter.prototype.processData = function (data, cb) {
   var params = this.param;
   if (params.ignoreEmpty && !params._headers) {
-    data = data.trimLeft();
+    data = data.replace(/^\s+/, "");
   }
   var eol = this.param.eol;
   var fileLines = fileline(data, this.param);

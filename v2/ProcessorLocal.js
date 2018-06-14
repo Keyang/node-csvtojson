@@ -116,7 +116,7 @@ var ProcessorLocal = /** @class */ (function (_super) {
         }
         // trim csv file has initial blank lines.
         if (params.ignoreEmpty && !runtime.started) {
-            csv = csv.trimLeft();
+            csv = csv.replace(/^\s+/, "");
         }
         var stringToLineResult = fileline_1.stringToLines(csv, runtime);
         if (!finalChunk) {
