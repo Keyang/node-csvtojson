@@ -46,8 +46,8 @@ describe("testCSVConverter3", function () {
       .subscribe(function (json) {
         assert.equal(typeof json.column1, "string");
         assert.equal(json.column5, "hello world");
-        assert.strictEqual(json["name#!"],false);
-        assert.strictEqual(json["column9"],true);
+        assert.strictEqual(json["name#!"], false);
+        assert.strictEqual(json["column9"], true);
       })
       .on('done', function () {
         done()
@@ -194,26 +194,38 @@ describe("testCSVConverter3", function () {
   "1","2","3"
   "fefe,5",6`)
       .then((d) => {
-        assert.equal(d[0].a,'"1"');
-        assert.equal(d[0].b,'"2"');
-        assert.equal(d[1].a,'"fefe');
-        assert.equal(d[1].b,'5"');
+        assert.equal(d[0].a, '"1"');
+        assert.equal(d[0].b, '"2"');
+        assert.equal(d[1].a, '"fefe');
+        assert.equal(d[1].b, '5"');
       })
   })
-  it ("should allow ignoreEmpty with checkColumn",()=>{
+  it("should allow ignoreEmpty with checkColumn", () => {
     return csv({
-      checkColumn:true,
+      checkColumn: true,
       ignoreEmpty: true
     })
-    .fromString(`date,altitude,airtime
+      .fromString(`date,altitude,airtime
     2016-07-08,2000,23
     
     2016-07-09,3000,43`)
-    .then((data)=>{
+      .then((data) => {
 
-    },(err)=>{
-      console.log(err);
-      assert(!err);
+      }, (err) => {
+        console.log(err);
+        assert(!err);
+      })
+  });
+  it("should allow quotes without content", () => {
+    const data = "a|^^|^b^";
+    return csv({
+      delimiter: '|',
+      quote: '^',
+      noheader: true,
     })
+      .fromString(data)
+      .then((jsonObj) => {
+        assert.equal(jsonObj[0].field2, "");
+      });
   })
 });

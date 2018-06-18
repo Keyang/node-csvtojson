@@ -17,3 +17,4 @@ graph.png
 coverage/
 .nyc_output
 .coveralls.yml
+.ts-node

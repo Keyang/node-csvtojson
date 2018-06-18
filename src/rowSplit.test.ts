@@ -106,5 +106,25 @@ describe("RowSplit.parse function", function () {
     assert.equal(res.closed, true);
     assert.equal(res.cells[2], 'csvtojson,a"\nwesome');
   });
+  it ("should allow blank quotes",()=>{
+    const data="a|^^|^b^";
+    
+    const rowSplit = new RowSplit(new Converter({
+      delimiter: '|',
+      quote: '^',
+      noheader: true
+    }));
+    const res=rowSplit.parse(data);
+    assert.equal(res.cells[1],"");
+  })
+  it ("should allow blank quotes in quotes",()=>{
+    const data='a,"hello,this,"", test"';
+    
+    const rowSplit = new RowSplit(new Converter({
+      noheader: true
+    }));
+    const res=rowSplit.parse(data);
+    assert.equal(res.cells[1],'hello,this,", test');
+  })
 
 });

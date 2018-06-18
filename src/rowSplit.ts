@@ -63,7 +63,10 @@ export class RowSplit {
       }
       const len = e.length;
       if (!inquote) {
-        if (this.isQuoteOpen(e)) { //quote open
+        if (len === 2 && e ===this.quote+this.quote){
+          row.push("");
+          continue;
+        }else if (this.isQuoteOpen(e)) { //quote open
           e = e.substr(1);
           if (this.isQuoteClose(e)) { //quote close
             e = e.substring(0, e.lastIndexOf(quote));
