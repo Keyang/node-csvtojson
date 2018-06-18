@@ -23,3 +23,15 @@ export function filterArray(arr: any[], filter: number[]): any[] {
   }
   return rtn;
 }
+
+export const trimLeft=String.prototype.trimLeft?function trimLeftNative(str:string){
+  return str.trimLeft();
+}:function trimLeftRegExp(str:string){
+  return str.replace(/^\s+/, "");
+}
+
+export const trimRight=String.prototype.trimRight?function trimRightNative(str:string){
+  return str.trimRight();
+}:function trimRightRegExp(str:string){
+  return str.replace(/\s+$/, "");
+}

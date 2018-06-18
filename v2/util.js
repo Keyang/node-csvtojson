@@ -26,4 +26,14 @@ function filterArray(arr, filter) {
     return rtn;
 }
 exports.filterArray = filterArray;
+exports.trimLeft = String.prototype.trimLeft ? function trimLeftNative(str) {
+    return str.trimLeft();
+} : function trimLeftRegExp(str) {
+    return str.replace(/^\s+/, "");
+};
+exports.trimRight = String.prototype.trimRight ? function trimRightNative(str) {
+    return str.trimRight();
+} : function trimRightRegExp(str) {
+    return str.replace(/\s+$/, "");
+};
 //# sourceMappingURL=util.js.map

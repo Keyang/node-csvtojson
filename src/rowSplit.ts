@@ -2,7 +2,7 @@ import { CSVParseParam } from "./Parameters";
 import { Converter } from "./Converter";
 import { Fileline } from "./fileline";
 import getEol from "./getEol";
-import { filterArray } from "./util";
+import { filterArray,trimLeft,trimRight } from "./util";
 
 const defaulDelimiters = [",", "|", "\t", ";", ":"];
 export class RowSplit {
@@ -59,7 +59,7 @@ export class RowSplit {
     for (let i = 0, rowLen = rowArr.length; i < rowLen; i++) {
       let e = rowArr[i];
       if (!inquote && trim) {
-        e = e.replace(/^\s+/, "");
+        e = trimLeft(e);
       }
       const len = e.length;
       if (!inquote) {
@@ -80,7 +80,7 @@ export class RowSplit {
           }
         } else {
           if (trim) {
-            e = e.replace(/\s+$/, "");
+            e = trimRight(e);
           }
           row.push(e);
           continue;
@@ -92,7 +92,7 @@ export class RowSplit {
           quoteBuff += delimiter + e;
           quoteBuff = this.escapeQuote(quoteBuff);
           if (trim) {
-            quoteBuff = quoteBuff.replace(/\s+$/, "");
+            quoteBuff = trimRight(quoteBuff);
           }
           row.push(quoteBuff);
           quoteBuff = "";
@@ -139,7 +139,7 @@ export class RowSplit {
     const quote = this.quote;
     const escape = this.escape;
     if (this.conv.parseParam.trim) {
-      str = str.replace(/\s+$/, "");
+      str = trimRight(str);
     }
     let count = 0;
     let idx = str.length - 1;

@@ -3,11 +3,13 @@ import P from "bluebird";
 import { prepareData } from "./dataClean";
 import getEol from "./getEol";
 import { stringToLines } from "./fileline";
-import { bufFromString, filterArray } from "./util";
+import { bufFromString, filterArray,trimLeft } from "./util";
 import { RowSplit } from "./rowSplit";
 import lineToJson from "./lineToJson";
 import { ParseRuntime } from "./ParseRuntime";
 import CSVError from "./CSVError";
+
+
 
 export class ProcessorLocal extends Processor {
   flush(): P<ProcessLineResult[]> {
@@ -83,7 +85,7 @@ export class ProcessorLocal extends Processor {
     }
     // trim csv file has initial blank lines.
     if (params.ignoreEmpty && !runtime.started) {
-      csv = csv.replace(/^\s+/, "");
+      csv = trimLeft(csv);
     }
     const stringToLineResult = stringToLines(csv, runtime);
     if (!finalChunk) {
