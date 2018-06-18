@@ -61,7 +61,7 @@ var RowSplit = /** @class */ (function () {
         for (var i = 0, rowLen = rowArr.length; i < rowLen; i++) {
             var e = rowArr[i];
             if (!inquote && trim) {
-                e = e.trimLeft();
+                e = e.replace(/^\s+/, "");
             }
             var len = e.length;
             if (!inquote) {
@@ -85,7 +85,7 @@ var RowSplit = /** @class */ (function () {
                 }
                 else {
                     if (trim) {
-                        e = e.trimRight();
+                        e = e.replace(/\s+$/, "");
                     }
                     row.push(e);
                     continue;
@@ -98,7 +98,7 @@ var RowSplit = /** @class */ (function () {
                     quoteBuff += delimiter + e;
                     quoteBuff = this.escapeQuote(quoteBuff);
                     if (trim) {
-                        quoteBuff = quoteBuff.trimRight();
+                        quoteBuff = quoteBuff.replace(/\s+$/, "");
                     }
                     row.push(quoteBuff);
                     quoteBuff = "";
@@ -145,7 +145,7 @@ var RowSplit = /** @class */ (function () {
         var quote = this.quote;
         var escape = this.escape;
         if (this.conv.parseParam.trim) {
-            str = str.trimRight();
+            str = str.replace(/\s+$/, "");
         }
         var count = 0;
         var idx = str.length - 1;

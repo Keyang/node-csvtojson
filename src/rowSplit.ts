@@ -59,7 +59,7 @@ export class RowSplit {
     for (let i = 0, rowLen = rowArr.length; i < rowLen; i++) {
       let e = rowArr[i];
       if (!inquote && trim) {
-        e = e.trimLeft();
+        e = e.replace(/^\s+/, "");
       }
       const len = e.length;
       if (!inquote) {
@@ -80,7 +80,7 @@ export class RowSplit {
           }
         } else {
           if (trim) {
-            e = e.trimRight();
+            e = e.replace(/\s+$/, "");
           }
           row.push(e);
           continue;
@@ -92,7 +92,7 @@ export class RowSplit {
           quoteBuff += delimiter + e;
           quoteBuff = this.escapeQuote(quoteBuff);
           if (trim) {
-            quoteBuff = quoteBuff.trimRight();
+            quoteBuff = quoteBuff.replace(/\s+$/, "");
           }
           row.push(quoteBuff);
           quoteBuff = "";
@@ -139,7 +139,7 @@ export class RowSplit {
     const quote = this.quote;
     const escape = this.escape;
     if (this.conv.parseParam.trim) {
-      str = str.trimRight();
+      str = str.replace(/\s+$/, "");
     }
     let count = 0;
     let idx = str.length - 1;
