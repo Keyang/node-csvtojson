@@ -244,7 +244,7 @@
       "hireable": null
     }
   ],
-  "version": "2.0.4",
+  "version": "2.0.5",
   "keywords": [
     "csv",
     "csv parser",
@@ -297,7 +297,7 @@
     "test": "rm -Rf .ts-node && TS_NODE_CACHE_DIRECTORY=.ts-node mocha -r ts-node/register src/**/*.test.ts ./test/*.ts -R spec",
     "travis": "nyc --reporter lcov mocha -r ts-node/register src/**/*.test.ts ./test/*.ts -R spec",
     "test:debug": "mocha debug -r ts-node/register src/**/*.test.ts ./test/*.ts -R spec",
-    "test:function":"mocha -r ts-node/register test/**/*.ts",
+    "test:function": "mocha -r ts-node/register test/**/*.ts",
     "test-all": "mocha  ./test -R spec && CSV_WORKER=3 mocha ./test -R spec ",
     "test:unit": "mocha -r ts-node/register src/**/*.ts",
     "test:all:debug": "mocha debug ./testNew -R spec",
