@@ -132,7 +132,6 @@ describe("RowSplit.parse function", function () {
       noheader: true
     }));
     const res = rowSplit.parse(data);
-    console.log(res);
     assert.equal(res.cells.length, 3);
     assert(res.closed);
     assert.equal(res.cells[0],'"Weight" (kg)');

@@ -73,12 +73,24 @@ export class RowSplit {
             e = this.escapeQuote(e);
             row.push(e);
             continue;
-          } else if (e.lastIndexOf(quote) !== 0) {
-            if (trim) {
-              e = trimRight(e);
+          } else if (e.indexOf(quote) !== -1) {
+            let count = 0;
+            for (const c of e) {
+              if (c === quote) {
+                count++;
+              }
             }
-            row.push(quote+e);
-            continue;
+            if (count % 2 === 1) {
+              if (trim) {
+                e = trimRight(e);
+              }
+              row.push(quote + e);
+              continue;
+            }else{
+              inquote = true;
+              quoteBuff += e;
+              continue;  
+            }
           }
           else {
             inquote = true;

@@ -77,12 +77,26 @@ var RowSplit = /** @class */ (function () {
                         row.push(e);
                         continue;
                     }
-                    else if (e.lastIndexOf(quote) !== 0) {
-                        if (trim) {
-                            e = util_1.trimRight(e);
+                    else if (e.indexOf(quote) !== -1) {
+                        var count = 0;
+                        for (var _i = 0, e_1 = e; _i < e_1.length; _i++) {
+                            var c = e_1[_i];
+                            if (c === quote) {
+                                count++;
+                            }
                         }
-                        row.push(quote + e);
-                        continue;
+                        if (count % 2 === 1) {
+                            if (trim) {
+                                e = util_1.trimRight(e);
+                            }
+                            row.push(quote + e);
+                            continue;
+                        }
+                        else {
+                            inquote = true;
+                            quoteBuff += e;
+                            continue;
+                        }
                     }
                     else {
                         inquote = true;
