@@ -13,7 +13,7 @@ import { ProcessorLocal } from "./ProcessorLocal";
 import { Result } from "./Result";
 import CSVError from "./CSVError";
 import { bufFromString } from "./util";
-export class Converter extends Transform {
+export class Converter extends Transform implements PromiseLike<Array<any>> {
   preRawData(onRawData: PreRawDataCallback): Converter {
     this.runtime.preRawDataHook = onRawData;
     return this;

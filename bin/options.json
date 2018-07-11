@@ -13,7 +13,7 @@
             "type": "~object"
         },
         "--quote": {
-            "desc": "quote surrounding a column content containing delimiters. default double quote (\"). e.g. --quote=# ",
+            "desc": "quote surrounding a column content containing delimiters. To turn off quote, please use 'off' --quote=off. default double quote (\"). e.g. chage to hash: --quote=# ",
             "type": "string"
         },
         "--trim": {

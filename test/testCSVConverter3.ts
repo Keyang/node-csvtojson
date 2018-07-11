@@ -228,4 +228,16 @@ describe("testCSVConverter3", function () {
         assert.equal(jsonObj[0].field2, "");
       });
   })
+  it("should parse header with quotes correctly", function () {
+    var testData = __dirname + "/data/csvWithUnclosedHeader";
+    return csv({
+      headers:["exam_date","sample_no","status","sample_type","patient_id","last_name","first_name","gender_of_patient","patient_birth_date","patient_note","patient_department","accession_number","sample_site","physician","operator","department","note","test_order_code","draw_time","approval_status","approval_time","report_layout","patient_account_number","none_1","errors_detected_during_measurement","age","error_code_01","weight","error_code_02","height","error_code_03","hcg_beta_p","error_code_04","troponin_i_p","error_code_05","ck_mb_p","error_code_06","d_dimer_p","error_code_07","hscrp_p","error_code_08","myoglobin_p","error_code_09","nt_probnp","error_code_10","crp","error_code_11","bnp","error_code_12","tnt","error_code_13","demo_p","error_code_14","pct","error_code_15"]
+    })
+    .fromFile(testData)
+    .then((d)=>{
+      assert.equal(d.length,2);
+      assert.equal(d[0].sample_no,"12669");
+    })
+    
+  });
 });

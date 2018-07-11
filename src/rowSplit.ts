@@ -2,7 +2,7 @@ import { CSVParseParam } from "./Parameters";
 import { Converter } from "./Converter";
 import { Fileline } from "./fileline";
 import getEol from "./getEol";
-import { filterArray,trimLeft,trimRight } from "./util";
+import { filterArray, trimLeft, trimRight } from "./util";
 
 const defaulDelimiters = [",", "|", "\t", ";", ":"];
 export class RowSplit {
@@ -24,7 +24,7 @@ export class RowSplit {
     this.escape = conv.parseParam.escape;
   }
   parse(fileline: Fileline): RowSplitResult {
-    if (fileline.length ===0 ||(this.conv.parseParam.ignoreEmpty && fileline.trim().length===0) ) {
+    if (fileline.length === 0 || (this.conv.parseParam.ignoreEmpty && fileline.trim().length === 0)) {
       return { cells: [], closed: true };
     }
     const quote = this.quote;
@@ -41,9 +41,9 @@ export class RowSplit {
     const delimiter = this.conv.parseRuntime.delimiter;
     const rowArr = fileline.split(delimiter);
     if (quote === "off") {
-      if (trim){
-        for (let i =0;i<rowArr.length;i++){
-          rowArr[i]=rowArr[i].trim();
+      if (trim) {
+        for (let i = 0; i < rowArr.length; i++) {
+          rowArr[i] = rowArr[i].trim();
         }
       }
       return { cells: rowArr, closed: true };
@@ -63,17 +63,24 @@ export class RowSplit {
       }
       const len = e.length;
       if (!inquote) {
-        if (len === 2 && e ===this.quote+this.quote){
+        if (len === 2 && e === this.quote + this.quote) {
           row.push("");
           continue;
-        }else if (this.isQuoteOpen(e)) { //quote open
+        } else if (this.isQuoteOpen(e)) { //quote open
           e = e.substr(1);
           if (this.isQuoteClose(e)) { //quote close
             e = e.substring(0, e.lastIndexOf(quote));
             e = this.escapeQuote(e);
             row.push(e);
             continue;
-          } else {
+          } else if (e.lastIndexOf(quote) !== 0) {
+            if (trim) {
+              e = trimRight(e);
+            }
+            row.push(quote+e);
+            continue;
+          }
+          else {
             inquote = true;
             quoteBuff += e;
             continue;
@@ -175,7 +182,7 @@ export class RowSplit {
     while (lines.length) {
       const line = left + lines.shift();
       const row = this.parse(line);
-      if (row.cells.length === 0 && this.conv.parseParam.ignoreEmpty){
+      if (row.cells.length === 0 && this.conv.parseParam.ignoreEmpty) {
         continue;
       }
       if (row.closed || this.conv.parseParam.alwaysSplitAtEOL) {
