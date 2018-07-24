@@ -1,4 +1,5 @@
-import { Transform, TransformOptions, Readable } from "stream";
+import { Transform, TransformOptions, Readable } from "readable-stream";
+import * as s from "stream";
 import { CSVParseParam, mergeParams } from "./Parameters";
 import { ParseRuntime, initParseRuntime } from "./ParseRuntime";
 import P from "bluebird";
@@ -8,11 +9,14 @@ import { RowSplit, RowSplitResult } from "./rowSplit";
 import getEol from "./getEol";
 import lineToJson, { JSONResult } from "./lineToJson";
 import { Processor, ProcessLineResult } from "./Processor";
-import { ProcessorFork } from "./ProcessFork";
+// import { ProcessorFork } from "./ProcessFork";
 import { ProcessorLocal } from "./ProcessorLocal";
 import { Result } from "./Result";
 import CSVError from "./CSVError";
 import { bufFromString } from "./util";
+
+
+
 export class Converter extends Transform implements PromiseLike<Array<any>> {
   preRawData(onRawData: PreRawDataCallback): Converter {
     this.runtime.preRawDataHook = onRawData;

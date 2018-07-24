@@ -13,10 +13,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var stream_1 = require("stream");
+var readable_stream_1 = require("readable-stream");
 var Parameters_1 = require("./Parameters");
 var ParseRuntime_1 = require("./ParseRuntime");
 var bluebird_1 = __importDefault(require("bluebird"));
+// import { ProcessorFork } from "./ProcessFork";
 var ProcessorLocal_1 = require("./ProcessorLocal");
 var Result_1 = require("./Result");
 var Converter = /** @class */ (function (_super) {
@@ -87,7 +88,7 @@ var Converter = /** @class */ (function (_super) {
     };
     Converter.prototype.fromString = function (csvString) {
         var csv = csvString.toString();
-        var read = new stream_1.Readable();
+        var read = new readable_stream_1.Readable();
         var idx = 0;
         read._read = function (size) {
             if (idx >= csvString.length) {
@@ -186,6 +187,6 @@ var Converter = /** @class */ (function (_super) {
         configurable: true
     });
     return Converter;
-}(stream_1.Transform));
+}(readable_stream_1.Transform));
 exports.Converter = Converter;
 //# sourceMappingURL=Converter.js.map

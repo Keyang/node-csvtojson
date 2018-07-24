@@ -279,6 +279,7 @@
   "dependencies": {
     "bluebird": "^3.5.1",
     "lodash": "^4.17.3",
+    "readable-stream": "^2.3.6",
     "strip-bom": "^2.0.0"
   },
   "nyc": {
