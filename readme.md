@@ -43,6 +43,7 @@ const csvtojsonV2=require("csvtojson/v2");
 
 * [Quick Start](#quick-start)
 * [API](#api)
+* [Browser Usage](#browser-usage)
 * [Contribution](#contribution)
 
 # Quick Start
@@ -636,3 +637,43 @@ Thank you to all our sponsors! (please ask your company to also support this ope
 
 [![donate](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=DUBQLRPJADJFQ)
 
+# Browser Usage
+
+To use `csvtojson` in browser is quite simple. There are two ways:
+
+**1. Embed script directly into script tag**
+
+There is a pre-built script located in `browser/csvtojson.min.js`. Simply include that file in a `script` tag in `index.html` page:
+
+```html
+<script src="node_modules/csvtojson/browser/csvtojson.min.js"></script>
+<!-- or use cdn -->
+<script src="https://cdn.rawgit.com/Keyang/node-csvtojson/ff908866/browser/csvtojson.min.js"></script>
+```
+then use a global `csv` function
+```html 
+<script>
+csv({
+	output: "csv"
+})
+.fromString("a,b,c\n1,2,3")
+.then(function(result){
+
+})
+</script>
+```
+
+
+
+**2. Use webpack or browserify**
+
+If a module packager is preferred, just simply `require("csvtojson")`:
+
+```js
+var csv=require("csvtojson");
+
+// or with import
+import * as csv from "csvtojson");
+
+//then use csv as normal
+```

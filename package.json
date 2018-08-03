@@ -297,8 +297,9 @@
   },
   "scripts": {
     "dev": "tsc -w",
-    "build": "rm -Rf ./v2 && tsc && npm run build:browser",
+    "build": "rm -Rf ./v2 && tsc && npm run build:browser && npm run build:browser:window",
     "build:browser": "webpack --config ./webpack.config.js",
+    "build:browser:window": "webpack --config ./webpack.config.js --output-library-target=window --output-library=csv --output-filename=csvtojson.min.js",
     "test": "rm -Rf .ts-node && TS_NODE_CACHE_DIRECTORY=.ts-node mocha -r ts-node/register src/**/*.test.ts ./test/*.ts -R spec",
     "travis": "nyc --reporter lcov mocha -r ts-node/register src/**/*.test.ts ./test/*.ts -R spec",
     "test:debug": "mocha debug -r ts-node/register src/**/*.test.ts ./test/*.ts -R spec",
