@@ -1,4 +1,3 @@
-var util = require("util");
 export default class CSVError extends Error {
   static column_mismatched(index: number, extra?: string) {
     return new CSVError("column_mismatched", index, extra);

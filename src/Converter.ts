@@ -1,5 +1,4 @@
-import { Transform, TransformOptions, Readable } from "readable-stream";
-import * as s from "stream";
+import { Transform, TransformOptions, Readable } from "stream";
 import { CSVParseParam, mergeParams } from "./Parameters";
 import { ParseRuntime, initParseRuntime } from "./ParseRuntime";
 import P from "bluebird";

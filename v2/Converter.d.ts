@@ -1,4 +1,5 @@
-import { Transform, TransformOptions, Readable } from "readable-stream";
+/// <reference types="node" />
+import { Transform, TransformOptions, Readable } from "stream";
 import { CSVParseParam } from "./Parameters";
 import { ParseRuntime } from "./ParseRuntime";
 import CSVError from "./CSVError";

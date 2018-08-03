@@ -10,7 +10,6 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-var util = require("util");
 var CSVError = /** @class */ (function (_super) {
     __extends(CSVError, _super);
     function CSVError(err, line, extra) {
