@@ -648,7 +648,7 @@ There is a pre-built script located in `browser/csvtojson.min.js`. Simply includ
 ```html
 <script src="node_modules/csvtojson/browser/csvtojson.min.js"></script>
 <!-- or use cdn -->
-<script src="https://cdn.rawgit.com/Keyang/node-csvtojson/ff908866/browser/csvtojson.min.js"></script>
+<script src="https://cdn.rawgit.com/Keyang/node-csvtojson/d41f44aa/browser/csvtojson.min.js"></script>
 ```
 then use a global `csv` function
 ```html 
