@@ -91,6 +91,8 @@ csv()
 
 Note that `.fromFile(filePath[ ,cb ,options])` takes an `options` parameter which will be passed to `fs.createReadStream()`. See [here](https://nodejs.org/dist/latest-v6.x/docs/api/fs.html#fs_fs_createreadstream_path_options) for docs.
 
+**Tip**: Make sure to define a csv path from the root of your project.
+
 ### From CSV Stream
 
 ```js
