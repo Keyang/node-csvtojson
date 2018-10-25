@@ -26,7 +26,7 @@
 
 `csvtojson` has released version `2.0.0`. 
 * To upgrade to v2, please follow [upgrading guide](https://github.com/Keyang/node-csvtojson/blob/master/docs/csvtojson-v2.md)
-* If you are looking for documentation for `v1`, open [this page](https://github.com/Keyang/node-csvtojson/blob/master/docs/readme.v1.md).
+* If you are looking for documentation for `v1`, open [this page](https://github.com/Keyang/node-csvtojson/blob/master/docs/readme.v1.md)
 
 It is still able to use v1 with `csvtojson@2.0.0`
 
