@@ -1,5 +1,4 @@
 /// <reference types="node" />
-/// <reference types="bluebird" />
 import { Converter } from "./Converter";
 import P from "bluebird";
 import { JSONResult } from "./lineToJson";

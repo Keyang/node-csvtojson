@@ -276,7 +276,6 @@
     "sinon": "^3.2.3",
     "ts-node": "^6.0.3",
     "typescript": "^2.8.3",
-    "uglifyjs-webpack-plugin": "^1.2.7",
     "webpack": "^4.16.4",
     "webpack-cli": "^3.1.0"
   },
@@ -298,8 +297,8 @@
   "scripts": {
     "dev": "tsc -w",
     "build": "rm -Rf ./v2 && tsc && npm run build:browser && npm run build:browser:window",
-    "build:browser": "webpack --config ./webpack.config.js",
-    "build:browser:window": "webpack --config ./webpack.config.js --output-library-target=window --output-library=csv --output-filename=csvtojson.min.js",
+    "build:browser": "webpack",
+    "build:browser:window": "webpack -p --output-filename=csvtojson.min.js",
     "test": "rm -Rf .ts-node && TS_NODE_CACHE_DIRECTORY=.ts-node mocha -r ts-node/register src/**/*.test.ts ./test/*.ts -R spec",
     "travis": "nyc --reporter lcov mocha -r ts-node/register src/**/*.test.ts ./test/*.ts -R spec",
     "test:debug": "mocha debug -r ts-node/register src/**/*.test.ts ./test/*.ts -R spec",

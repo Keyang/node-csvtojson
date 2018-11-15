@@ -21,7 +21,7 @@ export declare class Converter extends Transform implements PromiseLike<Array<an
     constructor(param?: Partial<CSVParseParam>, options?: TransformOptions);
     _transform(chunk: any, encoding: string, cb: Function): void;
     _flush(cb: Function): void;
-    private processEnd(cb);
+    private processEnd;
     readonly parsedLineNumber: number;
 }
 export interface CreateReadStreamOption {

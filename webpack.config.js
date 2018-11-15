@@ -17,19 +17,6 @@ var path = require('path')
  *
  */
 
-/*
- * We've enabled UglifyJSPlugin for you! This minifies your app
- * in order to load faster and run less javascript.
- *
- * https://github.com/webpack-contrib/uglifyjs-webpack-plugin
- *
- */
-
-var UglifyJSPlugin = require('uglifyjs-webpack-plugin');
-
-
-
-
 module.exports = {
   module: {
     rules: []
@@ -38,29 +25,14 @@ module.exports = {
   entry: "./index.js",
 
   output: {
-    filename: 'browser.js',
+    library: "csv",
+    filename: 'csvtojson.js',
     path: path.resolve(__dirname, 'browser'),
-    libraryTarget: "commonjs2"
+    libraryTarget: "umd"
   },
 
-  mode: 'production',
+  mode: 'development',
   plugins: [
-    new UglifyJSPlugin(),
     new webpack.IgnorePlugin(/fs/),
-  ],
-  optimization: {
-    splitChunks: {
-      cacheGroups: {
-        vendors: {
-          priority: -10,
-          test: /[\\/]node_modules[\\/]/
-        }
-      },
-
-      chunks: 'async',
-      minChunks: 1,
-      minSize: 30000,
-      name: true
-    }
-  }
+  ]
 }

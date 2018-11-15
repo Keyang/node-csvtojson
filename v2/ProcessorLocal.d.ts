@@ -1,4 +1,3 @@
-/// <reference types="bluebird" />
 /// <reference types="node" />
 import { Processor, ProcessLineResult } from "./Processor";
 import P from "bluebird";
@@ -13,10 +12,10 @@ export declare class ProcessorLocal extends Processor {
     private _needEmitHead?;
     private readonly needEmitHead;
     process(chunk: Buffer, finalChunk?: boolean): P<ProcessLineResult[]>;
-    private processCSV(csv, finalChunk);
-    private processDataWithHead(lines);
-    private filterHeader();
-    private processCSVBody(lines);
-    private prependLeftBuf(buf);
-    private runPreLineHook(lines);
+    private processCSV;
+    private processDataWithHead;
+    private filterHeader;
+    private processCSVBody;
+    private prependLeftBuf;
+    private runPreLineHook;
 }
