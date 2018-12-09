@@ -195,7 +195,7 @@ $ csvtojson
 # API
 
 * [Parameters](#parameters)
-* [Asynchronouse Result Process](#asynchronouse-result-process)
+* [Asynchronous Result Process](#asynchronous-result-process)
 * [Events](#events)
 * [Hook / Transform](#hook--transform)
 * [Nested JSON Structure](#nested-json-structure)
@@ -208,7 +208,7 @@ $ csvtojson
 
 `require('csvtojson')` returns a constructor function which takes 2 arguments:
 
-1. parser parameters
+1. Parser parameters
 2. Stream options
 
 ```js
@@ -230,8 +230,8 @@ const converter=csv({
 Following parameters are supported:
 
 * **output**: The format to be converted to. "json" (default) -- convert csv to json. "csv" -- convert csv to csv row array. "line" -- convert csv to csv line string  
-* **delimiter**: delimiter used for seperating columns. Use "auto" if delimiter is unknown in advance, in this case, delimiter will be auto-detected (by best attempt). Use an array to give a list of potential delimiters e.g. [",","|","$"]. default: ","
-* **quote**: If a column contains delimiter, it is able to use quote character to surround the column content. e.g. "hello, world" wont be split into two columns while parsing. Set to "off" will ignore all quotes. default: " (double quote)
+* **delimiter**: delimiter used for separating columns. Use "auto" if delimiter is unknown in advance, in this case, delimiter will be auto-detected (by best attempt). Use an array to give a list of potential delimiters e.g. [",","|","$"]. default: ","
+* **quote**: If a column contains delimiter, it is able to use quote character to surround the column content. e.g. "hello, world" won't be split into two columns while parsing. Set to "off" will ignore all quotes. default: " (double quote)
 * **trim**: Indicate if parser trim off spaces surrounding column content. e.g. "  content  " will be trimmed to "content". Default: true
 * **checkType**: This parameter turns on and off whether check field type. Default is false. (The default is `true` if version < 1.1.4)
 * **ignoreEmpty**: Ignore the empty value in CSV columns. If a column value is not given, set this to true to skip them. Default: false.
@@ -239,7 +239,7 @@ Following parameters are supported:
 * **noheader**:Indicating csv data has no header row and first row is data row. Default is false. See [header row](#header-row)
 * **headers**: An array to specify the headers of CSV data. If --noheader is false, this value will override CSV header row. Default: null. Example: ["my field","name"]. See [header row](#header-row)
 * **flatKeys**: Don't interpret dots (.) and square brackets in header fields as nested object or array identifiers at all (treat them like regular characters for JSON field identifiers). Default: false.
-* **maxRowLength**: the max character a csv row could have. 0 means infinite. If max number exceeded, parser will emit "error" of "row_exceed". if a possibly corrupted csv data provided, give it a number like 65535 so the parser wont consume memory. default: 0
+* **maxRowLength**: the max character a csv row could have. 0 means infinite. If max number exceeded, parser will emit "error" of "row_exceed". if a possibly corrupted csv data provided, give it a number like 65535 so the parser won't consume memory. default: 0
 * **checkColumn**: whether check column number of a row is the same as headers. If column number mismatched headers number, an error of "mismatched_column" will be emitted.. default: false
 * **eol**: End of line character. If omitted, parser will attempt to retrieve it from the first chunks of CSV data.
 * **escape**: escape character used in quoted column. Default is double quote (") according to RFC4108. Change to back slash (\\) or other chars for your own case.
@@ -250,18 +250,18 @@ Following parameters are supported:
 
 All parameters can be used in Command Line tool.
 
-## Asynchronouse Result Process
+## Asynchronous Result Process
 
-Since `v2.0.0`, asynchronouse processing has been fully supported.
+Since `v2.0.0`, asynchronous processing has been fully supported.
 
-e.g. Process each JSON result asynchronousely.
+e.g. Process each JSON result asynchronously.
 
 ```js
 csv().fromFile(csvFile)
 .subscribe((json)=>{
 	return new Promise((resolve,reject)=>{
 		// Async operation on the json
-		// dont forget to call resolve and reject
+		// don't forget to call resolve and reject
 	})
 })
 ```
@@ -292,7 +292,7 @@ csv()
 
 ### data
 
-`data` event is emitted for each parsed CSV line. It passes buffer of strigified JSON in [ndjson format](http://ndjson.org/) unless `objectMode` is set true in stream option.
+`data` event is emitted for each parsed CSV line. It passes buffer of stringified JSON in [ndjson format](http://ndjson.org/) unless `objectMode` is set true in stream option.
 
 ```js
 const csv=require('csvtojson')
@@ -304,7 +304,7 @@ csv()
 ```
 
 ### error
-`error` event is emitted if there is any errors happened during parsing.
+`error` event is emitted if any errors happened during parsing.
 
 ```js
 const csv=require('csvtojson')
@@ -348,7 +348,7 @@ csv()
 	return newData;
 })
 
-// asynchronouse
+// asynchronous
 csv()
 .preRawData((csvRawData)=>{
 	return new Promise((resolve,reject)=>{
@@ -361,7 +361,7 @@ csv()
 
 ### CSV File Line Hook
 
-the function is called each time a file line has been parsed in csv stream. the `lineIdx` is the file line number in the file starting with 0. 
+The function is called each time a file line has been parsed in csv stream. The `lineIdx` is the file line number in the file starting with 0. 
 
 ```js
 const csv=require('csvtojson')
@@ -374,7 +374,7 @@ csv()
 	return fileLineString
 })
 
-// asynchronouse
+// asynchronous
 csv()
 .preFileLine((fileLineString, lineIdx)=>{
 	return new Promise((resolve,reject)=>{
@@ -396,7 +396,7 @@ const csv=require('csvtojson')
 csv()
 .subscribe((jsonObj,index)=>{
 	jsonObj.myNewKey='some value'
-	// OR asynchronousely
+	// OR asynchronously
 	return new Promise((resolve,reject)=>{
 		jsonObj.myNewKey='some value';
 		resolve();
@@ -487,7 +487,7 @@ csv({flatKeys:true})
 1. First row of csv source. Use first row of csv source as header row. This is default.
 2. If first row of csv source is header row but it is incorrect and need to be replaced. Use `headers:[]` and `noheader:false` parameters.
 3. If original csv source has no header row but the header definition can be defined. Use `headers:[]` and `noheader:true` parameters.
-4. If original csv source has no header row and the header definition is unknow. Use `noheader:true`. This will automatically add `fieldN` header to csv cells
+4. If original csv source has no header row and the header definition is unknown. Use `noheader:true`. This will automatically add `fieldN` header to csv cells
 
 
 ### Example
@@ -579,7 +579,7 @@ csv({
 
 Above example will convert `birthday` column into a js `Date` object.
 
-the returned value will be used in result JSON object. returning `undefined` will not change result JSON object. 
+The returned value will be used in result JSON object. Returning `undefined` will not change result JSON object. 
 
 ### Flat key column
 
@@ -615,7 +615,7 @@ Very much appreciate any types of donation and support.
 
 1. Fork the repo to your github account
 2. Checkout code from your github repo to your local machine.
-3. Make code changes and dont forget add related tests.
+3. Make code changes and don't forget add related tests.
 4. Run `npm test` locally before pushing code back.
 5. Create a [Pull Request](https://help.github.com/articles/creating-a-pull-request/) on github.
 6. Code review and merge
