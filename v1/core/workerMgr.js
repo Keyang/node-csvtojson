@@ -4,7 +4,6 @@ var eom1 = "\x0e";
 var eom2 = "\x0f";
 var CSVError = require('./CSVError');
 function workerMgr() {
-  var spawn = require("child_process").spawn;
   var exports = {
     initWorker: initWorker,
     sendWorker: sendWorker,
