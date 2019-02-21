@@ -200,7 +200,6 @@ $ csvtojson
 * [Hook / Transform](#hook--transform)
 * [Nested JSON Structure](#nested-json-structure)
 * [Header Row](#header-row)
-* [Multi CPU Core Support(experimental) ](#multi-cpu-core-support)
 * [Column Parser](#column-parser)
 
 
