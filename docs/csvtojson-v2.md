@@ -222,7 +222,7 @@ const jsonArr=await csv().fromFile(myFile);
 
 ```js
 csv({
-  ignoreColumn:["gender","age"]
+  ignoreColumns:["gender","age"]
 })
 ```
 
@@ -230,7 +230,7 @@ csv({
 
 ```js
 csv({
-  ignoreColumn: /gender|age/
+  ignoreColumns: /gender|age/
 })
 ```
 
