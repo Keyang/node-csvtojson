@@ -294,7 +294,22 @@ describe("testCSVConverter2", function () {
     rs.pipe(test_converter);
   });
 
-  it("should output ndjson format", function (done) {
+  it("should process escape chars when delimiter is between escaped quotes", function(done) {
+    var test_converter = new Converter({
+      escape: "\\"
+    });
+
+    var testData =
+      __dirname + "/data/dataWithSlashEscapeAndDelimiterBetweenQuotes";
+    var rs = fs.createReadStream(testData);
+    test_converter.then(function(res) {
+      assert.equal(res[0].raw, '"hello,"world"');
+      done();
+    });
+    rs.pipe(test_converter);
+  });
+
+  it("should output ndjson format", function(done) {
     var conv = new Converter();
     conv.fromString("a,b,c\n1,2,3\n4,5,6")
       .on("data", function (d) {

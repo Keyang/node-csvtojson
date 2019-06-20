@@ -75,9 +75,15 @@ export class RowSplit {
             continue;
           } else if (e.indexOf(quote) !== -1) {
             let count = 0;
+            let prev = "";
             for (const c of e) {
-              if (c === quote) {
+              // count quotes only if previous character is not escape char
+              if (c === quote && prev !== this.escape) {
                 count++;
+                prev = "";
+              } else {
+                // save previous char to temp variable
+                prev = c;
               }
             }
             if (count % 2 === 1) {
