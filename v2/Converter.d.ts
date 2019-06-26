@@ -3,7 +3,7 @@ import { Transform, TransformOptions, Readable } from "stream";
 import { CSVParseParam } from "./Parameters";
 import { ParseRuntime } from "./ParseRuntime";
 import CSVError from "./CSVError";
-export declare class Converter extends Transform implements PromiseLike<Array<any>> {
+export declare class Converter extends Transform implements PromiseLike<any[]> {
     options: TransformOptions;
     preRawData(onRawData: PreRawDataCallback): Converter;
     preFileLine(onFileLine: PreFileLineCallback): Converter;

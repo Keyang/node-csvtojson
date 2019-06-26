@@ -4,6 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var bluebird_1 = __importDefault(require("bluebird"));
+var os_1 = require("os");
 var Result = /** @class */ (function () {
     function Result(converter) {
         this.converter = converter;
@@ -28,7 +29,8 @@ var Result = /** @class */ (function () {
     });
     Object.defineProperty(Result.prototype, "needEmitAll", {
         get: function () {
-            return !!this.converter.parseRuntime.then;
+            return !!this.converter.parseRuntime.then && this.converter.parseParam.needEmitAll;
+            // return !!this.converter.parseRuntime.then;
         },
         enumerable: true,
         configurable: true
@@ -36,6 +38,11 @@ var Result = /** @class */ (function () {
     Result.prototype.processResult = function (resultLines) {
         var _this = this;
         var startPos = this.converter.parseRuntime.parsedLineNumber;
+        if (this.needPushDownstream && this.converter.parseParam.downstreamFormat === "array") {
+            if (startPos === 0) {
+                pushDownstream(this.converter, "[" + os_1.EOL);
+            }
+        }
         // let prom: P<any>;
         return new bluebird_1.default(function (resolve, reject) {
             if (_this.needEmitLine) {
@@ -71,13 +78,19 @@ var Result = /** @class */ (function () {
         }
     };
     Result.prototype.endProcess = function () {
-        if (this.needEmitAll) {
-            if (this.converter.parseRuntime.then && this.converter.parseRuntime.then.onfulfilled) {
+        if (this.converter.parseRuntime.then && this.converter.parseRuntime.then.onfulfilled) {
+            if (this.needEmitAll) {
                 this.converter.parseRuntime.then.onfulfilled(this.finalResult);
+            }
+            else {
+                this.converter.parseRuntime.then.onfulfilled([]);
             }
         }
         if (this.converter.parseRuntime.subscribe && this.converter.parseRuntime.subscribe.onCompleted) {
             this.converter.parseRuntime.subscribe.onCompleted();
+        }
+        if (this.needPushDownstream && this.converter.parseParam.downstreamFormat === "array") {
+            pushDownstream(this.converter, "]" + os_1.EOL);
         }
     };
     return Result;
@@ -141,7 +154,8 @@ function processRecursive(lines, hook, conv, offset, needPushDownstream, cb, res
 }
 function pushDownstream(conv, res) {
     if (typeof res === "object" && !conv.options.objectMode) {
-        conv.push(JSON.stringify(res) + "\n", "utf8");
+        var data = JSON.stringify(res);
+        conv.push(data + (conv.parseParam.downstreamFormat === "array" ? "," + os_1.EOL : os_1.EOL), "utf8");
     }
     else {
         conv.push(res);

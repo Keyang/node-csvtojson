@@ -36,10 +36,11 @@ var Converter = /** @class */ (function (_super) {
         // }
         _this.once("error", function (err) {
             // console.log("BBB");
-            setTimeout(function () {
+            //wait for next cycle to emit the errors.
+            setImmediate(function () {
                 _this.result.processError(err);
                 _this.emit("done", err);
-            }, 0);
+            });
         });
         _this.once("done", function () {
             _this.processor.destroy();

@@ -19,7 +19,10 @@ function mergeParams(params) {
         colParser: {},
         eol: undefined,
         alwaysSplitAtEOL: false,
-        output: "json"
+        output: "json",
+        nullObject: false,
+        downstreamFormat: "line",
+        needEmitAll: true
     };
     if (!params) {
         params = {};

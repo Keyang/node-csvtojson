@@ -79,10 +79,17 @@ var RowSplit = /** @class */ (function () {
                     }
                     else if (e.indexOf(quote) !== -1) {
                         var count = 0;
+                        var prev = "";
                         for (var _i = 0, e_1 = e; _i < e_1.length; _i++) {
                             var c = e_1[_i];
-                            if (c === quote) {
+                            // count quotes only if previous character is not escape char
+                            if (c === quote && prev !== this.escape) {
                                 count++;
+                                prev = "";
+                            }
+                            else {
+                                // save previous char to temp variable
+                                prev = c;
                             }
                         }
                         if (count % 2 === 1) {

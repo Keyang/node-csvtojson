@@ -114,7 +114,16 @@ function setPath(resultJson, head, value, conv, headIdx) {
         }
         else {
             if (head.indexOf(".") > -1) {
-                if (conv.parseParam.colParser[head] && conv.parseParam.colParser[head].flat) {
+                var headArr = head.split(".");
+                var jsonHead = true;
+                while (headArr.length > 0) {
+                    var headCom = headArr.shift();
+                    if (headCom.length === 0) {
+                        jsonHead = false;
+                        break;
+                    }
+                }
+                if (!jsonHead || conv.parseParam.colParser[head] && conv.parseParam.colParser[head].flat) {
                     conv.parseRuntime.columnValueSetter[headIdx] = flatSetter;
                 }
                 else {
@@ -125,6 +134,9 @@ function setPath(resultJson, head, value, conv, headIdx) {
                 conv.parseRuntime.columnValueSetter[headIdx] = flatSetter;
             }
         }
+    }
+    if (conv.parseParam.nullObject === true && value === "null") {
+        value = null;
     }
     conv.parseRuntime.columnValueSetter[headIdx](resultJson, head, value);
     // flatSetter(resultJson, head, value);
