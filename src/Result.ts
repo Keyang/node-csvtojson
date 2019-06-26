@@ -2,7 +2,7 @@ import { Converter } from "./Converter";
 import { ProcessLineResult } from "./Processor";
 import P from "bluebird";
 import CSVError from "./CSVError";
-
+import { EOL } from "os";
 export class Result {
   private get needEmitLine(): boolean {
     return !!this.converter.parseRuntime.subscribe && !!this.converter.parseRuntime.subscribe.onNext || this.needPushDownstream
@@ -15,12 +15,18 @@ export class Result {
     return this._needPushDownstream;
   }
   private get needEmitAll(): boolean {
-    return !!this.converter.parseRuntime.then;
+    return !!this.converter.parseRuntime.then && this.converter.parseParam.needEmitAll;
+    // return !!this.converter.parseRuntime.then;
   }
   private finalResult: any[] = [];
   constructor(private converter: Converter) { }
   processResult(resultLines: ProcessLineResult[]): P<any> {
     const startPos = this.converter.parseRuntime.parsedLineNumber;
+    if (this.needPushDownstream && this.converter.parseParam.downstreamFormat === "array") {
+      if (startPos === 0) {
+        pushDownstream(this.converter, "[" + EOL);
+      }
+    }
     // let prom: P<any>;
     return new P((resolve, reject) => {
       if (this.needEmitLine) {
@@ -60,13 +66,19 @@ export class Result {
     }
   }
   endProcess() {
-    if (this.needEmitAll) {
+    
       if (this.converter.parseRuntime.then && this.converter.parseRuntime.then.onfulfilled) {
-        this.converter.parseRuntime.then.onfulfilled(this.finalResult);
+        if (this.needEmitAll) {
+          this.converter.parseRuntime.then.onfulfilled(this.finalResult);
+        }else{
+          this.converter.parseRuntime.then.onfulfilled([]);
+        }
       }
-    }
     if (this.converter.parseRuntime.subscribe && this.converter.parseRuntime.subscribe.onCompleted) {
       this.converter.parseRuntime.subscribe.onCompleted();
+    }
+    if (this.needPushDownstream && this.converter.parseParam.downstreamFormat === "array") {
+      pushDownstream(this.converter, "]" + EOL);
     }
   }
 }
@@ -94,15 +106,15 @@ function processLineByLine(
         }, cb);
       } else {
         // processRecursive(lines, hook, conv, offset, needPushDownstream, cb, nextLine, false);
-        if (needPushDownstream){
-          pushDownstream(conv,nextLine);
+        if (needPushDownstream) {
+          pushDownstream(conv, nextLine);
         }
-        while (offset<lines.length){
-          const line=lines[offset];
+        while (offset < lines.length) {
+          const line = lines[offset];
           hook(line, conv.parseRuntime.parsedLineNumber + offset);
           offset++;
-          if (needPushDownstream){
-            pushDownstream(conv,line);
+          if (needPushDownstream) {
+            pushDownstream(conv, line);
           }
         }
         cb();
@@ -116,11 +128,11 @@ function processLineByLine(
       // }
     } else {
       if (needPushDownstream) {
-        while (offset<lines.length) {
+        while (offset < lines.length) {
           const line = lines[offset++];
           pushDownstream(conv, line);
         }
-        
+
       }
       cb();
     }
@@ -144,7 +156,8 @@ function processRecursive(
 }
 function pushDownstream(conv: Converter, res: ProcessLineResult) {
   if (typeof res === "object" && !conv.options.objectMode) {
-    conv.push(JSON.stringify(res) + "\n", "utf8");
+    const data = JSON.stringify(res);
+    conv.push(data + (conv.parseParam.downstreamFormat === "array" ? "," + EOL : EOL), "utf8");
   } else {
     conv.push(res);
   }

@@ -66,13 +66,26 @@ export interface CSVParseParam {
    */
   eol?: string;
   /**
-   *  Always interpret each line (as defined by eol) as a row. This will prevent eol characters from being used within a row (even inside a quoted field). This ensures that misplaced quotes only break on row, and not all ensuing rows.
+   *  Always interpret each line (as defined by eol) as a row. This will prevent eol characters from being used within a row (even inside a quoted field). Default is false. Change to true if you are confident no inline line breaks (like line break in a cell which has multi line text)
    */
   alwaysSplitAtEOL: boolean;
   /**
    * The format to be converted to. "json" (default) -- convert csv to json. "csv" -- convert csv to csv row array. "line" -- convert csv to csv line string 
    */
   output: "json" | "csv" | "line";
+
+  /**
+   * Convert string "null" to null object in JSON outputs. Default is false.
+   */
+  nullObject:boolean;
+  /**
+   * Define the format required by downstream (this parameter does not work if objectMode is on). `line` -- json is emitted in a single line separated by a line breake like "json1\njson2" . `array` -- downstream requires array format like "[json1,json2]". Default is line.
+   */
+  downstreamFormat: "line" | "array";
+  /**
+   * Define whether .then(callback) returns all JSON data in its callback. Default is true. Change to false to save memory if subscribing json lines.
+   */
+  needEmitAll: boolean;
 }
 
 export type CellParser = (item: string, head: string, resultRow: any, row: string[], columnIndex: number) => any;
@@ -101,7 +114,10 @@ export function mergeParams(params?: Partial<CSVParseParam>): CSVParseParam {
     colParser: {},
     eol: undefined,
     alwaysSplitAtEOL: false,
-    output: "json"
+    output: "json",
+    nullObject: false,
+    downstreamFormat:"line",
+    needEmitAll:true
   }
   if (!params) {
     params = {};

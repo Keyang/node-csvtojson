@@ -16,7 +16,7 @@ import { bufFromString } from "./util";
 
 
 
-export class Converter extends Transform implements PromiseLike<Array<any>> {
+export class Converter extends Transform implements PromiseLike<any[]> {
   preRawData(onRawData: PreRawDataCallback): Converter {
     this.runtime.preRawDataHook = onRawData;
     return this;
@@ -115,11 +115,11 @@ export class Converter extends Transform implements PromiseLike<Array<any>> {
     // }
     this.once("error", (err: any) => {
       // console.log("BBB");
-
-      setTimeout(() => {
+      //wait for next cycle to emit the errors.
+      setImmediate(() => {
         this.result.processError(err);
         this.emit("done", err);
-      }, 0);
+      });
 
     });
     this.once("done", () => {

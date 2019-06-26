@@ -3,6 +3,5 @@ node_js:
   - "10"
   - "8"
   - "6"
-  - "4"
 after_success: 'npm run coveralls'
 script: "npm run travis"

@@ -76,6 +76,14 @@
         "--alwaysSplitAtEOL":{
             "desc": "Always interpret each line (as defined by eol) as a row. This will prevent eol characters from being used within a row (even inside a quoted field). This ensures that misplaced quotes only break on row, and not all ensuing rows.",
             "type": "boolean"
+        },
+        "--nullObject":{
+            "desc":"How to parse if a csv cell contains 'null'. Default false will keep 'null' as string. Change to true if a null object is needed.",
+            "type":"boolean"
+        },
+        "--downstreamFormat":{
+            "desc":"Option to set what JSON array format is needed by downstream. 'line' is also called ndjson format. This format will write lines of JSON (without square brackets and commas) to downstream. 'array' will write complete JSON array string to downstream (suitable for file writable stream etc). Default 'line'",
+            "type":"string"
         }
     },
     "examples": [

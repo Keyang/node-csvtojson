@@ -246,8 +246,10 @@ Following parameters are supported:
 * **includeColumns**: This parameter instructs the parser to include only those columns as specified by the regular expression. Example: /(name|age)/ will parse and include columns whose header contains "name" or "age"
 * **ignoreColumns**: This parameter instructs the parser to ignore columns as specified by the regular expression. Example: /(name|age)/ will ignore columns whose header contains "name" or "age"
 * **colParser**: Allows override parsing logic for a specific column. It accepts a JSON object with fields like: `headName: <String | Function | ColParser>` . e.g. {field1:'number'} will use built-in number parser to convert value of the `field1` column to number. For more information See [details below](#column-parser)
-* **alwaysSplitAtEOL**: Always interpret each line (as defined by `eol`) as a row. This will prevent `eol` characters from being used within a row (even inside a quoted field). This ensures that misplaced quotes only break on row, and not all ensuing rows.
-
+* **alwaysSplitAtEOL**: Always interpret each line (as defined by `eol` like `\n`) as a row. This will prevent `eol` characters from being used within a row (even inside a quoted field). Default is false. Change to true if you are confident no inline line breaks (like line break in a cell which has multi line text).
+* **nullObject**: How to parse if a csv cell contains "null". Default false will keep "null" as string. Change to true if a null object is needed.
+* **downstreamFormat**: Option to set what JSON array format is needed by downstream. "line" is also called ndjson format. This format will write lines of JSON (without square brackets and commas) to downstream. "array" will write complete JSON array string to downstream (suitable for file writable stream etc). Default "line"
+* **needEmitAll**: Parser will build JSON result is `.then` is called (or await is used). If this is not desired, set this to false. Default is true. 
 All parameters can be used in Command Line tool.
 
 ## Asynchronouse Result Process
