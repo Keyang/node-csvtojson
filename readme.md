@@ -674,7 +674,7 @@ If a module packager is preferred, just simply `require("csvtojson")`:
 var csv=require("csvtojson");
 
 // or with import
-import * as csv from "csvtojson";
+import { csv } from "csvtojson";
 
-//then use csv as normal
+// then use csv as normal
 ```
