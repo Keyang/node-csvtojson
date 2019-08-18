@@ -5,7 +5,7 @@ import { Converter } from "./Converter";
 type helper = (param?: Partial<CSVParseParam> | undefined, options?: TransformOptions | undefined) => Converter;
 interface Helper extends helper {
   csv: helper
-  Converter: Converter
+  Converter: typeof Converter
 }
 declare const helper: Helper;
 export = helper;
