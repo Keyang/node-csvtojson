@@ -76,7 +76,7 @@ csv()
 	/**
 	 * [
 	 * 	{a:"1", b:"2", c:"3"},
-	 * 	{a:"4", b:"5". c:"6"}
+	 * 	{a:"4", b:"5", c:"6"}
 	 * ]
 	 */ 
 })
@@ -541,7 +541,7 @@ hello,1234
 csv({
 	colParser:{
 		"column1":"omit",
-		"column2":"string",
+		"column2":"string"
 	},
 	checkType:true
 })
