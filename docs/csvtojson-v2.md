@@ -64,7 +64,7 @@ csv()
 csv()
 .fromFile(csvFilePath)
 .subscribe((json,lineNumber)=>{
-    // process the json line in synchronouse.
+    // process the json line in synchronous.
 },onError, onComplete)
 
 ```
@@ -194,7 +194,7 @@ const jsonArray=await csv().fromString(myCSV);  // async /await
 
 Worker feature makes sense to Command Line where it could utilize multiple CPU cores to speed up processing large csv file. However, it does not quite work as expected mainly because cooperation of multiple processes' result is very complex. Also the inter process communication adds too much overhead which minimize the benefit gained from spawning workers.
 
-Thus in verions `2.0.0` I decided to temporarily remove `Worker` feature and will re-think how to better utilize multiple CPU Cores.
+Thus in version `2.0.0` I decided to temporarily remove `Worker` feature and will re-think how to better utilize multiple CPU Cores.
 
 
 ## fromFile / fromStream / fromString will not accept callback. Use `.then` instead
@@ -273,9 +273,9 @@ csv()
 csv()
 .preRawData((csvRawData)=>{
   var newData=csvRawData.replace('some value','another value')
-  // synchronouse
+  // synchronous
   return newData;
-  // or asynchronousely
+  // or asynchronously
   return Promise.resolve(newData);
 })
 ```
