@@ -7,7 +7,7 @@
 
 `csvtojson` module is a comprehensive nodejs csv parser to convert csv to json or column arrays. It can be used as node.js library / command line tool / or in browser. Below are some features:
 
-*  Strictly follow CSV definition [RF4180](https://www.loc.gov/preservation/digital/formats/fdd/fdd000323.shtml)
+*  Strictly follow CSV definition [RFC4180](https://www.loc.gov/preservation/digital/formats/fdd/fdd000323.shtml)
 *  Work with millions of lines of CSV data
 *  Provide comprehensive parsing parameters
 *  Provide out of box CSV parsing tool for Command Line
@@ -342,7 +342,7 @@ the hook -- `preRawData` will be called with csv string passed to parser.
 
 ```js
 const csv=require('csvtojson')
-// synchronouse
+// synchronous
 csv()
 .preRawData((csvRawData)=>{
 	var newData=csvRawData.replace('some value','another value');
@@ -366,7 +366,7 @@ The function is called each time a file line has been parsed in csv stream. The 
 
 ```js
 const csv=require('csvtojson')
-// synchronouse
+// synchronous
 csv()
 .preFileLine((fileLineString, lineIdx)=>{
 	if (lineIdx === 2){
@@ -529,7 +529,7 @@ There are currently following built-in parser:
 * number: Convert value to number
 * omit: omit the whole column
 
-This will override types infered from `checkType:true` parameter. More built-in parsers will be added as requested in [issues page](https://github.com/Keyang/node-csvtojson/issues).
+This will override types inferred from `checkType:true` parameter. More built-in parsers will be added as requested in [issues page](https://github.com/Keyang/node-csvtojson/issues).
 
 Example:
 
