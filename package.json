@@ -282,7 +282,7 @@
   },
   "dependencies": {
     "bluebird": "^3.5.1",
-    "lodash": "^4.17.3",
+    "lodash": "^4.17.15",
     "strip-bom": "^2.0.0"
   },
   "nyc": {
