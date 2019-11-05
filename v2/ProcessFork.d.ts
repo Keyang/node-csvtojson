@@ -1,5 +1,3 @@
-/// <reference types="bluebird" />
-/// <reference types="node" />
 import { Processor, ProcessLineResult } from "./Processor";
 import P from "bluebird";
 import { Converter } from "./Converter";
@@ -15,10 +13,10 @@ export declare class ProcessorFork extends Processor {
     private finalChunk;
     private next?;
     constructor(converter: Converter);
-    private prepareParam(param);
-    private initWorker();
-    private flushResult();
-    private appendBuf(data);
+    private prepareParam;
+    private initWorker;
+    private flushResult;
+    private appendBuf;
     process(chunk: Buffer): P<ProcessLineResult[]>;
 }
 export interface Message {

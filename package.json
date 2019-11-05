@@ -1,5 +1,5 @@
 {
-  "name": "csvtojson",
+  "name": "@geoblink/csvtojson",
   "description": "A tool concentrating on converting csv data to JSON with customised parser supporting",
   "author": "Keyang Xiang <keyang.xiang@gmail.com>",
   "homepage": "https://github.com/Keyang/node-csvtojson",
@@ -244,7 +244,7 @@
       "hireable": null
     }
   ],
-  "version": "2.0.10",
+  "version": "2.0.11",
   "keywords": [
     "csv",
     "csv parser",

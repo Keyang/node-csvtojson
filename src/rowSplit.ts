@@ -95,7 +95,7 @@ export class RowSplit {
             }else{
               inquote = true;
               quoteBuff += e;
-              continue;  
+              continue;
             }
           }
           else {

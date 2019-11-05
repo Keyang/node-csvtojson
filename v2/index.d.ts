@@ -1,4 +1,3 @@
-/// <reference types="node" />
 import { TransformOptions } from "stream";
 import { CSVParseParam } from "./Parameters";
 import { Converter } from "./Converter";

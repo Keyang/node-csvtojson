@@ -1,4 +1,3 @@
-/// <reference types="bluebird" />
 import { Converter } from "./Converter";
 import { ProcessLineResult } from "./Processor";
 import P from "bluebird";

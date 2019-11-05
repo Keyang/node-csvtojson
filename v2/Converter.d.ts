@@ -1,4 +1,3 @@
-/// <reference types="node" />
 import { Transform, TransformOptions, Readable } from "stream";
 import { CSVParseParam } from "./Parameters";
 import { ParseRuntime } from "./ParseRuntime";
@@ -21,7 +20,7 @@ export declare class Converter extends Transform implements PromiseLike<any[]> {
     constructor(param?: Partial<CSVParseParam>, options?: TransformOptions);
     _transform(chunk: any, encoding: string, cb: Function): void;
     _flush(cb: Function): void;
-    private processEnd(cb);
+    private processEnd;
     readonly parsedLineNumber: number;
 }
 export interface CreateReadStreamOption {

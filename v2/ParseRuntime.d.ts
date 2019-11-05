@@ -1,4 +1,3 @@
-/// <reference types="node" />
 import { CellParser } from "./Parameters";
 import { Converter, PreRawDataCallback, PreFileLineCallback } from "./Converter";
 import CSVError from "./CSVError";
