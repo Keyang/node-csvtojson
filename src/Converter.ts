@@ -1,7 +1,7 @@
 import { Transform, TransformOptions, Readable } from "stream";
 import { CSVParseParam, mergeParams } from "./Parameters";
 import { ParseRuntime, initParseRuntime } from "./ParseRuntime";
-import P from "bluebird";
+
 import { stringToLines } from "./fileline";
 import { map } from "lodash/map";
 import { RowSplit, RowSplitResult } from "./rowSplit";
@@ -74,7 +74,7 @@ export class Converter extends Transform implements PromiseLike<any[]> {
     return this.fromStream(read);
   }
   then<TResult1 = any[], TResult2 = never>(onfulfilled?: (value: any[]) => TResult1 | PromiseLike<TResult1>, onrejected?: (reason: any) => TResult2 | PromiseLike<TResult2>): PromiseLike<TResult1 | TResult2> {
-    return new P((resolve, reject) => {
+    return new Promise((resolve, reject) => {
       this.parseRuntime.then = {
         onfulfilled: (value: any[]) => {
           if (onfulfilled) {

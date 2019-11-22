@@ -9,14 +9,10 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 var stream_1 = require("stream");
 var Parameters_1 = require("./Parameters");
 var ParseRuntime_1 = require("./ParseRuntime");
-var bluebird_1 = __importDefault(require("bluebird"));
 // import { ProcessorFork } from "./ProcessFork";
 var ProcessorLocal_1 = require("./ProcessorLocal");
 var Result_1 = require("./Result");
@@ -105,7 +101,7 @@ var Converter = /** @class */ (function (_super) {
     };
     Converter.prototype.then = function (onfulfilled, onrejected) {
         var _this = this;
-        return new bluebird_1.default(function (resolve, reject) {
+        return new Promise(function (resolve, reject) {
             _this.parseRuntime.then = {
                 onfulfilled: function (value) {
                     if (onfulfilled) {

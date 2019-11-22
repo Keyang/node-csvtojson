@@ -1,7 +1,5 @@
 /// <reference types="node" />
-/// <reference types="bluebird" />
 import { Converter } from "./Converter";
-import P from "bluebird";
 import { JSONResult } from "./lineToJson";
 import { CSVParseParam } from "./Parameters";
 import { ParseRuntime } from "./ParseRuntime";
@@ -10,8 +8,8 @@ export declare abstract class Processor {
     protected params: CSVParseParam;
     protected runtime: ParseRuntime;
     constructor(converter: Converter);
-    abstract process(chunk: Buffer, finalChunk?: boolean): P<ProcessLineResult[]>;
-    abstract destroy(): P<void>;
-    abstract flush(): P<ProcessLineResult[]>;
+    abstract process(chunk: Buffer, finalChunk?: boolean): Promise<ProcessLineResult[]>;
+    abstract destroy(): Promise<void>;
+    abstract flush(): Promise<ProcessLineResult[]>;
 }
 export declare type ProcessLineResult = string | string[] | JSONResult;
