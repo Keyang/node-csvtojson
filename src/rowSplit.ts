@@ -4,7 +4,7 @@ import { Fileline } from "./fileline";
 import getEol from "./getEol";
 import { filterArray, trimLeft, trimRight } from "./util";
 
-const defaulDelimiters = [",", "|", "\t", ";", ":"];
+const defaultDelimiters = [",", "|", "\t", ";", ":"];
 export class RowSplit {
   private quote: string;
   private trim: boolean;
@@ -136,7 +136,7 @@ export class RowSplit {
   private getDelimiter(fileline: Fileline): string {
     let possibleDelimiters;
     if (this.conv.parseParam.delimiter === "auto") {
-      possibleDelimiters = defaulDelimiters;
+      possibleDelimiters = defaultDelimiters;
     } else if (this.conv.parseParam.delimiter instanceof Array) {
       possibleDelimiters = this.conv.parseParam.delimiter;
     } else {
