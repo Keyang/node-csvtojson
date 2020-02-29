@@ -68,7 +68,7 @@ describe("CSV Converter", function () {
     stream.pipe(obj);
   });
 
-  it("should handle comma in column which is surrounded by qoutes", function (done) {
+  it("should handle comma in column which is surrounded by quotes", function (done) {
     var testData = __dirname + "/data/dataWithComma";
     var rs = fs.createReadStream(testData);
     var obj = new Converter({
@@ -146,7 +146,7 @@ describe("CSV Converter", function () {
   });
 
   it("should be able to handle columns with double quotes", function (done) {
-    var testData = __dirname + "/data/dataWithQoutes";
+    var testData = __dirname + "/data/dataWithQuotes";
     var data = fs.readFileSync(testData).toString();
     var csvConverter = new Converter();
     csvConverter.fromString(data).then(function (jsonObj) {
