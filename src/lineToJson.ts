@@ -6,7 +6,7 @@ import { ParseRuntime } from "./ParseRuntime";
 
 var numReg = /^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$/;
 
-export default function (csvRows: string[][], conv: Converter): JSONResult[] {
+export default function(csvRows: string[][], conv: Converter): JSONResult[] {
   const res: JSONResult[] = [];
   for (let i = 0, len = csvRows.length; i < len; i++) {
     const r = processRow(csvRows[i], conv, i);
@@ -15,19 +15,24 @@ export default function (csvRows: string[][], conv: Converter): JSONResult[] {
     }
   }
   return res;
-};
-export type JSONResult = {
-  [key: string]: any
 }
+export type JSONResult = {
+  [key: string]: any;
+};
 
 function processRow(row: string[], conv: Converter, index): JSONResult | null {
-
-  if (conv.parseParam.checkColumn && conv.parseRuntime.headers && row.length !== conv.parseRuntime.headers.length) {
-    throw (CSVError.column_mismatched(conv.parseRuntime.parsedLineNumber + index))
+  if (
+    conv.parseParam.checkColumn &&
+    conv.parseRuntime.headers &&
+    row.length !== conv.parseRuntime.headers.length
+  ) {
+    throw CSVError.column_mismatched(
+      conv.parseRuntime.parsedLineNumber + index
+    );
   }
 
   const headRow = conv.parseRuntime.headers || [];
-  const resultRow = convertRowToJson(row, headRow, conv);
+  const resultRow = convertRowToJson(row, headRow, conv, index);
   if (resultRow) {
     return resultRow;
   } else {
@@ -35,14 +40,19 @@ function processRow(row: string[], conv: Converter, index): JSONResult | null {
   }
 }
 
-function convertRowToJson(row: string[], headRow: string[], conv: Converter): { [key: string]: any } | null {
+function convertRowToJson(
+  row: string[],
+  headRow: string[],
+  conv: Converter,
+  rowIndex: number
+): { [key: string]: any } | null {
   let hasValue = false;
   const resultRow = {};
-  
+
   for (let i = 0, len = row.length; i < len; i++) {
     let item = row[i];
 
-    if (conv.parseParam.ignoreEmpty && item === '') {
+    if (conv.parseParam.ignoreEmpty && item === "") {
       continue;
     }
     hasValue = true;
@@ -53,9 +63,9 @@ function convertRowToJson(row: string[], headRow: string[], conv: Converter): { 
     }
     const convFunc = getConvFunc(head, i, conv);
     if (convFunc) {
-      const convRes = convFunc(item, head, resultRow, row, i);
+      const convRes = convFunc(item, head, resultRow, row, i, rowIndex);
       if (convRes !== undefined) {
-        setPath(resultRow, head, convRes, conv,i);
+        setPath(resultRow, head, convRes, conv, i);
       }
     } else {
       // var flag = getFlag(head, i, param);
@@ -67,7 +77,7 @@ function convertRowToJson(row: string[], headRow: string[], conv: Converter): { 
         item = convertFunc(item);
       }
       if (item !== undefined) {
-        setPath(resultRow, head, item, conv,i);
+        setPath(resultRow, head, item, conv, i);
       }
     }
   }
@@ -79,17 +89,21 @@ function convertRowToJson(row: string[], headRow: string[], conv: Converter): { 
 }
 
 const builtInConv: { [key: string]: CellParser } = {
-  "string": stringType,
-  "number": numberType,
-  "omit": function () { }
-}
-function getConvFunc(head: string, i: number, conv: Converter): CellParser | null {
+  string: stringType,
+  number: numberType,
+  omit: function() {}
+};
+function getConvFunc(
+  head: string,
+  i: number,
+  conv: Converter
+): CellParser | null {
   if (conv.parseRuntime.columnConv[i] !== undefined) {
     return conv.parseRuntime.columnConv[i];
   } else {
     let flag = conv.parseParam.colParser[head];
     if (flag === undefined) {
-      return conv.parseRuntime.columnConv[i] = null;
+      return (conv.parseRuntime.columnConv[i] = null);
     }
     if (typeof flag === "object") {
       flag = (flag as ColumnParam).cellParser || "string";
@@ -98,34 +112,43 @@ function getConvFunc(head: string, i: number, conv: Converter): CellParser | nul
       flag = flag.trim().toLowerCase();
       const builtInFunc = builtInConv[flag];
       if (builtInFunc) {
-        return conv.parseRuntime.columnConv[i] = builtInFunc;
+        return (conv.parseRuntime.columnConv[i] = builtInFunc);
       } else {
-        return conv.parseRuntime.columnConv[i] = null;
+        return (conv.parseRuntime.columnConv[i] = null);
       }
     } else if (typeof flag === "function") {
-      return conv.parseRuntime.columnConv[i] = flag;
+      return (conv.parseRuntime.columnConv[i] = flag);
     } else {
-      return conv.parseRuntime.columnConv[i] = null;
+      return (conv.parseRuntime.columnConv[i] = null);
     }
   }
 }
-function setPath(resultJson: any, head: string, value: any, conv: Converter,headIdx:number) {
+function setPath(
+  resultJson: any,
+  head: string,
+  value: any,
+  conv: Converter,
+  headIdx: number
+) {
   if (!conv.parseRuntime.columnValueSetter[headIdx]) {
     if (conv.parseParam.flatKeys) {
       conv.parseRuntime.columnValueSetter[headIdx] = flatSetter;
     } else {
-      
       if (head.indexOf(".") > -1) {
-        const headArr=head.split(".");
-        let jsonHead=true;
-        while(headArr.length>0){
-          const headCom=headArr.shift();
-          if (headCom!.length===0){
-            jsonHead=false;
+        const headArr = head.split(".");
+        let jsonHead = true;
+        while (headArr.length > 0) {
+          const headCom = headArr.shift();
+          if (headCom!.length === 0) {
+            jsonHead = false;
             break;
           }
         }
-        if (!jsonHead || conv.parseParam.colParser[head] && (conv.parseParam.colParser[head] as ColumnParam).flat) {
+        if (
+          !jsonHead ||
+          (conv.parseParam.colParser[head] &&
+            (conv.parseParam.colParser[head] as ColumnParam).flat)
+        ) {
           conv.parseRuntime.columnValueSetter[headIdx] = flatSetter;
         } else {
           conv.parseRuntime.columnValueSetter[headIdx] = jsonSetter;
@@ -135,12 +158,11 @@ function setPath(resultJson: any, head: string, value: any, conv: Converter,head
       }
     }
   }
-  if (conv.parseParam.nullObject ===true && value ==="null"){
-    value=null;
+  if (conv.parseParam.nullObject === true && value === "null") {
+    value = null;
   }
   conv.parseRuntime.columnValueSetter[headIdx](resultJson, head, value);
   // flatSetter(resultJson, head, value);
-
 }
 function flatSetter(resultJson: any, head: string, value: any) {
   resultJson[head] = value;
@@ -149,18 +171,22 @@ function jsonSetter(resultJson: any, head: string, value: any) {
   set(resultJson, head, value);
 }
 
-
-function checkType(item: string, head: string, headIdx: number, conv: Converter): Function {
+function checkType(
+  item: string,
+  head: string,
+  headIdx: number,
+  conv: Converter
+): Function {
   if (conv.parseRuntime.headerType[headIdx]) {
     return conv.parseRuntime.headerType[headIdx];
-  } else if (head.indexOf('number#!') > -1) {
-    return conv.parseRuntime.headerType[headIdx] = numberType;
-  } else if (head.indexOf('string#!') > -1) {
-    return conv.parseRuntime.headerType[headIdx] = stringType;
+  } else if (head.indexOf("number#!") > -1) {
+    return (conv.parseRuntime.headerType[headIdx] = numberType);
+  } else if (head.indexOf("string#!") > -1) {
+    return (conv.parseRuntime.headerType[headIdx] = stringType);
   } else if (conv.parseParam.checkType) {
-    return conv.parseRuntime.headerType[headIdx] = dynamicType;
+    return (conv.parseRuntime.headerType[headIdx] = dynamicType);
   } else {
-    return conv.parseRuntime.headerType[headIdx] = stringType;
+    return (conv.parseRuntime.headerType[headIdx] = stringType);
   }
 }
 
@@ -183,9 +209,15 @@ function dynamicType(item) {
   }
   if (numReg.test(trimed)) {
     return numberType(item);
-  } else if (trimed.length === 5 && trimed.toLowerCase() === "false" || trimed.length === 4 && trimed.toLowerCase() === "true") {
+  } else if (
+    (trimed.length === 5 && trimed.toLowerCase() === "false") ||
+    (trimed.length === 4 && trimed.toLowerCase() === "true")
+  ) {
     return booleanType(item);
-  } else if (trimed[0] === "{" && trimed[trimed.length - 1] === "}" || trimed[0] === "[" && trimed[trimed.length - 1] === "]") {
+  } else if (
+    (trimed[0] === "{" && trimed[trimed.length - 1] === "}") ||
+    (trimed[0] === "[" && trimed[trimed.length - 1] === "]")
+  ) {
     return jsonType(item);
   } else {
     return stringType(item);

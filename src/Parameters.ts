@@ -20,7 +20,7 @@ export interface CSVParseParam {
    */
   trim: boolean;
   /**
-   *  This parameter turns on and off whether check field type. Default is false. 
+   *  This parameter turns on and off whether check field type. Default is false.
    */
   checkType: boolean;
   /**
@@ -59,7 +59,7 @@ export interface CSVParseParam {
    *   Allows override parsing logic for a specific column. It accepts a JSON object with fields like: headName: <String | Function> . e.g. {field1:'number'} will use built-in number parser to convert value of the field1 column to number. Another example {"name":nameProcessFunc} will use specified function to parse the value.
    */
   colParser: {
-    [key: string]: string | CellParser | ColumnParam
+    [key: string]: string | CellParser | ColumnParam;
   };
   /**
    *  End of line character. If omitted, parser will attempt to retrieve it from the first chunks of CSV data
@@ -70,14 +70,14 @@ export interface CSVParseParam {
    */
   alwaysSplitAtEOL: boolean;
   /**
-   * The format to be converted to. "json" (default) -- convert csv to json. "csv" -- convert csv to csv row array. "line" -- convert csv to csv line string 
+   * The format to be converted to. "json" (default) -- convert csv to json. "csv" -- convert csv to csv row array. "line" -- convert csv to csv line string
    */
   output: "json" | "csv" | "line";
 
   /**
    * Convert string "null" to null object in JSON outputs. Default is false.
    */
-  nullObject:boolean;
+  nullObject: boolean;
   /**
    * Define the format required by downstream (this parameter does not work if objectMode is on). `line` -- json is emitted in a single line separated by a line breake like "json1\njson2" . `array` -- downstream requires array format like "[json1,json2]". Default is line.
    */
@@ -88,7 +88,14 @@ export interface CSVParseParam {
   needEmitAll: boolean;
 }
 
-export type CellParser = (item: string, head: string, resultRow: any, row: string[], columnIndex: number) => any;
+export type CellParser = (
+  item: string,
+  head: string,
+  resultRow: any,
+  row: string[],
+  columnIndex: number,
+  rowIndex: number
+) => any;
 
 export interface ColumnParam {
   flat?: boolean;
@@ -97,7 +104,7 @@ export interface ColumnParam {
 
 export function mergeParams(params?: Partial<CSVParseParam>): CSVParseParam {
   const defaultParam: CSVParseParam = {
-    delimiter: ',',
+    delimiter: ",",
     ignoreColumns: undefined,
     includeColumns: undefined,
     quote: '"',
@@ -116,9 +123,9 @@ export function mergeParams(params?: Partial<CSVParseParam>): CSVParseParam {
     alwaysSplitAtEOL: false,
     output: "json",
     nullObject: false,
-    downstreamFormat:"line",
-    needEmitAll:true
-  }
+    downstreamFormat: "line",
+    needEmitAll: true
+  };
   if (!params) {
     params = {};
   }
@@ -133,4 +140,3 @@ export function mergeParams(params?: Partial<CSVParseParam>): CSVParseParam {
   }
   return defaultParam;
 }
-
