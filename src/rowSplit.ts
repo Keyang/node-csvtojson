@@ -4,7 +4,7 @@ import { Fileline } from "./fileline";
 import getEol from "./getEol";
 import { filterArray, trimLeft, trimRight } from "./util";
 
-const defaulDelimiters = [",", "|", "\t", ";", ":"];
+const defaultDelimiters = [",", "|", "\t", ";", ":"];
 export class RowSplit {
   private quote: string;
   private trim: boolean;
@@ -134,24 +134,24 @@ export class RowSplit {
     return { cells: row, closed: !inquote };
   }
   private getDelimiter(fileline: Fileline): string {
-    let checker;
+    let possibleDelimiters;
     if (this.conv.parseParam.delimiter === "auto") {
-      checker = defaulDelimiters;
+      possibleDelimiters = defaultDelimiters;
     } else if (this.conv.parseParam.delimiter instanceof Array) {
-      checker = this.conv.parseParam.delimiter;
+      possibleDelimiters = this.conv.parseParam.delimiter;
     } else {
       return this.conv.parseParam.delimiter;
     }
     let count = 0;
-    let rtn = ",";
-    checker.forEach(function (delim) {
+    let delimiter = ",";
+    possibleDelimiters.forEach(function (delim) {
       const delimCount = fileline.split(delim).length;
       if (delimCount > count) {
-        rtn = delim;
+        delimiter = delim;
         count = delimCount;
       }
     });
-    return rtn;
+    return delimiter;
   }
   private isQuoteOpen(str: string): boolean {
     const quote = this.quote;

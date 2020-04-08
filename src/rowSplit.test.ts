@@ -32,7 +32,7 @@ describe("Test delimiters", function () {
     assert(returnedDelimiter === ",");
   });
 
-  it("should accetp an array with potential delimiters", function () {
+  it("should accept an array with potential delimiters", function () {
     var rowStr = "a$b$c";
     var returnedDelimiter = getDelimiter(rowStr, { delimiter: [",", ";", "$"] });
     assert(returnedDelimiter === '$');
