@@ -59,7 +59,7 @@ export class Converter extends Transform implements PromiseLike<any[]> {
     return this;
   }
   fromString(csvString: string): Converter {
-    const csv = csvString.toString();
+    csvString = csvString.toString(); // enforce a string
     const read = new Readable();
     let idx = 0;
     read._read = function (size) {
