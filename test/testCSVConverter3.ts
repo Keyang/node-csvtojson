@@ -69,7 +69,7 @@ describe("testCSVConverter3", function () {
   it("emit file not exists error when try to open a non-exists file", function () {
     let called = false;
     const cb = sb.spy((err) => {
-      assert(err.toString().indexOf("File does not exist") > -1);
+      assert(err.toString().indexOf("does not exist") > -1);
     });
     return csv()
       .fromFile("somefile")
