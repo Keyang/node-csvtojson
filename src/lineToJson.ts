@@ -135,8 +135,11 @@ function setPath(resultJson: any, head: string, value: any, conv: Converter,head
       }
     }
   }
-  if (conv.parseParam.nullObject ===true && value ==="null"){
-    value=null;
+  if (conv.parseParam.nullObject === true
+    && typeof value === 'string'
+    && value.toLowerCase() === "null"
+  ) {
+    value = null;
   }
   conv.parseRuntime.columnValueSetter[headIdx](resultJson, head, value);
   // flatSetter(resultJson, head, value);
