@@ -207,7 +207,7 @@ Converter.prototype._preProcessLines = function (lines, startIdx) {
       rtn.push(result);
     } else {
       rtn.push(lines[i]);
-      this.emit("error", new Error("preProcessLine should return a string but got: " + JSON.stringify(result) + typeof result));
+      this.emit("error", new Error("preProcessLine should return a string but got: " + JSON.stringify(result) + "Type of this line is: " + typeof result));
     }
   }
   return rtn;
