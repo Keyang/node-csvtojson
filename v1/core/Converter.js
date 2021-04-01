@@ -105,7 +105,7 @@ Converter.prototype._transform = function (data, encoding, cb) {
    * From Keyang:
    * The code below is to check if a single utf8 char (which could be multiple bytes) being split.
    * If the char being split, the buffer from two chunk needs to be concat
-   * check how utf8 being encoded to understand the code below. 
+   * check how utf8 being encoded to understand the code below.
    * If anyone has any better way to do this, please let me know.
    */
   if ((data[idx] & 1<<7) !=0){
@@ -207,7 +207,7 @@ Converter.prototype._preProcessLines = function (lines, startIdx) {
       rtn.push(result);
     } else {
       rtn.push(lines[i]);
-      this.emit("error", new Error("preProcessLine should return a string but got: " + JSON.stringify(result)));
+      this.emit("error", new Error("preProcessLine should return a string but got: " + JSON.stringify(result) + "Type of this line is: " + typeof result));
     }
   }
   return rtn;
@@ -522,7 +522,7 @@ Converter.prototype.fromFile = function (filePath, cb, options) {
       rs = fs.createReadStream(filePath,options);
       rs.pipe(this);
     } else {
-      this.emit('error', new Error("File does not exist. Check to make sure the file path to your csv is correct."));
+      this.emit('error', new Error(`File does not exist at ${filePath}. Check to make sure the file path to your csv is correct.`));
     }
   }.bind(this));
   return this;
