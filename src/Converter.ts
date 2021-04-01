@@ -49,7 +49,7 @@ export class Converter extends Transform implements PromiseLike<any[]> {
         const rs = fs.createReadStream(filePath, options);
         rs.pipe(this);
       } else {
-        this.emit('error', new Error("File does not exist. Check to make sure the file path to your csv is correct."));
+        this.emit('error', new Error(`File does not exist at ${filePath}. Check to make sure the file path to your csv is correct.`));
       }
     });
     return this;
