@@ -674,7 +674,14 @@ If a module packager is preferred, just simply `require("csvtojson")`:
 var csv=require("csvtojson");
 
 // or with import
-import * as csv from "csvtojson";
+import {csv} from "csvtojson";
 
-//then use csv as normal
+//then use csv as normal, you'll need to load the CSV first, this example is using Fetch https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch 
+fetch('http://mywebsite.com/mycsvfile.csv')
+  .then(response => response.text())
+  .then(text => csv.fromString(text));
+  .then(function(result){
+  
+  })
+
 ```
