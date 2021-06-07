@@ -248,7 +248,7 @@ Following parameters are supported:
 * **alwaysSplitAtEOL**: Always interpret each line (as defined by `eol` like `\n`) as a row. This will prevent `eol` characters from being used within a row (even inside a quoted field). Default is false. Change to true if you are confident no inline line breaks (like line break in a cell which has multi line text).
 * **nullObject**: How to parse if a csv cell contains "null". Default false will keep "null" as string. Change to true if a null object is needed.
 * **downstreamFormat**: Option to set what JSON array format is needed by downstream. "line" is also called ndjson format. This format will write lines of JSON (without square brackets and commas) to downstream. "array" will write complete JSON array string to downstream (suitable for file writable stream etc). Default "line"
-* **needEmitAll**: Parser will build JSON result is `.then` is called (or await is used). If this is not desired, set this to false. Default is true. 
+* **needEmitAll**: Parser will build JSON result if `.then` is called (or await is used). If this is not desired, set this to false. Default is true. 
 All parameters can be used in Command Line tool.
 
 ## Asynchronous Result Process
