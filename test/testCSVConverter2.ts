@@ -79,6 +79,16 @@ describe("testCSVConverter2", function () {
     });
   });
 
+  it("should parse fromFile with encoding option", function (done) {
+    var csvFile = __dirname + "/data/dataWithLatin1Encoding";
+    var conv = new Converter({
+    });
+    conv.fromFile(csvFile, { encoding: "latin1" }).then(function (json) {
+      assert.equal(json[0].Name, 'bébé');
+      done();
+    });
+  });
+
   it("should fromFile should emit error", function (done) {
     var csvFile = __dirname + "/data/dataWithUnclosedQuotes";
     var conv = new Converter({
