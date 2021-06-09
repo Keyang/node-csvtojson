@@ -1,10 +1,8 @@
-/// <reference types="bluebird" />
 /// <reference types="node" />
 import { Processor, ProcessLineResult } from "./Processor";
-import P from "bluebird";
 export declare class ProcessorLocal extends Processor {
-    flush(): P<ProcessLineResult[]>;
-    destroy(): P<void>;
+    flush(): Promise<ProcessLineResult[]>;
+    destroy(): Promise<void>;
     private rowSplit;
     private eolEmitted;
     private _needEmitEol?;
@@ -12,7 +10,7 @@ export declare class ProcessorLocal extends Processor {
     private headEmitted;
     private _needEmitHead?;
     private readonly needEmitHead;
-    process(chunk: Buffer, finalChunk?: boolean): P<ProcessLineResult[]>;
+    process(chunk: Buffer, finalChunk?: boolean): Promise<ProcessLineResult[]>;
     private processCSV(csv, finalChunk);
     private processDataWithHead(lines);
     private filterHeader();

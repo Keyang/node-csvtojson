@@ -14,7 +14,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var Processor_1 = require("./Processor");
-var bluebird_1 = __importDefault(require("bluebird"));
 var dataClean_1 = require("./dataClean");
 var getEol_1 = __importDefault(require("./getEol"));
 var fileline_1 = require("./fileline");
@@ -41,19 +40,19 @@ var ProcessorLocal = /** @class */ (function (_super) {
             return this.process(buf, true)
                 .then(function (res) {
                 if (_this.runtime.csvLineBuffer && _this.runtime.csvLineBuffer.length > 0) {
-                    return bluebird_1.default.reject(CSVError_1.default.unclosed_quote(_this.runtime.parsedLineNumber, _this.runtime.csvLineBuffer.toString()));
+                    return Promise.reject(CSVError_1.default.unclosed_quote(_this.runtime.parsedLineNumber, _this.runtime.csvLineBuffer.toString()));
                 }
                 else {
-                    return bluebird_1.default.resolve(res);
+                    return Promise.resolve(res);
                 }
             });
         }
         else {
-            return bluebird_1.default.resolve([]);
+            return Promise.resolve([]);
         }
     };
     ProcessorLocal.prototype.destroy = function () {
-        return bluebird_1.default.resolve();
+        return Promise.resolve();
     };
     Object.defineProperty(ProcessorLocal.prototype, "needEmitEol", {
         get: function () {
@@ -85,7 +84,7 @@ var ProcessorLocal = /** @class */ (function (_super) {
         else {
             csvString = dataClean_1.prepareData(chunk, this.converter.parseRuntime);
         }
-        return bluebird_1.default.resolve()
+        return Promise.resolve()
             .then(function () {
             if (_this.runtime.preRawDataHook) {
                 return _this.runtime.preRawDataHook(csvString);
@@ -99,7 +98,7 @@ var ProcessorLocal = /** @class */ (function (_super) {
                 return _this.processCSV(csv, finalChunk);
             }
             else {
-                return bluebird_1.default.resolve([]);
+                return Promise.resolve([]);
             }
         });
     };
@@ -132,7 +131,7 @@ var ProcessorLocal = /** @class */ (function (_super) {
                 prom = this.runPreLineHook(stringToLineResult.lines);
             }
             else {
-                prom = bluebird_1.default.resolve(stringToLineResult.lines);
+                prom = Promise.resolve(stringToLineResult.lines);
             }
             return prom.then(function (lines) {
                 if (!runtime.started
@@ -145,7 +144,7 @@ var ProcessorLocal = /** @class */ (function (_super) {
             });
         }
         else {
-            return bluebird_1.default.resolve([]);
+            return Promise.resolve([]);
         }
     };
     ProcessorLocal.prototype.processDataWithHead = function (lines) {
@@ -264,7 +263,7 @@ var ProcessorLocal = /** @class */ (function (_super) {
     };
     ProcessorLocal.prototype.runPreLineHook = function (lines) {
         var _this = this;
-        return new bluebird_1.default(function (resolve, reject) {
+        return new Promise(function (resolve, reject) {
             processLineHook(lines, _this.runtime, 0, function (err) {
                 if (err) {
                     reject(err);

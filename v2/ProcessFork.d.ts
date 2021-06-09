@@ -1,13 +1,11 @@
-/// <reference types="bluebird" />
 /// <reference types="node" />
 import { Processor, ProcessLineResult } from "./Processor";
-import P from "bluebird";
 import { Converter } from "./Converter";
 import { ChildProcess } from "child_process";
 export declare class ProcessorFork extends Processor {
     protected converter: Converter;
-    flush(): P<ProcessLineResult[]>;
-    destroy(): P<void>;
+    flush(): Promise<ProcessLineResult[]>;
+    destroy(): Promise<void>;
     childProcess: ChildProcess;
     inited: boolean;
     private resultBuf;
@@ -19,7 +17,7 @@ export declare class ProcessorFork extends Processor {
     private initWorker();
     private flushResult();
     private appendBuf(data);
-    process(chunk: Buffer): P<ProcessLineResult[]>;
+    process(chunk: Buffer): Promise<ProcessLineResult[]>;
 }
 export interface Message {
     cmd: string;

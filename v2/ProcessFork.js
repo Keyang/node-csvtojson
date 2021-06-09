@@ -14,7 +14,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var Processor_1 = require("./Processor");
-var bluebird_1 = __importDefault(require("bluebird"));
 var Parameters_1 = require("./Parameters");
 var CSVError_1 = __importDefault(require("./CSVError"));
 var ProcessorFork = /** @class */ (function (_super) {
@@ -34,7 +33,7 @@ var ProcessorFork = /** @class */ (function (_super) {
     }
     ProcessorFork.prototype.flush = function () {
         var _this = this;
-        return new bluebird_1.default(function (resolve, reject) {
+        return new Promise(function (resolve, reject) {
             // console.log("flush");
             _this.finalChunk = true;
             _this.next = resolve;
@@ -47,7 +46,7 @@ var ProcessorFork = /** @class */ (function (_super) {
     };
     ProcessorFork.prototype.destroy = function () {
         this.childProcess.kill();
-        return bluebird_1.default.resolve();
+        return Promise.resolve();
     };
     ProcessorFork.prototype.prepareParam = function (param) {
         var clone = Parameters_1.mergeParams(param);
@@ -137,7 +136,7 @@ var ProcessorFork = /** @class */ (function (_super) {
     };
     ProcessorFork.prototype.process = function (chunk) {
         var _this = this;
-        return new bluebird_1.default(function (resolve, reject) {
+        return new Promise(function (resolve, reject) {
             // console.log("chunk", chunk.length);
             _this.next = resolve;
             // this.appendReadBuf(chunk);

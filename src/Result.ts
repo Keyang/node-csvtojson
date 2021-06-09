@@ -1,6 +1,6 @@
 import { Converter } from "./Converter";
 import { ProcessLineResult } from "./Processor";
-import P from "bluebird";
+
 import CSVError from "./CSVError";
 import { EOL } from "os";
 export class Result {
@@ -20,15 +20,15 @@ export class Result {
   }
   private finalResult: any[] = [];
   constructor(private converter: Converter) { }
-  processResult(resultLines: ProcessLineResult[]): P<any> {
+  processResult(resultLines: ProcessLineResult[]): Promise<any> {
     const startPos = this.converter.parseRuntime.parsedLineNumber;
     if (this.needPushDownstream && this.converter.parseParam.downstreamFormat === "array") {
       if (startPos === 0) {
         pushDownstream(this.converter, "[" + EOL);
       }
     }
-    // let prom: P<any>;
-    return new P((resolve, reject) => {
+    // let prom: Promise<any>;
+    return new Promise((resolve, reject) => {
       if (this.needEmitLine) {
         processLineByLine(
           resultLines,

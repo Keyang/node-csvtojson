@@ -1,9 +1,5 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-var bluebird_1 = __importDefault(require("bluebird"));
 var os_1 = require("os");
 var Result = /** @class */ (function () {
     function Result(converter) {
@@ -43,8 +39,8 @@ var Result = /** @class */ (function () {
                 pushDownstream(this.converter, "[" + os_1.EOL);
             }
         }
-        // let prom: P<any>;
-        return new bluebird_1.default(function (resolve, reject) {
+        // let prom: Promise<any>;
+        return new Promise(function (resolve, reject) {
             if (_this.needEmitLine) {
                 processLineByLine(resultLines, _this.converter, 0, _this.needPushDownstream, function (err) {
                     if (err) {

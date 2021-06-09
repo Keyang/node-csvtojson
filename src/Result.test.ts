@@ -1,6 +1,6 @@
 import {Result} from "./Result";
 import { Converter } from "./Converter";
-import P from "bluebird";
+
 import {readFileSync} from "fs";
 import path from "path";
 import assert from "assert";
