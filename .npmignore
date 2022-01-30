@@ -15,6 +15,9 @@ graph.png
 .project
 .settings
 .vscode
-docs
+docs/
 devops
-coverage
+coverage/
+.nyc_output/
+.coveralls.yml
+.ts-node
