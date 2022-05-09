@@ -5,7 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var getEol_1 = __importDefault(require("./getEol"));
 var util_1 = require("./util");
-var defaulDelimiters = [",", "|", "\t", ";", ":"];
+var defaultDelimiters = [",", "|", "\t", ";", ":"];
 var RowSplit = /** @class */ (function () {
     function RowSplit(conv) {
         this.conv = conv;
@@ -142,26 +142,26 @@ var RowSplit = /** @class */ (function () {
         return { cells: row, closed: !inquote };
     };
     RowSplit.prototype.getDelimiter = function (fileline) {
-        var checker;
+        var possibleDelimiters;
         if (this.conv.parseParam.delimiter === "auto") {
-            checker = defaulDelimiters;
+            possibleDelimiters = defaultDelimiters;
         }
         else if (this.conv.parseParam.delimiter instanceof Array) {
-            checker = this.conv.parseParam.delimiter;
+            possibleDelimiters = this.conv.parseParam.delimiter;
         }
         else {
             return this.conv.parseParam.delimiter;
         }
         var count = 0;
-        var rtn = ",";
-        checker.forEach(function (delim) {
+        var delimiter = ",";
+        possibleDelimiters.forEach(function (delim) {
             var delimCount = fileline.split(delim).length;
             if (delimCount > count) {
-                rtn = delim;
+                delimiter = delim;
                 count = delimCount;
             }
         });
-        return rtn;
+        return delimiter;
     };
     RowSplit.prototype.isQuoteOpen = function (str) {
         var quote = this.quote;

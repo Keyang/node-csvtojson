@@ -115,7 +115,7 @@ function setPath(resultJson: any, head: string, value: any, conv: Converter,head
       conv.parseRuntime.columnValueSetter[headIdx] = flatSetter;
     } else {
       
-      if (head.indexOf(".") > -1) {
+      if (head.indexOf(".") > -1 || head.indexOf("[") > -1) {
         const headArr=head.split(".");
         let jsonHead=true;
         while(headArr.length>0){
