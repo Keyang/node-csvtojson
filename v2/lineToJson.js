@@ -113,7 +113,7 @@ function setPath(resultJson, head, value, conv, headIdx) {
             conv.parseRuntime.columnValueSetter[headIdx] = flatSetter;
         }
         else {
-            if (head.indexOf(".") > -1) {
+            if (head.indexOf(".") > -1 || head.indexOf("[") > -1) {
                 var headArr = head.split(".");
                 var jsonHead = true;
                 while (headArr.length > 0) {
