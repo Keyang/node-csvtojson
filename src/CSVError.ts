@@ -8,6 +8,9 @@ export default class CSVError extends Error {
   static fromJSON(obj) {
     return new CSVError(obj.err, obj.line, obj.extra);
   }
+  static row_exceed(index: number){
+    return new CSVError("row_exceed",index)
+  }
   constructor(
     public err: string,
     public line: number,

@@ -8,6 +8,9 @@ var numReg = /^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$/;
 
 export default function (csvRows: string[][], conv: Converter): JSONResult[] {
   const res: JSONResult[] = [];
+  if(conv.parseParam.maxRowLength && conv.parseParam.maxRowLength < csvRows.length){
+    throw (CSVError.row_exceed(0));
+}
   for (let i = 0, len = csvRows.length; i < len; i++) {
     const r = processRow(csvRows[i], conv, i);
     if (r) {

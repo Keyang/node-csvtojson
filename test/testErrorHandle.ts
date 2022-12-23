@@ -54,4 +54,24 @@ describe("Converter error handling", function() {
     });
     rs.pipe(conv);
   });
+
+  it ("should handle row exceed error", function(done) {
+    var rs = fs.createReadStream(__dirname + "/data/rowExceeded");
+    var conv = new Converter({
+      maxRowLength:3
+    });
+    var tested = false;
+    conv.on("error", function(err:CSVError) {
+      if (tested === false) {
+        assert(err.err === "row_exceed");
+        tested = true;
+        // done();
+      }
+    });
+    conv.on('done',function() {
+      assert(tested);
+      done();
+    });
+    rs.pipe(conv);
+  });
 });

@@ -8,6 +8,9 @@ var set_1 = __importDefault(require("lodash/set"));
 var numReg = /^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$/;
 function default_1(csvRows, conv) {
     var res = [];
+    if(conv.parseParam.maxRowLength && conv.parseParam.maxRowLength < csvRows.length){
+        throw (CSVError_1.default.row_exceed(0));
+    }
     for (var i = 0, len = csvRows.length; i < len; i++) {
         var r = processRow(csvRows[i], conv, i);
         if (r) {
