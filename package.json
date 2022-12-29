@@ -277,8 +277,8 @@
     "ts-node": "^6.0.3",
     "typescript": "^2.8.3",
     "uglifyjs-webpack-plugin": "^1.2.7",
-    "webpack": "^4.16.4",
-    "webpack-cli": "^3.1.0"
+    "webpack": "^5.75.0",
+    "webpack-cli": "^5.0.1"
   },
   "dependencies": {
     "bluebird": "^3.5.1",
