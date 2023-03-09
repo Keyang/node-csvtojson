@@ -137,6 +137,37 @@ describe("RowSplit.parse function", function () {
     assert.equal(res.cells[0],'"Weight" (kg)');
     assert.equal(res.cells[1],'Error code');
     assert.equal(res.cells[2],'"Height" (m)');
-    
+  })
+  it("should remove closing quote when cell string is quoted ", () => {
+    // manually edited csv often are formatted to have commas like columns
+    // this trailing whitespace should be removed before the closing quote is removed
+    const data = '   "   Text with ws   "  ,   "Text, with, commas"  ,   "   Text, with, both   "   ,   No quotes   ';
+    const rowSplit = new RowSplit(new Converter({
+      noheader: true,
+	  trim: false
+    }));
+    const res = rowSplit.parse(data);
+    assert.equal(res.cells.length, 4);
+    assert(res.closed);
+    assert.equal(res.cells[0],'   Text with ws   ');
+    assert.equal(res.cells[1],'Text, with, commas');
+    assert.equal(res.cells[2],'   Text, with, both   ');
+    assert.equal(res.cells[3],'   No quotes   ');
+  })
+  it("should remove trailing whitespace (and the closing quote) when cell string is quoted ", () => {
+    // manually edited csv often are formatted to have commas like columns
+    // this trailing whitespace should be removed before the closing quote is removed
+    const data = '   "   Text with ws   "  ,   "   Text, with, commas"  ,   "   Text, with, both   "   ,   No quotes   ';
+    const rowSplit = new RowSplit(new Converter({
+      noheader: true,
+	  trim: true
+    }));
+    const res = rowSplit.parse(data);
+    assert.equal(res.cells.length, 4);
+    assert(res.closed);
+    assert.equal(res.cells[0],'Text with ws');
+    assert.equal(res.cells[1],'Text, with, commas');
+    assert.equal(res.cells[2],'Text, with, both');
+    assert.equal(res.cells[3],'No quotes');
   })
 });
