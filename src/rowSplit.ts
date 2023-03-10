@@ -67,9 +67,16 @@ export class RowSplit {
           row.push("");
           continue;
         } else if (this.isQuoteOpen(e)) { //quote open
+          e = trimLeft(e);
           e = e.substr(1);
+          if (trim) {
+            e = trimLeft(e);
+          }
           if (this.isQuoteClose(e)) { //quote close
             e = e.substring(0, e.lastIndexOf(quote));
+            if (trim) {
+              e = trimRight(e);
+            }
             e = this.escapeQuote(e);
             row.push(e);
             continue;
@@ -113,7 +120,7 @@ export class RowSplit {
       } else { //previous quote not closed
         if (this.isQuoteClose(e)) { //close double quote
           inquote = false;
-          e = e.substr(0, len - 1);
+          e = e.substring(0, e.lastIndexOf(quote));
           quoteBuff += delimiter + e;
           quoteBuff = this.escapeQuote(quoteBuff);
           if (trim) {
@@ -156,6 +163,7 @@ export class RowSplit {
   private isQuoteOpen(str: string): boolean {
     const quote = this.quote;
     const escape = this.escape;
+    str = trimLeft(str);
     return str[0] === quote && (
       str[1] !== quote ||
       str[1] === escape && (str[2] === quote || str.length === 2));
@@ -163,9 +171,7 @@ export class RowSplit {
   private isQuoteClose(str: string): boolean {
     const quote = this.quote;
     const escape = this.escape;
-    if (this.conv.parseParam.trim) {
-      str = trimRight(str);
-    }
+    str = trimRight(str);
     let count = 0;
     let idx = str.length - 1;
     while (str[idx] === quote || str[idx] === escape) {
