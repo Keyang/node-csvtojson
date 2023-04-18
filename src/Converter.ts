@@ -93,14 +93,8 @@ export class Converter extends Transform implements PromiseLike<any[]> {
     this.params = mergeParams(param);
     this.runtime = initParseRuntime(this);
     this.result = new Result(this);
-    // if (this.params.fork) {
-    //   this.processor = new ProcessorFork(this);
-    // } else {
     this.processor = new ProcessorLocal(this);
-    // }
     this.once("error", (err: any) => {
-      // console.log("BBB");
-      //wait for next cycle to emit the errors.
       setImmediate(() => {
         this.result.processError(err);
         this.emit("done", err);

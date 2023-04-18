@@ -2,9 +2,8 @@ import { Converter } from "./Converter";
 import CSVError from "./CSVError";
 import { CellParser, ColumnParam } from "./Parameters";
 import set from "lodash/set";
-import { ParseRuntime } from "./ParseRuntime";
 
-var numReg = /^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$/;
+const numReg = /^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$/;
 
 export default function (csvRows: string[][], conv: Converter): JSONResult[] {
   const res: JSONResult[] = [];
@@ -58,10 +57,6 @@ function convertRowToJson(row: string[], headRow: string[], conv: Converter): { 
         setPath(resultRow, head, convRes, conv,i);
       }
     } else {
-      // var flag = getFlag(head, i, param);
-      // if (flag === 'omit') {
-      //   continue;
-      // }
       if (conv.parseParam.checkType) {
         const convertFunc = checkType(item, head, i, conv);
         item = convertFunc(item);
@@ -193,12 +188,8 @@ function dynamicType(item) {
 }
 
 function booleanType(item) {
-  var trimed = item.trim();
-  if (trimed.length === 5 && trimed.toLowerCase() === "false") {
-    return false;
-  } else {
-    return true;
-  }
+  const trimmed = item.trim();
+  return !(trimmed.length === 5 && trimmed.toLowerCase() === "false");
 }
 
 function jsonType(item) {
