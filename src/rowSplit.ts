@@ -69,7 +69,7 @@ export class RowSplit {
         } else if (this.isQuoteOpen(e)) { //quote open
           e = e.substr(1);
           if (this.isQuoteClose(e)) { //quote close
-            e = e.substring(0, e.lastIndexOf(quote));
+            e = e.substr(0, e.lastIndexOf(quote));
             e = this.escapeQuote(e);
             row.push(e);
             continue;

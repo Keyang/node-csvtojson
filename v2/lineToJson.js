@@ -17,7 +17,6 @@ function default_1(csvRows, conv) {
     return res;
 }
 exports.default = default_1;
-;
 function processRow(row, conv, index) {
     if (conv.parseParam.checkColumn && conv.parseRuntime.headers && row.length !== conv.parseRuntime.headers.length) {
         throw (CSVError_1.default.column_mismatched(conv.parseRuntime.parsedLineNumber + index));
