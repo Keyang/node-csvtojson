@@ -43,8 +43,8 @@ function csvtojson() {
   }
   function stringToRegExp(str) {
     var lastSlash = str.lastIndexOf("/");
-    var source = str.substring(1, lastSlash);
-    var flag = str.substring(lastSlash + 1);
+    var source = str.substr(1, lastSlash);
+    var flag = str.substr(lastSlash + 1);
     return new RegExp(source,flag);
   }
   function parse() {
