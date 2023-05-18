@@ -78,7 +78,7 @@ var Converter = /** @class */ (function (_super) {
                 rs.pipe(_this);
             }
             else {
-                _this.emit('error', new Error(`File does not exist at ${filePath}. Check to make sure the file path to your csv is correct.`));
+                _this.emit('error', new Error("File does not exist at " + filePath + ". Check to make sure the file path to your csv is correct."));
             }
         });
         return this;
