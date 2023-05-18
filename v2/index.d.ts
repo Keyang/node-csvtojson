@@ -2,5 +2,10 @@
 import { TransformOptions } from "stream";
 import { CSVParseParam } from "./Parameters";
 import { Converter } from "./Converter";
-declare const helper: (param?: Partial<CSVParseParam> | undefined, options?: TransformOptions | undefined) => Converter;
+type helper = (param?: Partial<CSVParseParam> | undefined, options?: TransformOptions | undefined) => Converter;
+interface Helper extends helper {
+  csv: helper
+  Converter: typeof Converter
+}
+declare const helper: Helper;
 export = helper;
