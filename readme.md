@@ -1,3 +1,27 @@
+## Deprecation Notice: csvtojson
+
+Dear users,
+
+We would like to inform you that csvtojson will be deprecated and no longer actively maintained. This decision has been made due to simply that the owner of the library is absent and we maintainers cant publish a new package in npm.
+
+### What does this mean for you?
+
+1. **No further updates or bug fixes:** We will no longer provide updates or bug fixes for csvtojson. It will remain in its current state and will not receive any new features or improvements.
+
+2. **No official support:** We won't be providing any official support for csvtojson going forward. This includes responding to issues, answering questions, or offering assistance related to the package.
+
+3. **Security risks:** As csvtojson will no longer receive updates, using it in your projects may expose you to potential security risks. We strongly recommend migrating to an alternative package or finding a suitable replacement.
+
+### Recommended Actions:
+
+1. **Migrate to alternative packages:** We created a new library with similar functionality, that you can migrate 1.0.0 version without any problems. We will keep the new repo up-to-date.
+
+
+Thank you for being a part of our community.
+
+Sincerely,  
+
+
 [![Build Status](https://travis-ci.org/Keyang/node-csvtojson.svg?branch=master)](https://travis-ci.org/Keyang/node-csvtojson)
 [![Coverage Status](https://coveralls.io/repos/github/Keyang/node-csvtojson/badge.svg?branch=master)](https://coveralls.io/github/Keyang/node-csvtojson?branch=master)
 [![OpenCollective](https://opencollective.com/csvtojson/backers/badge.svg)](#backers) 
