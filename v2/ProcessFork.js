@@ -1,9 +1,14 @@
 "use strict";
 var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
     return function (d, b) {
+        if (typeof b !== "function" && b !== null)
+            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
         extendStatics(d, b);
         function __() { this.constructor = d; }
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
@@ -13,8 +18,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.EOM = exports.ProcessorFork = void 0;
 var Processor_1 = require("./Processor");
-var bluebird_1 = __importDefault(require("bluebird"));
 var Parameters_1 = require("./Parameters");
 var CSVError_1 = __importDefault(require("./CSVError"));
 var ProcessorFork = /** @class */ (function (_super) {
@@ -34,11 +39,12 @@ var ProcessorFork = /** @class */ (function (_super) {
     }
     ProcessorFork.prototype.flush = function () {
         var _this = this;
-        return new bluebird_1.default(function (resolve, reject) {
+        return new Promise(function (resolve, reject) {
+            var _a;
             // console.log("flush");
             _this.finalChunk = true;
             _this.next = resolve;
-            _this.childProcess.stdin.end();
+            (_a = _this.childProcess.stdin) === null || _a === void 0 ? void 0 : _a.end();
             // this.childProcess.stdout.on("end",()=>{
             //   // console.log("!!!!");
             //   this.flushResult();
@@ -47,10 +53,10 @@ var ProcessorFork = /** @class */ (function (_super) {
     };
     ProcessorFork.prototype.destroy = function () {
         this.childProcess.kill();
-        return bluebird_1.default.resolve();
+        return Promise.resolve();
     };
     ProcessorFork.prototype.prepareParam = function (param) {
-        var clone = Parameters_1.mergeParams(param);
+        var clone = (0, Parameters_1.mergeParams)(param);
         if (clone.ignoreColumns) {
             clone.ignoreColumns = {
                 source: clone.ignoreColumns.source,
@@ -67,6 +73,7 @@ var ProcessorFork = /** @class */ (function (_super) {
     };
     ProcessorFork.prototype.initWorker = function () {
         var _this = this;
+        var _a, _b;
         this.childProcess.on("exit", function () {
             _this.flushResult();
         });
@@ -92,13 +99,13 @@ var ProcessorFork = /** @class */ (function (_super) {
                 // this.flushResult();
             }
         });
-        this.childProcess.stdout.on("data", function (data) {
+        (_a = this.childProcess.stdout) === null || _a === void 0 ? void 0 : _a.on("data", function (data) {
             // console.log("stdout", data.toString());
             var res = data.toString();
             // console.log(res);
             _this.appendBuf(res);
         });
-        this.childProcess.stderr.on("data", function (data) {
+        (_b = this.childProcess.stderr) === null || _b === void 0 ? void 0 : _b.on("data", function (data) {
             // console.log("stderr", data.toString());
             _this.converter.emit("error", CSVError_1.default.fromJSON(JSON.parse(data.toString())));
         });
@@ -137,11 +144,12 @@ var ProcessorFork = /** @class */ (function (_super) {
     };
     ProcessorFork.prototype.process = function (chunk) {
         var _this = this;
-        return new bluebird_1.default(function (resolve, reject) {
+        return new Promise(function (resolve, reject) {
+            var _a;
             // console.log("chunk", chunk.length);
             _this.next = resolve;
             // this.appendReadBuf(chunk);
-            _this.childProcess.stdin.write(chunk, function () {
+            (_a = _this.childProcess.stdin) === null || _a === void 0 ? void 0 : _a.write(chunk, function () {
                 // console.log("chunk callback");
                 _this.flushResult();
             });
@@ -151,4 +159,3 @@ var ProcessorFork = /** @class */ (function (_super) {
 }(Processor_1.Processor));
 exports.ProcessorFork = ProcessorFork;
 exports.EOM = "\x03";
-//# sourceMappingURL=ProcessFork.js.map

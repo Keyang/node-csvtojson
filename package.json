@@ -244,7 +244,7 @@
       "hireable": null
     }
   ],
-  "version": "2.0.11",
+  "version": "2.0.12",
   "keywords": [
     "csv",
     "csv parser",
@@ -262,28 +262,27 @@
   },
   "license": "MIT",
   "engines": {
-    "node": ">=4.0.0"
+    "node": ">=8.0.0"
   },
   "devDependencies": {
-    "@types/bluebird": "^3.5.20",
-    "@types/mocha": "^5.2.0",
-    "@types/node": "^10.0.1",
+    "@types/lodash.set": "^4.3.6",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^24.9.1",
     "babel-plugin-syntax-dynamic-import": "^6.18.0",
     "coveralls": "^3.0.1",
     "minimist": "^1.2.0",
-    "mocha": "^5.1.1",
+    "mocha": "^11.7.4",
     "nyc": "^11.7.3",
     "sinon": "^3.2.3",
-    "ts-node": "^6.0.3",
-    "typescript": "^2.8.3",
+    "ts-jest": "^29.4.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3",
     "uglifyjs-webpack-plugin": "^1.2.7",
     "webpack": "^4.16.4",
     "webpack-cli": "^3.1.0"
   },
   "dependencies": {
-    "bluebird": "^3.5.1",
-    "lodash": "^4.17.15",
-    "strip-bom": "^2.0.0"
+    "lodash.set": "^4.3.2"
   },
   "nyc": {
     "extension": [
@@ -311,5 +310,15 @@
     "coveralls": "cat ./coverage/lcov.info | ./node_modules/.bin/coveralls"
   },
   "browser": "./browser/browser.js",
-  "main": "./v2/index.js"
+  "main": "./v2/index.js",
+  "files": [
+    "v1",
+    "v2",
+    "browser",
+    "bin",
+    "index.d.ts",
+    "typings.d.ts",
+    "LICENSE",
+    "readme.md"
+  ]
 }

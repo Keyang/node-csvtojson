@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.Processor = void 0;
 var Processor = /** @class */ (function () {
     function Processor(converter) {
         this.converter = converter;
@@ -9,4 +10,3 @@ var Processor = /** @class */ (function () {
     return Processor;
 }());
 exports.Processor = Processor;
-//# sourceMappingURL=Processor.js.map

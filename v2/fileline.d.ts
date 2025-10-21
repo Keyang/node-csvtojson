@@ -13,4 +13,4 @@ export interface StringToLinesResult {
      */
     partial: string;
 }
-export declare type Fileline = string;
+export type Fileline = string;

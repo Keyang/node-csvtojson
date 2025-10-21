@@ -1,9 +1,6 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-var bluebird_1 = __importDefault(require("bluebird"));
+exports.Result = void 0;
 var os_1 = require("os");
 var Result = /** @class */ (function () {
     function Result(converter) {
@@ -14,7 +11,7 @@ var Result = /** @class */ (function () {
         get: function () {
             return !!this.converter.parseRuntime.subscribe && !!this.converter.parseRuntime.subscribe.onNext || this.needPushDownstream;
         },
-        enumerable: true,
+        enumerable: false,
         configurable: true
     });
     Object.defineProperty(Result.prototype, "needPushDownstream", {
@@ -24,7 +21,7 @@ var Result = /** @class */ (function () {
             }
             return this._needPushDownstream;
         },
-        enumerable: true,
+        enumerable: false,
         configurable: true
     });
     Object.defineProperty(Result.prototype, "needEmitAll", {
@@ -32,7 +29,7 @@ var Result = /** @class */ (function () {
             return !!this.converter.parseRuntime.then && this.converter.parseParam.needEmitAll;
             // return !!this.converter.parseRuntime.then;
         },
-        enumerable: true,
+        enumerable: false,
         configurable: true
     });
     Result.prototype.processResult = function (resultLines) {
@@ -43,8 +40,8 @@ var Result = /** @class */ (function () {
                 pushDownstream(this.converter, "[" + os_1.EOL);
             }
         }
-        // let prom: P<any>;
-        return new bluebird_1.default(function (resolve, reject) {
+        // let prom: Promise<any>;
+        return new Promise(function (resolve, reject) {
             if (_this.needEmitLine) {
                 processLineByLine(resultLines, _this.converter, 0, _this.needPushDownstream, function (err) {
                     if (err) {
@@ -52,14 +49,14 @@ var Result = /** @class */ (function () {
                     }
                     else {
                         _this.appendFinalResult(resultLines);
-                        resolve();
+                        resolve(undefined);
                     }
                 });
                 // resolve();
             }
             else {
                 _this.appendFinalResult(resultLines);
-                resolve();
+                resolve(undefined);
             }
         });
     };
@@ -161,4 +158,3 @@ function pushDownstream(conv, res) {
         conv.push(res);
     }
 }
-//# sourceMappingURL=Result.js.map

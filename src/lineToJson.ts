@@ -1,7 +1,7 @@
 import { Converter } from "./Converter";
 import CSVError from "./CSVError";
 import { CellParser, ColumnParam } from "./Parameters";
-import set from "lodash/set";
+import set from "lodash.set";
 
 const numReg = /^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$/;
 
@@ -105,6 +105,9 @@ function getConvFunc(head: string, i: number, conv: Converter): CellParser | nul
   }
 }
 function setPath(resultJson: any, head: string, value: any, conv: Converter,headIdx:number) {
+  if (head.includes("__proto__") || head.includes("constructor") || head.includes("prototype")) {
+    return;
+  }
   if (!conv.parseRuntime.columnValueSetter[headIdx]) {
     if (conv.parseParam.flatKeys) {
       conv.parseRuntime.columnValueSetter[headIdx] = flatSetter;

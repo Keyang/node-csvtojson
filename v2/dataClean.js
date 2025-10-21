@@ -1,9 +1,17 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-var strip_bom_1 = __importDefault(require("strip-bom"));
+exports.prepareData = prepareData;
+function stripBom(string) {
+    if (typeof string !== 'string') {
+        throw new TypeError("Expected a string, got ".concat(typeof string));
+    }
+    // Catches EFBBBF (UTF-8 BOM) because the buffer-to-string
+    // conversion translates it to FEFF (UTF-16 BOM).
+    if (string.charCodeAt(0) === 0xFEFF) {
+        return string.slice(1);
+    }
+    return string;
+}
 /**
  * For each data chunk coming to parser:
  * 1. append the data to the buffer that is left from last chunk
@@ -15,13 +23,12 @@ function prepareData(chunk, runtime) {
     runtime.csvLineBuffer = undefined;
     var cleanCSVString = cleanUtf8Split(workChunk, runtime).toString("utf8");
     if (runtime.started === false) {
-        return strip_bom_1.default(cleanCSVString);
+        return stripBom(cleanCSVString);
     }
     else {
         return cleanCSVString;
     }
 }
-exports.prepareData = prepareData;
 /**
  *  append data to buffer that is left form last chunk
  */
@@ -69,4 +76,3 @@ function cleanUtf8Split(chunk, runtime) {
         return chunk;
     }
 }
-//# sourceMappingURL=dataClean.js.map

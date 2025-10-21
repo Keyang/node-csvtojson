@@ -125,7 +125,7 @@ export function mergeParams(params?: Partial<CSVParseParam>): CSVParseParam {
   for (let key in params) {
     if (params.hasOwnProperty(key)) {
       if (Array.isArray(params[key])) {
-        defaultParam[key] = [].concat(params[key]);
+        defaultParam[key] = [...params[key]];
       } else {
         defaultParam[key] = params[key];
       }
@@ -133,4 +133,3 @@ export function mergeParams(params?: Partial<CSVParseParam>): CSVParseParam {
   }
   return defaultParam;
 }
-

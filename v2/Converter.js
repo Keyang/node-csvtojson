@@ -1,23 +1,24 @@
 "use strict";
 var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
     return function (d, b) {
+        if (typeof b !== "function" && b !== null)
+            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
         extendStatics(d, b);
         function __() { this.constructor = d; }
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.Converter = void 0;
 var stream_1 = require("stream");
 var Parameters_1 = require("./Parameters");
 var ParseRuntime_1 = require("./ParseRuntime");
-var bluebird_1 = __importDefault(require("bluebird"));
-// import { ProcessorFork } from "./ProcessFork";
 var ProcessorLocal_1 = require("./ProcessorLocal");
 var Result_1 = require("./Result");
 var Converter = /** @class */ (function (_super) {
@@ -26,17 +27,11 @@ var Converter = /** @class */ (function (_super) {
         if (options === void 0) { options = {}; }
         var _this = _super.call(this, options) || this;
         _this.options = options;
-        _this.params = Parameters_1.mergeParams(param);
-        _this.runtime = ParseRuntime_1.initParseRuntime(_this);
+        _this.params = (0, Parameters_1.mergeParams)(param);
+        _this.runtime = (0, ParseRuntime_1.initParseRuntime)(_this);
         _this.result = new Result_1.Result(_this);
-        // if (this.params.fork) {
-        //   this.processor = new ProcessorFork(this);
-        // } else {
         _this.processor = new ProcessorLocal_1.ProcessorLocal(_this);
-        // }
         _this.once("error", function (err) {
-            // console.log("BBB");
-            //wait for next cycle to emit the errors.
             setImmediate(function () {
                 _this.result.processError(err);
                 _this.emit("done", err);
@@ -66,19 +61,13 @@ var Converter = /** @class */ (function (_super) {
     Converter.prototype.fromFile = function (filePath, options) {
         var _this = this;
         var fs = require("fs");
-        // var rs = null;
-        // this.wrapCallback(cb, function () {
-        //   if (rs && rs.destroy) {
-        //     rs.destroy();
-        //   }
-        // });
         fs.exists(filePath, function (exist) {
             if (exist) {
                 var rs = fs.createReadStream(filePath, options);
                 rs.pipe(_this);
             }
             else {
-                _this.emit('error', new Error(`File does not exist at ${filePath}. Check to make sure the file path to your csv is correct.`));
+                _this.emit('error', new Error("File does not exist at ".concat(filePath, ". Check to make sure the file path to your csv is correct.")));
             }
         });
         return this;
@@ -96,7 +85,7 @@ var Converter = /** @class */ (function (_super) {
                 this.push(null);
             }
             else {
-                var str = csvString.substr(idx, size);
+                var str = csvString.substring(idx, idx + size);
                 this.push(str);
                 idx += size;
             }
@@ -105,7 +94,7 @@ var Converter = /** @class */ (function (_super) {
     };
     Converter.prototype.then = function (onfulfilled, onrejected) {
         var _this = this;
-        return new bluebird_1.default(function (resolve, reject) {
+        return new Promise(function (resolve, reject) {
             _this.parseRuntime.then = {
                 onfulfilled: function (value) {
                     if (onfulfilled) {
@@ -130,14 +119,14 @@ var Converter = /** @class */ (function (_super) {
         get: function () {
             return this.params;
         },
-        enumerable: true,
+        enumerable: false,
         configurable: true
     });
     Object.defineProperty(Converter.prototype, "parseRuntime", {
         get: function () {
             return this.runtime;
         },
-        enumerable: true,
+        enumerable: false,
         configurable: true
     });
     Converter.prototype._transform = function (chunk, encoding, cb) {
@@ -184,10 +173,9 @@ var Converter = /** @class */ (function (_super) {
         get: function () {
             return this.runtime.parsedLineNumber;
         },
-        enumerable: true,
+        enumerable: false,
         configurable: true
     });
     return Converter;
 }(stream_1.Transform));
 exports.Converter = Converter;
-//# sourceMappingURL=Converter.js.map

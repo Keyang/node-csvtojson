@@ -3,8 +3,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = default_1;
 var CSVError_1 = __importDefault(require("./CSVError"));
-var set_1 = __importDefault(require("lodash/set"));
+var lodash_set_1 = __importDefault(require("lodash.set"));
 var numReg = /^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$/;
 function default_1(csvRows, conv) {
     var res = [];
@@ -16,7 +17,7 @@ function default_1(csvRows, conv) {
     }
     return res;
 }
-exports.default = default_1;
+;
 function processRow(row, conv, index) {
     if (conv.parseParam.checkColumn && conv.parseRuntime.headers && row.length !== conv.parseRuntime.headers.length) {
         throw (CSVError_1.default.column_mismatched(conv.parseRuntime.parsedLineNumber + index));
@@ -51,10 +52,6 @@ function convertRowToJson(row, headRow, conv) {
             }
         }
         else {
-            // var flag = getFlag(head, i, param);
-            // if (flag === 'omit') {
-            //   continue;
-            // }
             if (conv.parseParam.checkType) {
                 var convertFunc = checkType(item, head, i, conv);
                 item = convertFunc(item);
@@ -107,6 +104,9 @@ function getConvFunc(head, i, conv) {
     }
 }
 function setPath(resultJson, head, value, conv, headIdx) {
+    if (head.includes("__proto__") || head.includes("constructor") || head.includes("prototype")) {
+        return;
+    }
     if (!conv.parseRuntime.columnValueSetter[headIdx]) {
         if (conv.parseParam.flatKeys) {
             conv.parseRuntime.columnValueSetter[headIdx] = flatSetter;
@@ -144,7 +144,7 @@ function flatSetter(resultJson, head, value) {
     resultJson[head] = value;
 }
 function jsonSetter(resultJson, head, value) {
-    set_1.default(resultJson, head, value);
+    (0, lodash_set_1.default)(resultJson, head, value);
 }
 function checkType(item, head, headIdx, conv) {
     if (conv.parseRuntime.headerType[headIdx]) {
@@ -192,13 +192,8 @@ function dynamicType(item) {
     }
 }
 function booleanType(item) {
-    var trimed = item.trim();
-    if (trimed.length === 5 && trimed.toLowerCase() === "false") {
-        return false;
-    }
-    else {
-        return true;
-    }
+    var trimmed = item.trim();
+    return !(trimmed.length === 5 && trimmed.toLowerCase() === "false");
 }
 function jsonType(item) {
     try {
@@ -208,4 +203,3 @@ function jsonType(item) {
         return item;
     }
 }
-//# sourceMappingURL=lineToJson.js.map

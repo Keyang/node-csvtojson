@@ -1,5 +1,4 @@
 import { Processor, ProcessLineResult } from "./Processor";
-import P from "bluebird";
 import { prepareData } from "./dataClean";
 import getEol from "./getEol";
 import { stringToLines } from "./fileline";
@@ -12,24 +11,24 @@ import CSVError from "./CSVError";
 
 
 export class ProcessorLocal extends Processor {
-  flush(): P<ProcessLineResult[]> {
+  flush(): Promise<ProcessLineResult[]> {
     if (this.runtime.csvLineBuffer && this.runtime.csvLineBuffer.length > 0) {
       const buf = this.runtime.csvLineBuffer;
       this.runtime.csvLineBuffer = undefined;
       return this.process(buf, true)
         .then((res) => {
           if (this.runtime.csvLineBuffer && this.runtime.csvLineBuffer.length > 0) {
-            return P.reject(CSVError.unclosed_quote(this.runtime.parsedLineNumber, this.runtime.csvLineBuffer.toString()))
+            return Promise.reject(CSVError.unclosed_quote(this.runtime.parsedLineNumber, this.runtime.csvLineBuffer.toString()))
           } else {
-            return P.resolve(res);
+            return Promise.resolve(res);
           }
         })
     } else {
-      return P.resolve([]);
+      return Promise.resolve([]);
     }
   }
-  destroy(): P<void> {
-    return P.resolve();
+  destroy(): Promise<void> {
+    return Promise.resolve();
   }
   private rowSplit: RowSplit = new RowSplit(this.converter);
   private eolEmitted = false;
@@ -49,7 +48,7 @@ export class ProcessorLocal extends Processor {
     return this._needEmitHead;
 
   }
-  process(chunk: Buffer, finalChunk = false): P<ProcessLineResult[]> {
+  process(chunk: Buffer, finalChunk = false): Promise<ProcessLineResult[]> {
     let csvString: string;
     if (finalChunk) {
       csvString = chunk.toString();
@@ -57,7 +56,7 @@ export class ProcessorLocal extends Processor {
       csvString = prepareData(chunk, this.converter.parseRuntime);
 
     }
-    return P.resolve()
+    return Promise.resolve()
       .then(() => {
         if (this.runtime.preRawDataHook) {
           return this.runtime.preRawDataHook(csvString);
@@ -69,11 +68,11 @@ export class ProcessorLocal extends Processor {
         if (csv && csv.length > 0) {
           return this.processCSV(csv, finalChunk);
         } else {
-          return P.resolve([]);
+          return Promise.resolve([]);
         }
       })
   }
-  private processCSV(csv: string, finalChunk: boolean): P<ProcessLineResult[]> {
+  private processCSV(csv: string, finalChunk: boolean): Promise<ProcessLineResult[]> {
     const params = this.params;
     const runtime = this.runtime;
     if (!runtime.eol) {
@@ -95,11 +94,11 @@ export class ProcessorLocal extends Processor {
       stringToLineResult.partial = "";
     }
     if (stringToLineResult.lines.length > 0) {
-      let prom: P<string[]>;
+      let prom: Promise<string[]>;
       if (runtime.preFileLineHook) {
         prom = this.runPreLineHook(stringToLineResult.lines);
       } else {
-        prom = P.resolve(stringToLineResult.lines);
+        prom = Promise.resolve(stringToLineResult.lines);
       }
       return prom.then((lines) => {
         if (!runtime.started
@@ -114,7 +113,7 @@ export class ProcessorLocal extends Processor {
 
     } else {
 
-      return P.resolve([]);
+      return Promise.resolve([]);
     }
 
   }
@@ -227,8 +226,8 @@ export class ProcessorLocal extends Processor {
     }
 
   }
-  private runPreLineHook(lines: string[]): P<string[]> {
-    return new P((resolve, reject) => {
+  private runPreLineHook(lines: string[]): Promise<string[]> {
+    return new Promise((resolve, reject) => {
       processLineHook(lines, this.runtime, 0, (err) => {
         if (err) {
           reject(err);

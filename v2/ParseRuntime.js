@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.initParseRuntime = initParseRuntime;
 function initParseRuntime(converter) {
     var params = converter.parseParam;
     var rtn = {
@@ -28,5 +29,3 @@ function initParseRuntime(converter) {
     }
     return rtn;
 }
-exports.initParseRuntime = initParseRuntime;
-//# sourceMappingURL=ParseRuntime.js.map

@@ -1,5 +1,18 @@
 import { ParseRuntime } from "./ParseRuntime";
-import stripBom from "strip-bom";
+function stripBom(string) {
+  if (typeof string !== 'string') {
+    throw new TypeError(`Expected a string, got ${typeof string}`);
+  }
+
+  // Catches EFBBBF (UTF-8 BOM) because the buffer-to-string
+  // conversion translates it to FEFF (UTF-16 BOM).
+  if (string.charCodeAt(0) === 0xFEFF) {
+    return string.slice(1);
+  }
+
+  return string;
+}
+
 /**
  * For each data chunk coming to parser:
  * 1. append the data to the buffer that is left from last chunk

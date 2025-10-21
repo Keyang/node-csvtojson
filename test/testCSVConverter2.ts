@@ -304,7 +304,7 @@ describe("testCSVConverter2", function () {
     rs.pipe(test_converter);
   });
 
-  it("should process escape chars when delimiter is between escaped quotes", function(done) {
+  it("should process escape chars when delimiter is between escaped quotes", function (done) {
     var test_converter = new Converter({
       escape: "\\"
     });
@@ -312,14 +312,14 @@ describe("testCSVConverter2", function () {
     var testData =
       __dirname + "/data/dataWithSlashEscapeAndDelimiterBetweenQuotes";
     var rs = fs.createReadStream(testData);
-    test_converter.then(function(res) {
+    test_converter.then(function (res) {
       assert.equal(res[0].raw, '"hello,"world"');
       done();
     });
     rs.pipe(test_converter);
   });
 
-  it("should output ndjson format", function(done) {
+  it("should output ndjson format", function (done) {
     var conv = new Converter();
     conv.fromString("a,b,c\n1,2,3\n4,5,6")
       .on("data", function (d) {
@@ -556,7 +556,7 @@ describe("testCSVConverter2", function () {
       });
   });
 
-  it("should leave provided params objects unmutated", function() {
+  it("should leave provided params objects unmutated", async function () {
     var rs = fs.createReadStream(__dirname + "/data/complexJSONCSV");
     var includeColumns = [
       'fieldA.title',
@@ -568,10 +568,10 @@ describe("testCSVConverter2", function () {
       includeColumns: /(fieldA\.title|description)/,
     })
       .fromStream(rs)
-      .on("json", function(j, idx) {
+      .on("json", function (j, idx) {
         assert(idx >= 0);
       })
-      .on("header", function(header) {
+      .on("header", function (header) {
         includeColumns.forEach(function (value, index) {
           assert.equal(index, header.indexOf(value));
         });
@@ -579,15 +579,15 @@ describe("testCSVConverter2", function () {
   });
 
   it("should only call done once", function (done) {
-    var counter=0;
+    var counter = 0;
     csv()
-    .fromString('"a","b", "c""')
-    .on('done',function(){
-      counter++;
-    });
-    setTimeout(function(){
-      assert.equal(counter,1);
+      .fromString('"a","b", "c""')
+      .on('done', function () {
+        counter++;
+      });
+    setTimeout(function () {
+      assert.equal(counter, 1);
       done();
-    },100);
+    }, 100);
   })
 });

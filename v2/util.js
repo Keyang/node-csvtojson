@@ -1,5 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.trimRight = exports.trimLeft = void 0;
+exports.bufFromString = bufFromString;
+exports.emptyBuffer = emptyBuffer;
+exports.filterArray = filterArray;
 function bufFromString(str) {
     var length = Buffer.byteLength(str);
     var buffer = Buffer.allocUnsafe
@@ -8,14 +12,12 @@ function bufFromString(str) {
     buffer.write(str);
     return buffer;
 }
-exports.bufFromString = bufFromString;
 function emptyBuffer() {
     var buffer = Buffer.allocUnsafe
         ? Buffer.allocUnsafe(0)
         : new Buffer(0);
     return buffer;
 }
-exports.emptyBuffer = emptyBuffer;
 function filterArray(arr, filter) {
     var rtn = [];
     for (var i = 0; i < arr.length; i++) {
@@ -25,15 +27,11 @@ function filterArray(arr, filter) {
     }
     return rtn;
 }
-exports.filterArray = filterArray;
-exports.trimLeft = String.prototype.trimLeft ? function trimLeftNative(str) {
-    return str.trimLeft();
-} : function trimLeftRegExp(str) {
-    return str.replace(/^\s+/, "");
+var trimLeft = function trimLeftNative(str) {
+    return str.trimStart();
 };
-exports.trimRight = String.prototype.trimRight ? function trimRightNative(str) {
-    return str.trimRight();
-} : function trimRightRegExp(str) {
-    return str.replace(/\s+$/, "");
+exports.trimLeft = trimLeft;
+var trimRight = function trimRightNative(str) {
+    return str.trimEnd();
 };
-//# sourceMappingURL=util.js.map
+exports.trimRight = trimRight;

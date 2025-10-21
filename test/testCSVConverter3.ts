@@ -84,7 +84,7 @@ describe("testCSVConverter3", function () {
       })
 
   })
-  it("should include column that is both included and excluded", () => {
+  it("should include column that is both included and excluded", async () => {
     return csv({
       includeColumns: /b/,
       ignoreColumns: /a|b/
@@ -97,7 +97,7 @@ describe("testCSVConverter3", function () {
         assert(!d.a);
       })
   })
-  it("should allow async preLine hook", () => {
+  it("should allow async preLine hook",async () => {
     return csv()
       .preFileLine((line) => {
         return new Promise((resolve, reject) => {

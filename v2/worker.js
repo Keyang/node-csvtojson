@@ -69,4 +69,3 @@
 // process.on("disconnect", () => {
 //   process.exit(-1);
 // });
-//# sourceMappingURL=worker.js.map

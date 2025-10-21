@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = default_1;
 //return first eol found from a data chunk.
 function default_1(data, param) {
     if (!param.eol && data) {
@@ -22,6 +23,4 @@ function default_1(data, param) {
     }
     return param.eol || "\n";
 }
-exports.default = default_1;
 ;
-//# sourceMappingURL=getEol.js.map

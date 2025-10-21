@@ -8,14 +8,14 @@ export declare class RowSplit {
     private cachedRegExp;
     private delimiterEmitted;
     private _needEmitDelimiter?;
-    private readonly needEmitDelimiter;
+    private get needEmitDelimiter();
     constructor(conv: Converter);
     parse(fileline: Fileline): RowSplitResult;
-    private toCSVRow(rowArr, trim, quote, delimiter);
-    private getDelimiter(fileline);
-    private isQuoteOpen(str);
-    private isQuoteClose(str);
-    private escapeQuote(segment);
+    private toCSVRow;
+    private getDelimiter;
+    private isQuoteOpen;
+    private isQuoteClose;
+    private escapeQuote;
     parseMultiLines(lines: Fileline[]): MultipleRowResult;
 }
 export interface MultipleRowResult {

@@ -1,5 +1,4 @@
 import { Processor, ProcessLineResult } from "./Processor";
-import P from "bluebird"
 import { Converter } from "./Converter";
 import { ChildProcess } from "child_process";
 import { CSVParseParam, mergeParams } from "./Parameters";
@@ -9,21 +8,21 @@ import { bufFromString, emptyBuffer } from "./util";
 import CSVError from "./CSVError";
 
 export class ProcessorFork extends Processor {
-  flush(): P<ProcessLineResult[]> {
-    return new P((resolve, reject) => {
+  flush(): Promise<ProcessLineResult[]> {
+    return new Promise((resolve, reject) => {
       // console.log("flush");
       this.finalChunk = true;
       this.next = resolve;
-      this.childProcess.stdin.end();
+      this.childProcess.stdin?.end();
       // this.childProcess.stdout.on("end",()=>{
       //   // console.log("!!!!");
       //   this.flushResult();
       // })
     });
   }
-  destroy(): P<void> {
+  destroy(): Promise<void> {
     this.childProcess.kill();
-    return P.resolve();
+    return Promise.resolve();
   }
   childProcess: ChildProcess;
   inited: boolean = false;
@@ -79,14 +78,14 @@ export class ProcessorFork extends Processor {
       }
 
     });
-    this.childProcess.stdout.on("data", (data) => {
+    this.childProcess.stdout?.on("data", (data) => {
       // console.log("stdout", data.toString());
       const res = data.toString();
       // console.log(res);
       this.appendBuf(res);
 
     });
-    this.childProcess.stderr.on("data", (data) => {
+    this.childProcess.stderr?.on("data", (data) => {
       // console.log("stderr", data.toString());
       this.converter.emit("error", CSVError.fromJSON(JSON.parse(data.toString())));
     });
@@ -124,12 +123,12 @@ export class ProcessorFork extends Processor {
     // console.log("buf length",this.resultBuf.length);
   }
 
-  process(chunk: Buffer): P<ProcessLineResult[]> {
-    return new P((resolve, reject) => {
+  process(chunk: Buffer): Promise<ProcessLineResult[]> {
+    return new Promise((resolve, reject) => {
       // console.log("chunk", chunk.length);
       this.next = resolve;
       // this.appendReadBuf(chunk);
-      this.childProcess.stdin.write(chunk, () => {
+      this.childProcess.stdin?.write(chunk, () => {
         // console.log("chunk callback");
         this.flushResult();
       });

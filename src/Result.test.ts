@@ -1,9 +1,8 @@
 import {Result} from "./Result";
 import { Converter } from "./Converter";
-import P from "bluebird";
 import {readFileSync} from "fs";
-import path from "path";
-import assert from "assert";
+import * as path from "path";
+import assert = require("assert");
 import { JSONResult } from "./lineToJson";
 const dataDir=path.join(__dirname,"../test/data/");
 
@@ -19,4 +18,3 @@ describe("Result",()=>{
   });
 
 })
-

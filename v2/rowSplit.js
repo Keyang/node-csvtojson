@@ -3,9 +3,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.RowSplit = void 0;
 var getEol_1 = __importDefault(require("./getEol"));
 var util_1 = require("./util");
-var defaulDelimiters = [",", "|", "\t", ";", ":"];
+var defaultDelimiters = [",", "|", "\t", ";", ":"];
 var RowSplit = /** @class */ (function () {
     function RowSplit(conv) {
         this.conv = conv;
@@ -23,7 +24,7 @@ var RowSplit = /** @class */ (function () {
             }
             return this._needEmitDelimiter;
         },
-        enumerable: true,
+        enumerable: false,
         configurable: true
     });
     RowSplit.prototype.parse = function (fileline) {
@@ -61,7 +62,7 @@ var RowSplit = /** @class */ (function () {
         for (var i = 0, rowLen = rowArr.length; i < rowLen; i++) {
             var e = rowArr[i];
             if (!inquote && trim) {
-                e = util_1.trimLeft(e);
+                e = (0, util_1.trimLeft)(e);
             }
             var len = e.length;
             if (!inquote) {
@@ -72,7 +73,7 @@ var RowSplit = /** @class */ (function () {
                 else if (this.isQuoteOpen(e)) { //quote open
                     e = e.substr(1);
                     if (this.isQuoteClose(e)) { //quote close
-                        e = e.substring(0, e.lastIndexOf(quote));
+                        e = e.substr(0, e.lastIndexOf(quote));
                         e = this.escapeQuote(e);
                         row.push(e);
                         continue;
@@ -94,7 +95,7 @@ var RowSplit = /** @class */ (function () {
                         }
                         if (count % 2 === 1) {
                             if (trim) {
-                                e = util_1.trimRight(e);
+                                e = (0, util_1.trimRight)(e);
                             }
                             row.push(quote + e);
                             continue;
@@ -113,7 +114,7 @@ var RowSplit = /** @class */ (function () {
                 }
                 else {
                     if (trim) {
-                        e = util_1.trimRight(e);
+                        e = (0, util_1.trimRight)(e);
                     }
                     row.push(e);
                     continue;
@@ -126,7 +127,7 @@ var RowSplit = /** @class */ (function () {
                     quoteBuff += delimiter + e;
                     quoteBuff = this.escapeQuote(quoteBuff);
                     if (trim) {
-                        quoteBuff = util_1.trimRight(quoteBuff);
+                        quoteBuff = (0, util_1.trimRight)(quoteBuff);
                     }
                     row.push(quoteBuff);
                     quoteBuff = "";
@@ -142,26 +143,26 @@ var RowSplit = /** @class */ (function () {
         return { cells: row, closed: !inquote };
     };
     RowSplit.prototype.getDelimiter = function (fileline) {
-        var checker;
+        var possibleDelimiters;
         if (this.conv.parseParam.delimiter === "auto") {
-            checker = defaulDelimiters;
+            possibleDelimiters = defaultDelimiters;
         }
         else if (this.conv.parseParam.delimiter instanceof Array) {
-            checker = this.conv.parseParam.delimiter;
+            possibleDelimiters = this.conv.parseParam.delimiter;
         }
         else {
             return this.conv.parseParam.delimiter;
         }
         var count = 0;
-        var rtn = ",";
-        checker.forEach(function (delim) {
+        var delimiter = ",";
+        possibleDelimiters.forEach(function (delim) {
             var delimCount = fileline.split(delim).length;
             if (delimCount > count) {
-                rtn = delim;
+                delimiter = delim;
                 count = delimCount;
             }
         });
-        return rtn;
+        return delimiter;
     };
     RowSplit.prototype.isQuoteOpen = function (str) {
         var quote = this.quote;
@@ -173,7 +174,7 @@ var RowSplit = /** @class */ (function () {
         var quote = this.quote;
         var escape = this.escape;
         if (this.conv.parseParam.trim) {
-            str = util_1.trimRight(str);
+            str = (0, util_1.trimRight)(str);
         }
         var count = 0;
         var idx = str.length - 1;
@@ -211,7 +212,7 @@ var RowSplit = /** @class */ (function () {
             }
             if (row.closed || this.conv.parseParam.alwaysSplitAtEOL) {
                 if (this.conv.parseRuntime.selectedColumns) {
-                    csvLines.push(util_1.filterArray(row.cells, this.conv.parseRuntime.selectedColumns));
+                    csvLines.push((0, util_1.filterArray)(row.cells, this.conv.parseRuntime.selectedColumns));
                 }
                 else {
                     csvLines.push(row.cells);
@@ -219,7 +220,7 @@ var RowSplit = /** @class */ (function () {
                 left = "";
             }
             else {
-                left = line + (getEol_1.default(line, this.conv.parseRuntime) || "\n");
+                left = line + ((0, getEol_1.default)(line, this.conv.parseRuntime) || "\n");
             }
         }
         return { rowsCells: csvLines, partial: left };
@@ -227,4 +228,3 @@ var RowSplit = /** @class */ (function () {
     return RowSplit;
 }());
 exports.RowSplit = RowSplit;
-//# sourceMappingURL=rowSplit.js.map

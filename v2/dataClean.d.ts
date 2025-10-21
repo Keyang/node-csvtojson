@@ -1,4 +1,3 @@
-/// <reference types="node" />
 import { ParseRuntime } from "./ParseRuntime";
 /**
  * For each data chunk coming to parser:
