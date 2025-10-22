@@ -244,7 +244,7 @@
       "hireable": null
     }
   ],
-  "version": "2.0.12",
+  "version": "2.0.13",
   "keywords": [
     "csv",
     "csv parser",
@@ -282,7 +282,7 @@
     "webpack-cli": "^3.1.0"
   },
   "dependencies": {
-    "lodash.set": "^4.3.2"
+    "lodash": "^4.17.21"
   },
   "nyc": {
     "extension": [
