@@ -564,13 +564,14 @@ Joe, 1970-01-01
 */
 csv({
 	colParser:{
-		"birthday":function(item, head, resultRow, row , colIdx){
+		"birthday":function(item, head, resultRow, row , colIdx, rowIdx){
 			/*
 				item - "1970-01-01"
 				head - "birthday"
 				resultRow - {name:"Joe"}
 				row - ["Joe","1970-01-01"]
 				colIdx - 1
+				rowIdx - 0
 			*/
 			return new Date(item);
 		}
