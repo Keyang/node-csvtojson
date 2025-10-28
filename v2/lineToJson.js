@@ -5,7 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = default_1;
 var CSVError_1 = __importDefault(require("./CSVError"));
-var lodash_set_1 = __importDefault(require("lodash.set"));
+var lodash_1 = require("lodash");
 var numReg = /^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$/;
 function default_1(csvRows, conv) {
     var res = [];
@@ -144,7 +144,7 @@ function flatSetter(resultJson, head, value) {
     resultJson[head] = value;
 }
 function jsonSetter(resultJson, head, value) {
-    (0, lodash_set_1.default)(resultJson, head, value);
+    (0, lodash_1.set)(resultJson, head, value);
 }
 function checkType(item, head, headIdx, conv) {
     if (conv.parseRuntime.headerType[headIdx]) {
