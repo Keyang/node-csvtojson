@@ -1,7 +1,7 @@
 import { Converter } from "./Converter";
 import CSVError from "./CSVError";
 import { CellParser, ColumnParam } from "./Parameters";
-import set from "lodash/set";
+import { set } from "lodash";
 
 const numReg = /^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$/;
 
