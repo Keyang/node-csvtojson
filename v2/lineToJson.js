@@ -104,9 +104,6 @@ function getConvFunc(head, i, conv) {
     }
 }
 function setPath(resultJson, head, value, conv, headIdx) {
-    if (head.includes("__proto__") || head.includes("constructor") || head.includes("prototype")) {
-        return;
-    }
     if (!conv.parseRuntime.columnValueSetter[headIdx]) {
         if (conv.parseParam.flatKeys) {
             conv.parseRuntime.columnValueSetter[headIdx] = flatSetter;

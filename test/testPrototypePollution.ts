@@ -3,7 +3,7 @@ const assert = require("assert");
 
 describe("Prototype Pollution", function () {
   it("should not allow prototype pollution", async function () {
-    const csvData = "a.__proto__.polluted,b\n1,2";
+    const csvData = "a.__proto__.polluted,b.prototype.polluted\n1,2";
     let polluted = false;
 
     if (({} as any).polluted) {

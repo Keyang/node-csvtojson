@@ -96,7 +96,9 @@ describe("CSV Converter", function () {
 
     //record_parsed will be emitted each time a row has been parsed.
     csvConverter.subscribe(function (resultRow, rowIndex) {
+      
       for (var key in resultRow) {
+        
         if (resultRow.hasOwnProperty(key)) {
           if (!result[key] || !(result[key] instanceof Array)) {
             result[key] = [];

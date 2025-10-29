@@ -37,7 +37,7 @@ function processRow(row: string[], conv: Converter, index): JSONResult | null {
 function convertRowToJson(row: string[], headRow: string[], conv: Converter): { [key: string]: any } | null {
   let hasValue = false;
   const resultRow = {};
-  
+
   for (let i = 0, len = row.length; i < len; i++) {
     let item = row[i];
 
@@ -54,7 +54,7 @@ function convertRowToJson(row: string[], headRow: string[], conv: Converter): { 
     if (convFunc) {
       const convRes = convFunc(item, head, resultRow, row, i);
       if (convRes !== undefined) {
-        setPath(resultRow, head, convRes, conv,i);
+        setPath(resultRow, head, convRes, conv, i);
       }
     } else {
       if (conv.parseParam.checkType) {
@@ -62,7 +62,7 @@ function convertRowToJson(row: string[], headRow: string[], conv: Converter): { 
         item = convertFunc(item);
       }
       if (item !== undefined) {
-        setPath(resultRow, head, item, conv,i);
+        setPath(resultRow, head, item, conv, i);
       }
     }
   }
@@ -104,22 +104,20 @@ function getConvFunc(head: string, i: number, conv: Converter): CellParser | nul
     }
   }
 }
-function setPath(resultJson: any, head: string, value: any, conv: Converter,headIdx:number) {
-  if (head.includes("__proto__") || head.includes("constructor") || head.includes("prototype")) {
-    return;
-  }
+function setPath(resultJson: any, head: string, value: any, conv: Converter, headIdx: number) {
+
   if (!conv.parseRuntime.columnValueSetter[headIdx]) {
     if (conv.parseParam.flatKeys) {
       conv.parseRuntime.columnValueSetter[headIdx] = flatSetter;
     } else {
-      
+
       if (head.indexOf(".") > -1) {
-        const headArr=head.split(".");
-        let jsonHead=true;
-        while(headArr.length>0){
-          const headCom=headArr.shift();
-          if (headCom!.length===0){
-            jsonHead=false;
+        const headArr = head.split(".");
+        let jsonHead = true;
+        while (headArr.length > 0) {
+          const headCom = headArr.shift();
+          if (headCom!.length === 0) {
+            jsonHead = false;
             break;
           }
         }
@@ -133,8 +131,8 @@ function setPath(resultJson: any, head: string, value: any, conv: Converter,head
       }
     }
   }
-  if (conv.parseParam.nullObject ===true && value ==="null"){
-    value=null;
+  if (conv.parseParam.nullObject === true && value === "null") {
+    value = null;
   }
   conv.parseRuntime.columnValueSetter[headIdx](resultJson, head, value);
   // flatSetter(resultJson, head, value);
