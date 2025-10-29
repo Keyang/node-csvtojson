@@ -17,4 +17,8 @@ describe("Prototype Pollution", function () {
       delete (Object.prototype as any).polluted;
     }
   });
+  it("should not allow prototype pollution for v1",function(){
+    require("../v1/core/defaultParsers/parser_jsonarray").parserFunc({ head: "a.__proto__.injectedProp", resultRow: {}, item: 'pollutedValue', regExp: /\./ });
+    assert.strictEqual(({} as any).injectedProp, undefined, "Prototype should not be polluted");
+  })
 });

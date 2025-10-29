@@ -8,6 +8,9 @@ module.exports = {
     var pointer = params.resultRow;
     while (headArr.length > 1) {
       var headStr = headArr.shift();
+      if (headStr==="__proto__" || headStr==="prototype" ||headStr==="constructor" ){
+        continue;
+      }
       if (pointer[headStr] === undefined) {
         pointer[headStr] = {};
       }
