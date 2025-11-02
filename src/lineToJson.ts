@@ -19,14 +19,14 @@ export type JSONResult = {
   [key: string]: any
 }
 
-function processRow(row: string[], conv: Converter, index): JSONResult | null {
+function processRow(row: string[], conv: Converter, index: number): JSONResult | null {
 
   if (conv.parseParam.checkColumn && conv.parseRuntime.headers && row.length !== conv.parseRuntime.headers.length) {
     throw (CSVError.column_mismatched(conv.parseRuntime.parsedLineNumber + index))
   }
 
   const headRow = conv.parseRuntime.headers || [];
-  const resultRow = convertRowToJson(row, headRow, conv);
+  const resultRow = convertRowToJson(row, headRow, conv,index);
   if (resultRow) {
     return resultRow;
   } else {
@@ -34,7 +34,7 @@ function processRow(row: string[], conv: Converter, index): JSONResult | null {
   }
 }
 
-function convertRowToJson(row: string[], headRow: string[], conv: Converter): { [key: string]: any } | null {
+function convertRowToJson(row: string[], headRow: string[], conv: Converter, rowIndex: number): { [key: string]: any } | null {
   let hasValue = false;
   const resultRow = {};
 
@@ -52,7 +52,7 @@ function convertRowToJson(row: string[], headRow: string[], conv: Converter): { 
     }
     const convFunc = getConvFunc(head, i, conv);
     if (convFunc) {
-      const convRes = convFunc(item, head, resultRow, row, i);
+      const convRes = convFunc(item, head, resultRow, row, i, rowIndex);
       if (convRes !== undefined) {
         setPath(resultRow, head, convRes, conv, i);
       }

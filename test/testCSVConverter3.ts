@@ -27,32 +27,34 @@ describe("testCSVConverter3", function () {
     });
     rs.pipe(csvConverter);
   });
-  it("should setup customise type convert function", function (done) {
-    csv({
+
+  it("should setup customise type convert function", async function () {
+    const json = await csv({
       checkType: true,
       colParser: {
         "column1": "string",
-        "column5": function (item, head, resultRow, row, i) {
+        "column5": function (item, head, resultRow, row, i, rowIndex) {
           assert.equal(item, '{"hello":"world"}');
-          assert.equal(head, "column5"),
-            assert(resultRow);
+          assert.equal(head, "column5");
+          assert(resultRow);
           assert(row);
           assert.equal(i, 5);
+
+          // this assumes we are parsing a file with a single row
+          assert.equal(rowIndex, 0);
+          
           return "hello world";
         }
       }
     })
-      .fromFile(__dirname + "/data/dataWithType")
-      .subscribe(function (json) {
-        assert.equal(typeof json.column1, "string");
-        assert.equal(json.column5, "hello world");
-        assert.strictEqual(json["name#!"], false);
-        assert.strictEqual(json["column9"], true);
-      })
-      .on('done', function () {
-        done()
-      });
-  })
+      .fromFile(__dirname + "/data/dataWithType");
+
+    assert.equal(typeof json[0].column1, "string");
+    assert.equal(json[0].column5, "hello world");
+    assert.strictEqual(json[0]["name#!"], false);
+    assert.strictEqual(json[0]["column9"], true);
+  });
+
   it("should accept pipe as quote", function (done) {
     csv({
       quote: "|",
