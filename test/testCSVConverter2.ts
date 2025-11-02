@@ -208,7 +208,7 @@ describe("testCSVConverter2", function () {
   });
 
   it("should convert triple quotes correctly", function (done) {
-    var testData = __dirname + "/data/dataWithTripleQoutes";
+    var testData = __dirname + "/data/dataWithTripleQuotes";
     var rs = fs.createReadStream(testData);
     var conv = new Converter({ trim: true });
     conv.then(function (res) {
@@ -445,8 +445,8 @@ describe("testCSVConverter2", function () {
       });
   });
 
-  it("should parse #139", function (done) {
-    var rs = fs.createReadStream(__dirname + "/data/data#139");
+  it("should process unquoted whitespace", function (done) {
+    var rs = fs.createReadStream(__dirname + "/data/dataWithUnquotedWhitespace");
     csv()
       .fromStream(rs)
       .then(function (res) {
@@ -456,7 +456,7 @@ describe("testCSVConverter2", function () {
   });
 
   it("should ignore column", function (done) {
-    var rs = fs.createReadStream(__dirname + "/data/dataWithQoutes");
+    var rs = fs.createReadStream(__dirname + "/data/dataWithQuotes");
     var headerEmitted = false;
     csv({
       ignoreColumns: /TIMESTAMP/
@@ -501,7 +501,7 @@ describe("testCSVConverter2", function () {
   })
 
   it("should include column", function (done) {
-    var rs = fs.createReadStream(__dirname + "/data/dataWithQoutes");
+    var rs = fs.createReadStream(__dirname + "/data/dataWithQuotes");
     csv({
       includeColumns: /TIMESTAMP/
     })
