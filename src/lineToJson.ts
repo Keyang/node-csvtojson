@@ -37,10 +37,14 @@ function processRow(row: string[], conv: Converter, index): JSONResult | null {
 function convertRowToJson(row: string[], headRow: string[], conv: Converter): { [key: string]: any } | null {
   let hasValue = false;
   const resultRow = {};
+  let len = row.length;
+  if (!conv.parseParam.ignoreEmpty && len > 0 && headRow.length > len) {
+    len = headRow.length;
+  }
 
-  for (let i = 0, len = row.length; i < len; i++) {
-    let item = row[i];
-
+  for (let i = 0; i < len; i++) {
+    let item = row[i] ?? '';
+ 
     if (conv.parseParam.ignoreEmpty && item === '') {
       continue;
     }

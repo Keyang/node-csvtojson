@@ -34,11 +34,15 @@ function processRow(row, conv, index) {
 function convertRowToJson(row, headRow, conv) {
     var hasValue = false;
     var resultRow = {};
-    for (var i = 0, len = row.length; i < len; i++) {
-        var item = row[i];
+    var len = row.length;
+    if (!conv.parseParam.ignoreEmpty && len > 0 && headRow.length > len) {
+        len = headRow.length;
+    }
+    for (var i = 0; i < len; i++) {
+        var item = row[i] !== null && row[i] !== void 0 ? row[i] : '';
         if (conv.parseParam.ignoreEmpty && item === '') {
             continue;
-        }
+        } 
         hasValue = true;
         var head = headRow[i];
         if (!head || head === "") {

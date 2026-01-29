@@ -304,6 +304,20 @@ describe("CSV Converter", function () {
     });
   });
 
+  it("should keep empty columns when ignoreEmpty is false", function (done) {
+    var testData = __dirname + "/data/dataEmptyColumns";
+    var rs = fs.createReadStream(testData);
+    var st = rs.pipe(csv({ ignoreEmpty: false }));
+    st.then(function (res) {
+      assert(res.length === 2);
+      assert.equal(res[0].col1, "a");
+      assert.equal(res[0].col2, "b");
+      assert.equal(res[0].col3, "");
+      assert.equal(res[1].col3, "");
+      done();
+    });
+  }); 
+
   it("should allow no header", function (done) {
     var testData = __dirname + "/data/noheadercsv";
     var rs = fs.createReadStream(testData);
