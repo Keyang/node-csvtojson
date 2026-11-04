@@ -156,7 +156,15 @@ function processRecursive(
 function pushDownstream(conv: Converter, res: ProcessLineResult) {
   if (typeof res === "object" && !conv.options.objectMode) {
     const data = JSON.stringify(res);
-    conv.push(data + (conv.parseParam.downstreamFormat === "array" ? "," + EOL : EOL), "utf8");
+    if (conv.parseParam.downstreamFormat === "array") {
+      if (conv.parseRuntime.hasWrittenArrayElement) {
+        conv.push("," + EOL, "utf8");
+      }
+      conv.parseRuntime.hasWrittenArrayElement = true;
+      conv.push(data, "utf8");
+    } else {
+      conv.push(data + EOL, "utf8");
+    }
   } else {
     conv.push(res);
   }

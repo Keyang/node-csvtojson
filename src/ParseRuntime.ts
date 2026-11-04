@@ -44,6 +44,7 @@ export interface ParseRuntime {
    * after first chunk of data being processed and emitted, started will become true.
    */
   started: boolean,
+  hasWrittenArrayElement: boolean,
   preRawDataHook?: PreRawDataCallback,
   preFileLineHook?: PreFileLineCallback,
   parsedLineNumber: number,
@@ -77,6 +78,7 @@ export function initParseRuntime(converter: Converter): ParseRuntime {
     headerFlag: [],
     headers: undefined,
     started: false,
+    hasWrittenArrayElement: false,
     parsedLineNumber: 0,
     columnValueSetter: [],
   }

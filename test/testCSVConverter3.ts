@@ -3,6 +3,7 @@ import assert from "assert";
 var fs = require("fs");
 import { sandbox } from "sinon";
 import CSVError from "../src/CSVError";
+import { EOL } from "os";
 const sb = sandbox.create();
 describe("testCSVConverter3", function () {
   afterEach(function () {
@@ -240,33 +241,180 @@ describe("testCSVConverter3", function () {
       })
 
   });
-  it ("should stream json string correctly",function(done){
-    const data=`a,b,c
-1,2,3
-4,5,6`
-    let hasLeftBracket=false;
-    let hasRightBracket=false;
-    csv({
-      downstreamFormat:"array"
-    })
-    .fromString(data)
-    .on("data",(d)=>{
-      const str=d.toString();
-      if (str[0]==="[" && str.length ===2){
-        hasLeftBracket=true;
-      }else if (str[0]==="]" && str.length===2){
-        hasRightBracket=true;
-      }else{
-        assert.equal(str[str.length-2],",");
-      }
-      
-    })
-    .on("end",()=>{
-      assert.equal(hasLeftBracket,true);
-      assert.equal(hasRightBracket,true);
-      done();
-    })
-  })
+  [
+    { name: "source", convert: csv },
+    { name: "package", convert: require("../") as typeof csv }
+  ].forEach((entry) => {
+    describe("downstream output from " + entry.name, function () {
+      const convert = entry.convert;
+      const firstRow = { a: "1", b: "2", c: "3" };
+      const secondRow = { a: "4", b: "5", c: "6" };
+      [
+        {
+          name: "one row",
+          chunks: ["a,b,c\n1,2,3\n"],
+          rows: [firstRow]
+        },
+        {
+          name: "multiple rows in one batch",
+          chunks: ["a,b,c\n1,2,3\n4,5,6\n"],
+          rows: [firstRow, secondRow]
+        },
+        {
+          name: "separate writes",
+          chunks: ["a,b,c\n1,2,3\n", "4,5,6\n"],
+          rows: [firstRow, secondRow]
+        },
+        {
+          name: "a quoted row split across writes",
+          chunks: ["a,b,c\n1,\"two,", " and \"\"quo", "ted\"\"\",3\n4,5,6\n"],
+          rows: [{ a: "1", b: 'two, and "quoted"', c: "3" }, secondRow]
+        },
+        {
+          name: "an unterminated last row",
+          chunks: ["a,b,c\n1,2,3\n4,5,6"],
+          rows: [firstRow, secondRow]
+        }
+      ].forEach((scenario) => {
+        it("should stream a complete JSON array with " + scenario.name, async function () {
+          const converter = convert({ downstreamFormat: "array" });
+          const output = collectOutput(converter);
+          scenario.chunks.forEach((chunk) => {
+            converter.write(chunk);
+          });
+          converter.end();
+          assert.deepStrictEqual(JSON.parse(await output), scenario.rows);
+        });
+      });
+      it("should stream synchronous subscriber mutations in order", async function () {
+        const indexes: number[] = [];
+        const converter = convert({ downstreamFormat: "array" })
+          .subscribe((row, index) => {
+            row.a = "changed " + index;
+            indexes.push(index);
+          });
+        const output = collectOutput(converter);
+        converter.end("a,b,c\n1,2,3\n4,5,6\n");
+        assert.deepStrictEqual(JSON.parse(await output), [
+          { a: "changed 0", b: "2", c: "3" },
+          { a: "changed 1", b: "5", c: "6" }
+        ]);
+        assert.deepStrictEqual(indexes, [0, 1]);
+      });
+      it("should stream asynchronous subscriber mutations in order", async function () {
+        const indexes: number[] = [];
+        const converter = convert({ downstreamFormat: "array" })
+          .subscribe((row, index) => {
+            return new Promise<void>((resolve) => {
+              setImmediate(() => {
+                row.a = "changed " + index;
+                indexes.push(index);
+                resolve();
+              });
+            });
+          });
+        const output = collectOutput(converter);
+        converter.end("a,b,c\n1,2,3\n4,5,6\n");
+        assert.deepStrictEqual(JSON.parse(await output), [
+          { a: "changed 0", b: "2", c: "3" },
+          { a: "changed 1", b: "5", c: "6" }
+        ]);
+        assert.deepStrictEqual(indexes, [0, 1]);
+      });
+      it("should keep interleaved converter arrays independent", async function () {
+        const first = convert({ downstreamFormat: "array" });
+        const second = convert({ downstreamFormat: "array" });
+        const firstOutput = collectOutput(first);
+        const secondOutput = collectOutput(second);
+        first.write("a,b,c\n1,2,3\n");
+        second.write("a,b,c\n7,8,9\n");
+        first.end("4,5,6");
+        second.end("10,11,12");
+        const outputs = await Promise.all([firstOutput, secondOutput]);
+        assert.deepStrictEqual(JSON.parse(outputs[0]), [firstRow, secondRow]);
+        assert.deepStrictEqual(JSON.parse(outputs[1]), [
+          { a: "7", b: "8", c: "9" },
+          { a: "10", b: "11", c: "12" }
+        ]);
+      });
+      it("should stream an array when needEmitAll is false", async function () {
+        const converter = convert({ downstreamFormat: "array", needEmitAll: false });
+        const output = collectOutput(converter);
+        const result = converter.then((rows) => rows);
+        converter.end("a,b,c\n1,2,3\n4,5,6");
+        assert.deepStrictEqual(JSON.parse(await output), [firstRow, secondRow]);
+        assert.deepStrictEqual(await result, []);
+      });
+      it("should stream CSV rows as a complete JSON array", async function () {
+        const converter = convert({ downstreamFormat: "array", output: "csv" });
+        const output = collectOutput(converter);
+        converter.end("a,b,c\n1,2,3\n4,5,6");
+        assert.deepStrictEqual(JSON.parse(await output), [["1", "2", "3"], ["4", "5", "6"]]);
+      });
+      it("should preserve newline-delimited JSON", async function () {
+        const converter = convert({ downstreamFormat: "line" });
+        const output = collectOutput(converter);
+        converter.end("a,b,c\n1,2,3\n4,5,6");
+        const text = await output;
+        assert.strictEqual(text, JSON.stringify(firstRow) + EOL + JSON.stringify(secondRow) + EOL);
+        assert.deepStrictEqual(text.trim().split(EOL).map((line) => JSON.parse(line)), [firstRow, secondRow]);
+      });
+      it("should preserve object mode chunks", async function () {
+        const converter = convert({}, { objectMode: true });
+        const output = collectChunks(converter);
+        converter.end("a,b,c\n1,2,3\n4,5,6");
+        assert.deepStrictEqual(await output, [firstRow, secondRow]);
+      });
+      it("should preserve existing array brackets in object mode", async function () {
+        const converter = convert({ downstreamFormat: "array" }, { objectMode: true });
+        const output = collectChunks(converter);
+        converter.end("a,b,c\n1,2,3\n4,5,6");
+        assert.deepStrictEqual(await output, ["[" + EOL, firstRow, secondRow, "]" + EOL]);
+      });
+      it("should preserve raw CSV line output", async function () {
+        const converter = convert({ output: "line" });
+        const output = collectOutput(converter);
+        converter.end("a,b,c\n1,2,3\n4,5,6");
+        assert.strictEqual(await output, "1,2,34,5,6");
+      });
+      it("should preserve existing array brackets around raw CSV lines", async function () {
+        const converter = convert({ output: "line", downstreamFormat: "array" });
+        const output = collectOutput(converter);
+        converter.end("a,b,c\n1,2,3\n4,5,6");
+        assert.strictEqual(await output, "[" + EOL + "1,2,34,5,6]" + EOL);
+      });
+      ["", "a,b,c\n"].forEach((data) => {
+        it("should preserve zero-row array output for " + JSON.stringify(data), async function () {
+          const converter = convert({ downstreamFormat: "array" });
+          const output = collectOutput(converter);
+          converter.end(data);
+          assert.strictEqual(await output, "]" + EOL);
+        });
+      });
+      it("should surface parser errors to the stream consumer", function () {
+        const converter = convert({ downstreamFormat: "array", checkColumn: true });
+        const output = collectOutput(converter);
+        converter.end("a,b,c\n1,2\n");
+        return output.then(() => {
+          assert.fail("Expected a mismatched-column error");
+        }, (err: CSVError) => {
+          assert.strictEqual(err.err, "column_mismatched");
+        });
+      });
+      it("should surface asynchronous subscriber errors to the stream consumer", function () {
+        const error = new Error("subscriber failed");
+        const converter = convert({ downstreamFormat: "array" })
+          .subscribe(() => Promise.reject(error));
+        const output = collectOutput(converter);
+        converter.end("a,b,c\n1,2,3\n");
+        return output.then(() => {
+          assert.fail("Expected the subscriber error");
+        }, (err) => {
+          assert.strictEqual(err, error);
+        });
+      });
+    });
+  });
   it ("should stream json line correctly",function(done){
     const data=`a,b,c
 1,2,3
@@ -321,3 +469,20 @@ null,2,3
     })
   })
 });
+
+function collectChunks(converter: ReturnType<typeof csv>): Promise<any[]> {
+  return new Promise((resolve, reject) => {
+    const chunks: any[] = [];
+    converter.on("error", reject);
+    converter.on("data", (chunk) => {
+      chunks.push(chunk);
+    });
+    converter.on("end", () => {
+      resolve(chunks);
+    });
+  });
+}
+
+function collectOutput(converter: ReturnType<typeof csv>): Promise<string> {
+  return collectChunks(converter).then((chunks) => Buffer.concat(chunks).toString("utf8"));
+}
