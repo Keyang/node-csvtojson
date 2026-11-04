@@ -152,7 +152,16 @@ function processRecursive(lines, hook, conv, offset, needPushDownstream, cb, res
 function pushDownstream(conv, res) {
     if (typeof res === "object" && !conv.options.objectMode) {
         var data = JSON.stringify(res);
-        conv.push(data + (conv.parseParam.downstreamFormat === "array" ? "," + os_1.EOL : os_1.EOL), "utf8");
+        if (conv.parseParam.downstreamFormat === "array") {
+            if (conv.parseRuntime.hasWrittenArrayElement) {
+                conv.push("," + os_1.EOL, "utf8");
+            }
+            conv.parseRuntime.hasWrittenArrayElement = true;
+            conv.push(data, "utf8");
+        }
+        else {
+            conv.push(data + os_1.EOL, "utf8");
+        }
     }
     else {
         conv.push(res);

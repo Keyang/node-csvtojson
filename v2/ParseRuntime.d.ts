@@ -41,6 +41,7 @@ export interface ParseRuntime {
      * after first chunk of data being processed and emitted, started will become true.
      */
     started: boolean;
+    hasWrittenArrayElement: boolean;
     preRawDataHook?: PreRawDataCallback;
     preFileLineHook?: PreFileLineCallback;
     parsedLineNumber: number;
